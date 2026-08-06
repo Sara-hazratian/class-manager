@@ -1,0 +1,94 @@
+/* ============================================================
+   LAYOUT — app shell (locked in Phase 1; page content is added
+   view-by-view in later phases without touching this file)
+   ============================================================ */
+
+/* ---------- Auth + Setup + Pending screens (full-viewport overlays) ---------- */
+#auth-screen, #setup-screen, #pending-screen {
+  position: fixed; inset: 0; z-index: 100;
+  display: grid; place-items: center;
+  overflow-y: auto;
+  background:
+    radial-gradient(900px 500px at 15% -10%, color-mix(in srgb, var(--color-primary) 12%, transparent), transparent),
+    radial-gradient(700px 400px at 100% 0%, color-mix(in srgb, var(--color-primary) 8%, transparent), transparent),
+    var(--color-bg);
+  padding: var(--space-6);
+}
+#auth-screen[hidden], #setup-screen[hidden], #pending-screen[hidden] { display: none; }
+
+/* On phone-sized screens, the card becomes a true full-screen page —
+   edge to edge, sized to the viewport — instead of a floating card with a
+   lot of empty background around it. */
+@media (max-width: 640px) {
+  #auth-screen, #setup-screen { padding: 0; align-items: stretch; }
+  .setup-card { min-height: 100vh; min-height: 100dvh; border-radius: 0; box-shadow: none; max-width: none; display: flex; flex-direction: column; justify-content: center; }
+}
+
+/* ---------- App shell ---------- */
+#app { display: flex; min-height: 100vh; }
+#app[hidden] { display: none; }
+
+.sidebar {
+  width: var(--sidebar-width); flex-shrink: 0;
+  background: linear-gradient(180deg, #16232A 0%, #0E181D 100%);
+  color: #E7EEF0;
+  display: flex; flex-direction: column;
+  padding: var(--space-6) var(--space-4);
+  position: sticky; top: 0; height: 100vh; z-index: 40;
+  transition: width .2s var(--ease);
+}
+.sidebar__brand { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-2) var(--space-2) var(--space-6); }
+.brand__mark { width: 42px; height: 42px; border-radius: var(--radius-md); background: var(--gradient-brand); display: grid; place-items: center; color: #fff; box-shadow: var(--shadow-2); flex-shrink: 0; }
+.brand__mark .icon { width: 22px; height: 22px; }
+.brand__title { font-size: 17px; font-weight: 700; color: #fff; line-height: 1.2; }
+.brand__title small { display: block; font-size: 11px; font-weight: 500; color: rgba(255,255,255,.55); margin-top: 2px; }
+
+.nav-tabs { display: flex; flex-direction: column; gap: 3px; flex: 1; overflow-y: auto; }
+.nav-tab {
+  display: flex; align-items: center; gap: var(--space-3); width: 100%; padding: 11px var(--space-3);
+  background: transparent; border: none; color: rgba(255,255,255,.72); border-radius: var(--radius-sm);
+  text-align: right; font-size: 13.5px; font-weight: 600; position: relative; transition: background .15s, color .15s;
+}
+.nav-tab .icon { width: 18px; height: 18px; opacity: .9; }
+.nav-tab:hover { background: rgba(255,255,255,.08); color: #fff; }
+.nav-tab.is-active { color: #fff; background: rgba(255,255,255,.13); }
+.nav-tab.is-active::before { content: ""; position: absolute; right: -14px; top: 50%; translate: 0 -50%; width: 4px; height: 20px; border-radius: var(--radius-pill); background: var(--color-primary); }
+
+/* ---------- Fixed header (shown on every page once Setup is complete) ---------- */
+.app-header {
+  min-height: var(--header-height);
+  display: flex; align-items: center; justify-content: space-between; gap: var(--space-5);
+  padding: var(--space-4) var(--space-7);
+  background: rgba(255,255,255,.78); backdrop-filter: blur(var(--glass-blur));
+  border-bottom: 1px solid var(--color-border);
+  position: sticky; top: 0; z-index: 30;
+}
+.app-header__school { font-size: 12.5px; color: var(--color-ink-soft); font-weight: 600; }
+.app-header__teacher { font-size: 19px; font-weight: 700; margin-top: 1px; }
+.app-header__meta { display: flex; gap: var(--space-2); flex-wrap: wrap; margin-top: 4px; }
+.app-header__date {
+  font-family: var(--font-mono); font-size: 12.5px; color: var(--color-ink-soft);
+  background: var(--color-surface-alt); padding: 8px 14px; border-radius: var(--radius-pill); white-space: nowrap;
+}
+
+.workspace { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.main-content { padding: var(--space-7); max-width: 1320px; width: 100%; margin: 0 auto; }
+.view[hidden] { display: none; }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1024px) {
+  .sidebar { width: var(--sidebar-width-collapsed); }
+  .brand__title, .nav-tab__label { display: none; }
+  .nav-tab { justify-content: center; }
+  .nav-tab.is-active::before { display: none; }
+  .sidebar__brand { justify-content: center; }
+}
+@media (max-width: 720px) {
+  #app { flex-direction: column; }
+  .sidebar { width: 100%; height: auto; flex-direction: row; align-items: center; padding: var(--space-3); position: sticky; z-index: 50; }
+  .sidebar__brand { padding: 0 var(--space-3) 0 0; }
+  .nav-tabs { flex-direction: row; overflow-x: auto; }
+  .nav-tab.is-active::before { display: none; }
+  .app-header { flex-direction: column; align-items: stretch; padding: var(--space-4); gap: var(--space-2); }
+  .main-content { padding: var(--space-4); }
+}

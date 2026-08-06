@@ -1,0 +1,89 @@
+/* ============================================================
+   DESIGN TOKENS
+   ------------------------------------------------------------
+   Everything else (base.css, layout.css, components.css) reads
+   these custom properties — nothing is hardcoded downstream.
+
+   Theme color is a single swappable attribute: data-theme on
+   <html>, chosen once at Setup and editable later in Settings.
+   Only the BRAND colors change between themes; neutral tokens
+   (ink, backgrounds, borders, semantic success/warning/danger)
+   stay constant so the app never reads "gendered" or themed
+   beyond a friendly accent color, per the design brief.
+   ============================================================ */
+
+:root {
+  /* ---------- Neutral surface & text (same across all themes) ---------- */
+  --color-bg: #F5F7F8;
+  --color-bg-alt: #EEF2F3;
+  --color-surface: #FFFFFF;
+  --color-surface-alt: #F8FAFA;
+  --color-ink: #1B2426;
+  --color-ink-soft: #5C6C70;
+  --color-ink-faint: #92A2A5;
+  --color-border: #E3E9EA;
+  --color-border-strong: #CFDADC;
+
+  /* ---------- Semantic colors (status meanings, theme-independent) ---------- */
+  --color-success: #1F9D63;
+  --color-success-tint: #E1F6EA;
+  --color-warning: #E8A33D;
+  --color-warning-tint: #FCEFD9;
+  --color-danger: #D1523F;
+  --color-danger-tint: #FBE6E2;
+  --color-info: #3D7DCA;
+  --color-info-tint: #E4EEFB;
+  --color-plum: #7C6AE0;
+  --color-plum-tint: #EAE6FB;
+
+  /* ---------- Type ---------- */
+  --font-body: 'Vazirmatn', Tahoma, sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+
+  /* ---------- Scale ---------- */
+  --radius-xs: 8px; --radius-sm: 12px; --radius-md: 16px; --radius-lg: 20px; --radius-xl: 24px; --radius-pill: 999px;
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 20px; --space-6: 24px; --space-7: 32px; --space-8: 48px;
+
+  --shadow-1: 0 1px 2px rgba(20,30,32,.06), 0 1px 1px rgba(20,30,32,.04);
+  --shadow-2: 0 8px 22px rgba(20,30,32,.09), 0 2px 6px rgba(20,30,32,.05);
+  --shadow-3: 0 22px 44px rgba(20,30,32,.16), 0 8px 16px rgba(20,30,32,.06);
+
+  --ease: cubic-bezier(.2,0,0,1);
+  --ease-spring: cubic-bezier(.34,1.56,.64,1);
+  --glass-blur: 18px;
+
+  --header-height: 96px;
+  --sidebar-width: 240px;
+  --sidebar-width-collapsed: 88px;
+}
+
+/* ============================================================
+   THEME COLOR PRESETS — chosen at Setup, editable in Settings.
+   Each only defines the brand hue; everything else above stays put.
+   ============================================================ */
+[data-theme="blue"] {
+  --color-primary: #2F6FED; --color-primary-dark: #1E4FC4; --color-primary-tint: #E3ECFE;
+  --gradient-brand: linear-gradient(135deg, #2F6FED 0%, #6AA3FF 100%);
+}
+[data-theme="green"] {
+  --color-primary: #22A06B; --color-primary-dark: #16804F; --color-primary-tint: #DEF7EC;
+  --gradient-brand: linear-gradient(135deg, #22A06B 0%, #6FCB9F 100%);
+}
+[data-theme="purple"] {
+  --color-primary: #7C5CE0; --color-primary-dark: #5E3FC2; --color-primary-tint: #ECE6FC;
+  --gradient-brand: linear-gradient(135deg, #7C5CE0 0%, #A98CF0 100%);
+}
+[data-theme="orange"] {
+  --color-primary: #E8862F; --color-primary-dark: #C6691D; --color-primary-tint: #FCE9D6;
+  --gradient-brand: linear-gradient(135deg, #E8862F 0%, #F4B36A 100%);
+}
+[data-theme="teal"] {
+  --color-primary: #17A2A2; --color-primary-dark: #0F7E7E; --color-primary-tint: #DEF5F5;
+  --gradient-brand: linear-gradient(135deg, #17A2A2 0%, #5FCACA 100%);
+}
+
+/* Default before Setup has run (Setup itself always shows a neutral/blue hero) */
+html:not([data-theme]) {
+  --color-primary: #2F6FED; --color-primary-dark: #1E4FC4; --color-primary-tint: #E3ECFE;
+  --gradient-brand: linear-gradient(135deg, #2F6FED 0%, #6AA3FF 100%);
+}

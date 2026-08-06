@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ClassPilot — دفتر مدیریت کلاسی</title>
+<meta name="theme-color" content="#2F6FED" />
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="icon" href="icons/icon-192.png" type="image/png" />
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="ClassPilot" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/tokens.css" />
+<link rel="stylesheet" href="css/base.css" />
+<link rel="stylesheet" href="css/layout.css" />
+<link rel="stylesheet" href="css/components.css" />
+</head>
+<body>
+
+<!-- ===== ICON SPRITE (shared by every phase) ===== -->
+<svg style="display:none" aria-hidden="true">
+  <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/></symbol>
+  <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol>
+  <symbol id="i-check-cal" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="m9 16 2 2 4-4"/></symbol>
+  <symbol id="i-clipboard" viewBox="0 0 24 24"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M9 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-3"/><path d="M9 12h6M9 16h6"/></symbol>
+  <symbol id="i-flask" viewBox="0 0 24 24"><path d="M10 2v7L4 19a2 2 0 0 0 1.7 3h12.6a2 2 0 0 0 1.7-3L14 9V2"/><path d="M8 2h8M7 15h10"/></symbol>
+  <symbol id="i-note" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 15h6M9 11h2"/></symbol>
+  <symbol id="i-chart" viewBox="0 0 24 24"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6" rx="1"/><rect x="12.5" y="8" width="3" height="10" rx="1"/><rect x="18" y="5" width="3" height="13" rx="1"/></symbol>
+  <symbol id="i-map" viewBox="0 0 24 24"><path d="m9 4-6 2v16l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v16M15 6v16"/></symbol>
+  <symbol id="i-report" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h1.5a1.5 1.5 0 0 1 0 3H8zM13 13v4M17 13v4"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 2 3 6v6c0 5 4 8.5 9 10 5-1.5 9-5 9-10V6Z"/></symbol>
+  <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></symbol>
+  <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v6h-6"/></symbol>
+  <symbol id="i-print" viewBox="0 0 24 24"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></symbol>
+</svg>
+
+<!-- ===== AUTH SCREEN — sign in / sign up, populated by js/auth.js ===== -->
+<div id="auth-screen"></div>
+
+<!-- ===== SETUP SCREEN — populated by js/setup.js after sign-in/sign-up ===== -->
+<div id="setup-screen" hidden></div>
+
+<!-- ===== PENDING APPROVAL — shown to admin/vice-principal accounts until a verified admin approves them ===== -->
+<div id="pending-screen" hidden>
+  <div class="panel setup-card animate-in" style="text-align:center">
+    <span class="brand__mark" style="margin:0 auto var(--space-4);width:56px;height:56px;background:var(--color-warning)">
+      <svg class="icon" style="width:28px;height:28px"><use href="#i-check-cal"/></svg>
+    </span>
+    <h1 style="font-size:19px;margin-bottom:8px">حساب شما در انتظار تأیید است</h1>
+    <p style="color:var(--color-ink-soft);font-size:13.5px;line-height:1.9;margin-bottom:var(--space-5)">
+      درخواست ثبت‌نام شما به‌عنوان مدیر/معاون ثبت شد و برای بررسی مدرک ابلاغ/حکم کارگزینی نزد مدیریت سامانه ارسال شد.
+      پس از تأیید، با همین نام کاربری و رمز عبور می‌توانید وارد شوید.
+    </p>
+    <button type="button" class="btn btn--secondary btn--block" id="pending-sign-out">خروج از حساب</button>
+  </div>
+</div>
+
+<!-- ===== PARENT VIEW — read-only ===== -->
+<div id="parent-screen" hidden style="min-height:100vh;background:var(--color-bg)">
+  <header class="app-header">
+    <div>
+      <p class="app-header__school">ClassPilot</p>
+      <h1 class="app-header__teacher">پنل ولی</h1>
+    </div>
+    <button type="button" class="btn btn--secondary btn--sm" id="parent-sign-out">خروج</button>
+  </header>
+  <main class="main-content">
+    <section class="panel" style="margin-bottom:var(--space-5)">
+      <div class="panel__header"><h2>افزودن فرزند</h2></div>
+      <form id="parent-add-child-form" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+        <div style="flex:1;min-width:200px">
+          <label for="parent-national-id">کد ملی دانش‌آموز</label>
+          <input type="text" id="parent-national-id" inputmode="numeric" maxlength="10" placeholder="۱۰ رقم" required />
+        </div>
+        <button type="submit" class="btn btn--primary">افزودن</button>
+      </form>
+      <p id="parent-add-error" style="color:var(--color-danger);font-size:12.5px;margin-top:8px;min-height:1em"></p>
+    </section>
+
+    <div class="empty-state" id="parent-empty" hidden>
+      <p class="empty-state__text">هنوز فرزندی اضافه نکرده‌اید — کد ملی را در بالا وارد کنید.</p>
+    </div>
+
+    <div id="parent-content" hidden>
+      <div class="pill-tabs" id="parent-child-tabs" style="margin-bottom:var(--space-4)"></div>
+      <div class="pill-tabs" id="parent-period-tabs" style="margin-bottom:var(--space-5)">
+        <button type="button" class="pill-tab is-active" data-period="term1">نیمسال اول</button>
+        <button type="button" class="pill-tab" data-period="term2">نیمسال دوم</button>
+      </div>
+      <div id="parent-report"></div>
+    </div>
+  </main>
+</div>
+
+<!-- ===== ADMIN / VICE-PRINCIPAL VIEW ===== -->
+<div id="admin-screen" hidden style="min-height:100vh;background:var(--color-bg)">
+  <header class="app-header">
+    <div>
+      <p class="app-header__school">ClassPilot</p>
+      <h1 class="app-header__teacher" id="admin-title">پنل <span id="admin-role-label">مدیر</span></h1>
+    </div>
+    <button type="button" class="btn btn--secondary btn--sm" id="admin-sign-out">خروج</button>
+  </header>
+  <main class="main-content">
+    <div class="pill-tabs" id="admin-tabs" style="margin-bottom:var(--space-5)">
+      <button type="button" class="pill-tab is-active" data-admin-tab="queue">درخواست‌های در انتظار تأیید</button>
+      <button type="button" class="pill-tab" data-admin-tab="classes">کلاس‌های مدرسه</button>
+    </div>
+
+    <section id="admin-tab-queue">
+      <section class="panel">
+        <div class="panel__header"><h2>درخواست‌های در انتظار تأیید</h2></div>
+        <div id="admin-pending-list"></div>
+        <div class="empty-state" id="admin-pending-empty" hidden>
+          <p class="empty-state__text">درخواست در انتظاری وجود ندارد.</p>
+        </div>
+      </section>
+    </section>
+
+    <section id="admin-tab-classes" hidden>
+      <div id="admin-teacher-picker">
+        <p class="empty-state__text" style="text-align:right;padding:0;margin-bottom:var(--space-4)">یک معلم را انتخاب کنید تا کلاس او را ببینید</p>
+        <div id="admin-teacher-list"></div>
+        <div class="empty-state" id="admin-teachers-empty" hidden>
+          <p class="empty-state__text">هنوز معلمی در سامانه ثبت‌نام نکرده است.</p>
+        </div>
+      </div>
+
+      <div id="admin-student-picker" hidden>
+        <button type="button" class="btn btn--ghost btn--sm" id="admin-back-to-teachers" style="margin-bottom:var(--space-4)"><svg class="icon"><use href="#i-back"/></svg>بازگشت به لیست معلم‌ها</button>
+        <div class="panel" style="margin-bottom:var(--space-5)">
+          <div class="panel__header"><h2>کلاس <span id="admin-selected-teacher-name"></span></h2></div>
+          <div id="admin-student-list" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:var(--space-3)"></div>
+          <div class="empty-state" id="admin-students-empty" hidden>
+            <p class="empty-state__text">این معلم هنوز دانش‌آموزی ثبت نکرده است.</p>
+          </div>
+          <div class="pill-tabs" id="admin-period-tabs">
+            <button type="button" class="pill-tab is-active" data-period="term1">نیمسال اول</button>
+            <button type="button" class="pill-tab" data-period="term2">نیمسال دوم</button>
+          </div>
+        </div>
+        <div id="admin-student-report"></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- ===== APP SHELL — Phase 3+ fill in the real dashboard/pages ===== -->
+<div id="app" hidden>
+  <aside class="sidebar">
+    <div class="sidebar__brand">
+      <span class="brand__mark"><svg class="icon"><use href="#i-book"/></svg></span>
+      <span class="brand__title">ClassPilot<small>دفتر مدیریت کلاسی</small></span>
+    </div>
+    <nav class="nav-tabs">
+      <button class="nav-tab is-active" data-view="dashboard"><svg class="icon"><use href="#i-grid"/></svg><span class="nav-tab__label">داشبورد</span></button>
+      <button class="nav-tab" data-view="students"><svg class="icon"><use href="#i-users"/></svg><span class="nav-tab__label">دانش‌آموزان</span></button>
+      <button class="nav-tab" data-view="attendance"><svg class="icon"><use href="#i-check-cal"/></svg><span class="nav-tab__label">حضور و غیاب</span></button>
+      <button class="nav-tab" data-view="lessons"><svg class="icon"><use href="#i-book"/></svg><span class="nav-tab__label">درس‌ها</span></button>
+      <button class="nav-tab" data-view="homework"><svg class="icon"><use href="#i-clipboard"/></svg><span class="nav-tab__label">تکالیف</span></button>
+      <button class="nav-tab" data-view="lab"><svg class="icon"><use href="#i-flask"/></svg><span class="nav-tab__label">آزمایشگاه علوم</span></button>
+      <button class="nav-tab" data-view="discipline"><svg class="icon"><use href="#i-shield"/></svg><span class="nav-tab__label">انضباط</span></button>
+      <button class="nav-tab" data-view="notes"><svg class="icon"><use href="#i-note"/></svg><span class="nav-tab__label">یادداشت‌ها</span></button>
+      <button class="nav-tab" data-view="progress"><svg class="icon"><use href="#i-chart"/></svg><span class="nav-tab__label">پیشرفت</span></button>
+      <button class="nav-tab" data-view="planning"><svg class="icon"><use href="#i-map"/></svg><span class="nav-tab__label">برنامه‌ریزی</span></button>
+      <button class="nav-tab" data-view="reports"><svg class="icon"><use href="#i-report"/></svg><span class="nav-tab__label">گزارش‌ها</span></button>
+      <button class="nav-tab" data-view="settings"><svg class="icon"><use href="#i-settings"/></svg><span class="nav-tab__label">تنظیمات</span></button>
+    </nav>
+  </aside>
+
+  <div class="workspace">
+    <header class="app-header">
+      <div>
+        <p class="app-header__school" id="header-school"></p>
+        <h1 class="app-header__teacher" id="header-teacher"></h1>
+        <div class="app-header__meta" id="header-meta"></div>
+      </div>
+      <time class="app-header__date" id="header-date"></time>
+    </header>
+
+    <main class="main-content">
+      <h1 id="view-title" class="visually-hidden">داشبورد</h1>
+      <section class="view" id="view-dashboard" data-view="dashboard">
+        <div class="stat-grid">
+          <article class="stat-card stat-card--a">
+            <div class="stat-card__icon"><svg class="icon"><use href="#i-users"/></svg></div>
+            <p class="stat-card__value" id="stat-students">۰</p>
+            <p class="stat-card__label">دانش‌آموزان</p>
+          </article>
+          <article class="stat-card stat-card--b">
+            <div class="stat-card__icon"><svg class="icon"><use href="#i-book"/></svg></div>
+            <p class="stat-card__value" id="stat-lessons">۰</p>
+            <p class="stat-card__label">درس‌های امروز</p>
+          </article>
+          <article class="stat-card stat-card--c">
+            <div class="stat-card__icon"><svg class="icon"><use href="#i-clipboard"/></svg></div>
+            <p class="stat-card__value" id="stat-pending-tasks">۰</p>
+            <p class="stat-card__label">کارهای انجام‌نشده</p>
+          </article>
+          <article class="stat-card stat-card--d">
+            <div class="stat-card__icon"><svg class="icon"><use href="#i-check-cal"/></svg></div>
+            <p class="stat-card__value" id="stat-attendance">—</p>
+            <p class="stat-card__label">حضور امروز</p>
+          </article>
+        </div>
+
+        <div class="dashboard-grid">
+          <section class="panel">
+            <div class="panel__header">
+              <div><span class="panel__eyebrow">برنامه امروز</span><h2 id="today-day-name">درس‌های امروز</h2></div>
+              <button type="button" class="btn btn--secondary btn--sm" data-goto="planning"><svg class="icon"><use href="#i-map"/></svg>ویرایش برنامه</button>
+            </div>
+            <div class="today-schedule" id="today-schedule"></div>
+          </section>
+
+          <div style="display:flex;flex-direction:column;gap:var(--space-5)">
+            <section class="panel">
+              <div class="panel__header"><h2>کارهای امروز</h2></div>
+              <div style="display:flex;gap:8px;margin-bottom:var(--space-3)">
+                <input type="text" id="new-task-input" placeholder="مثلاً تصحیح دفترهای ریاضی" />
+                <button class="btn btn--primary btn--sm" id="btn-add-task"><svg class="icon"><use href="#i-plus"/></svg></button>
+              </div>
+              <div class="task-list" id="task-list"></div>
+            </section>
+
+            <section class="panel">
+              <div class="panel__header"><h2>یادداشت کلی امروز</h2></div>
+              <textarea id="dashboard-notes" rows="4" placeholder="یادداشت‌های سریع…" style="resize:vertical"></textarea>
+              <p style="font-size:11.5px;color:var(--color-ink-faint);margin-top:6px">به‌صورت خودکار ذخیره می‌شود · یادداشت کامل در فاز ۱۰</p>
+            </section>
+          </div>
+        </div>
+
+        <section class="panel" style="margin-top:var(--space-5)">
+          <div class="panel__header"><h2>دسترسی سریع</h2></div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button type="button" class="btn btn--secondary" data-goto="students"><svg class="icon"><use href="#i-users"/></svg>مدیریت دانش‌آموزان</button>
+            <button type="button" class="btn btn--secondary" data-goto="attendance"><svg class="icon"><use href="#i-check-cal"/></svg>ثبت حضور و غیاب امروز</button>
+            <button type="button" class="btn btn--secondary" data-goto="lessons"><svg class="icon"><use href="#i-book"/></svg>ارزشیابی درس‌ها</button>
+            <button type="button" class="btn btn--secondary" data-goto="homework"><svg class="icon"><use href="#i-clipboard"/></svg>بررسی تکالیف</button>
+            <button type="button" class="btn btn--secondary" data-goto="lab"><svg class="icon"><use href="#i-flask"/></svg>آزمایشگاه علوم</button>
+            <button type="button" class="btn btn--secondary" data-goto="discipline"><svg class="icon"><use href="#i-shield"/></svg>ثبت انضباط</button>
+            <button type="button" class="btn btn--secondary" data-goto="notes"><svg class="icon"><use href="#i-note"/></svg>یادداشت‌ها</button>
+            <button type="button" class="btn btn--secondary" data-goto="progress"><svg class="icon"><use href="#i-chart"/></svg>پیشرفت دانش‌آموزان</button>
+            <button type="button" class="btn btn--secondary" data-goto="planning"><svg class="icon"><use href="#i-map"/></svg>برنامه‌ریزی</button>
+            <button type="button" class="btn btn--secondary" data-goto="reports"><svg class="icon"><use href="#i-report"/></svg>تهیه کارنامه</button>
+            <button type="button" class="btn btn--secondary" data-goto="settings"><svg class="icon"><use href="#i-settings"/></svg>تنظیمات</button>
+          </div>
+        </section>
+      </section>
+
+      <!-- ========== STUDENTS (Phase 4) ========== -->
+      <section class="view" id="view-students" data-view="students" hidden>
+        <div class="pill-tabs" id="students-tabs" style="margin-bottom:var(--space-5)">
+          <button type="button" class="pill-tab is-active" data-st-tab="list">لیست دانش‌آموزان</button>
+          <button type="button" class="pill-tab" data-st-tab="groups">گروه‌بندی</button>
+        </div>
+
+        <div id="students-list-tab">
+          <div class="toolbar" style="display:flex;align-items:flex-end;justify-content:space-between;gap:var(--space-4);margin-bottom:var(--space-5);flex-wrap:wrap">
+            <div style="display:flex;gap:var(--space-3);flex-wrap:wrap">
+              <div style="min-width:160px"><label for="st-group-filter">گروه</label><select id="st-group-filter" class="select-control"><option value="">همه گروه‌ها</option></select></div>
+              <div style="min-width:200px"><label for="st-search">جستجو</label><input type="search" id="st-search" placeholder="نام یا کد ملی…" /></div>
+            </div>
+            <button type="button" class="btn btn--primary" id="btn-add-student"><svg class="icon"><use href="#i-plus"/></svg>افزودن دانش‌آموز</button>
+          </div>
+          <div class="student-grid" id="student-grid"></div>
+          <div class="empty-state" id="st-empty" hidden>
+            <p class="empty-state__text">هنوز دانش‌آموزی ثبت نشده. با دکمه «افزودن دانش‌آموز» شروع کنید.</p>
+          </div>
+        </div>
+
+        <div id="students-groups-tab" hidden>
+          <section class="panel" style="margin-bottom:var(--space-5)">
+            <div class="panel__header"><h2>گروه‌ها</h2></div>
+            <div style="display:flex;gap:8px;margin-bottom:var(--space-4)">
+              <input type="text" id="new-group-name" placeholder="نام گروه جدید، مثلاً گروه ۱" />
+              <button type="button" class="btn btn--primary btn--sm" id="btn-add-group"><svg class="icon"><use href="#i-plus"/></svg>افزودن گروه</button>
+            </div>
+            <div id="group-list" style="display:flex;flex-direction:column;gap:var(--space-2)"></div>
+            <p class="empty-state empty-state--inline" id="group-list-empty" hidden>هنوز گروهی نساخته‌اید.</p>
+          </section>
+
+          <section class="panel">
+            <div class="panel__header"><h2>تخصیص دانش‌آموزان به گروه</h2></div>
+            <p style="font-size:11.5px;color:var(--color-ink-faint);margin-bottom:var(--space-3)">هر زمان می‌توانید گروه هر دانش‌آموز را از این‌جا تغییر دهید.</p>
+            <div id="group-assign-list" style="display:flex;flex-direction:column;gap:var(--space-2)"></div>
+          </section>
+        </div>
+      </section>
+
+      <!-- ========== ATTENDANCE (Phase 5) ========== -->
+      <section class="view" id="view-attendance" data-view="attendance" hidden>
+        <div class="toolbar" style="display:flex;align-items:center;justify-content:space-between;gap:var(--space-4);margin-bottom:var(--space-5);flex-wrap:wrap">
+          <div class="date-trigger">
+            <svg class="icon"><use href="#i-calendar"/></svg>
+            <span id="att-date"></span><span style="color:var(--color-ink-faint);margin-inline-start:6px" id="att-weekday"></span>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <span class="chip chip--excellent">حاضر: <strong id="c-present">۰</strong></span>
+            <span class="chip chip--danger">غایب: <strong id="c-absent">۰</strong></span>
+            <span class="chip chip--warn">تأخیر: <strong id="c-late">۰</strong></span>
+            <span class="chip" style="background:var(--color-plum-tint);color:var(--color-plum)">خروج: <strong id="c-left">۰</strong></span>
+          </div>
+          <button type="button" class="btn btn--secondary btn--sm" id="btn-all-present"><svg class="icon"><use href="#i-check"/></svg>همه حاضرند</button>
+        </div>
+
+        <div class="eval-table-wrap">
+          <table class="eval-table">
+            <thead><tr><th>دانش‌آموز</th><th>وضعیت</th><th>جزئیات</th></tr></thead>
+            <tbody id="att-tbody"></tbody>
+          </table>
+        </div>
+        <div class="empty-state" id="att-empty" hidden>
+          <p class="empty-state__text">ابتدا از صفحه‌ی «دانش‌آموزان» دانش‌آموزان کلاس را اضافه کنید.</p>
+        </div>
+      </section>
+
+      <!-- ========== LESSONS LIST (Phase 6) ========== -->
+      <section class="view" id="view-lessons" data-view="lessons" hidden>
+        <p class="empty-state__text" style="text-align:right;padding:0;margin-bottom:var(--space-5)">درس مورد نظر را برای ارزشیابی انتخاب کنید</p>
+        <div class="subject-grid" id="subject-grid"></div>
+      </section>
+
+      <!-- ========== LESSON DETAIL (Phase 6) ========== -->
+      <section class="view" id="view-lesson" data-view="lesson" hidden>
+        <button type="button" class="btn btn--ghost btn--sm" id="btn-back-to-lessons" style="margin-bottom:var(--space-4)"><svg class="icon"><use href="#i-back"/></svg>بازگشت به درس‌ها</button>
+
+        <div class="panel" style="margin-bottom:var(--space-5)">
+          <div class="panel__header">
+            <div><span class="panel__eyebrow">ارزشیابی درس</span><h2 id="lesson-title">—</h2></div>
+            <div class="date-trigger"><svg class="icon"><use href="#i-calendar"/></svg><span id="lesson-date"></span></div>
+          </div>
+
+          <div class="pill-tabs" id="period-tabs" style="margin-bottom:var(--space-3)">
+            <button type="button" class="pill-tab is-active" data-period="daily">روزانه</button>
+            <button type="button" class="pill-tab" data-period="weekly">هفتگی</button>
+            <button type="button" class="pill-tab" data-period="monthly">ماهانه</button>
+          </div>
+          <div class="pill-tabs" id="kind-tabs" style="margin-bottom:var(--space-4)"></div>
+
+          <div id="eval-range-picker" class="panel" style="background:var(--color-primary-tint);border:none;padding:12px 16px;margin-bottom:var(--space-4);display:flex;align-items:center;gap:8px;flex-wrap:wrap" hidden></div>
+
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+            <span style="font-size:12.5px;color:var(--color-ink-soft);font-weight:700">ثبت سریع برای کل کلاس:</span>
+            <div id="eval-mark-all" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+          </div>
+
+          <div class="eval-table-wrap">
+            <table class="eval-table">
+              <thead><tr><th>دانش‌آموز</th><th>عالی</th><th>خوب</th><th>قابل قبول</th><th>نیاز به تلاش</th></tr></thead>
+              <tbody id="eval-tbody"></tbody>
+            </table>
+          </div>
+          <p class="empty-state" id="eval-empty" hidden>ابتدا از صفحه‌ی «دانش‌آموزان» دانش‌آموزان کلاس را اضافه کنید.</p>
+        </div>
+      </section>
+
+      <!-- ========== HOMEWORK (Phase 7) ========== -->
+      <section class="view" id="view-homework" data-view="homework" hidden>
+        <div class="toolbar" style="display:flex;align-items:flex-end;justify-content:space-between;gap:var(--space-4);margin-bottom:var(--space-5);flex-wrap:wrap">
+          <div style="min-width:200px"><label for="hw-subject">درس</label><select id="hw-subject" class="select-control"></select></div>
+          <div class="date-trigger"><svg class="icon"><use href="#i-calendar"/></svg><span id="hw-date"></span></div>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+          <span style="font-size:12.5px;color:var(--color-ink-soft);font-weight:700">اعمال برای کل کلاس:</span>
+          <button type="button" class="chip-btn" data-hw-all="completed">همه: انجام شده</button>
+          <button type="button" class="chip-btn" data-hw-all="partial">همه: ناقص</button>
+          <button type="button" class="chip-btn" data-hw-all="not-completed">همه: انجام نشده</button>
+        </div>
+
+        <div class="eval-table-wrap">
+          <table class="eval-table">
+            <thead><tr><th>دانش‌آموز</th><th>وضعیت تکلیف</th></tr></thead>
+            <tbody id="hw-tbody"></tbody>
+          </table>
+        </div>
+        <p class="empty-state" id="hw-empty" hidden>ابتدا از صفحه‌ی «دانش‌آموزان» دانش‌آموزان کلاس را اضافه کنید.</p>
+      </section>
+
+      <!-- ========== SCIENCE LABORATORY (Phase 8) — separate from Science evaluation ========== -->
+      <section class="view" id="view-lab" data-view="lab" hidden>
+        <div class="toolbar" style="display:flex;align-items:center;justify-content:space-between;gap:var(--space-4);margin-bottom:var(--space-5);flex-wrap:wrap">
+          <p class="empty-state__text" style="text-align:right;padding:0">آزمایش‌های علوم — جدا از ارزشیابی درس علوم</p>
+          <button type="button" class="btn btn--primary" id="btn-add-lab"><svg class="icon"><use href="#i-plus"/></svg>ثبت آزمایش</button>
+        </div>
+        <div class="plan-grid" id="lab-list" style="display:flex;flex-direction:column;gap:var(--space-4)"></div>
+        <div class="empty-state" id="lab-empty" hidden><p class="empty-state__text">هنوز آزمایشی ثبت نشده است.</p></div>
+      </section>
+
+      <!-- ========== DISCIPLINE LOG (Phase 9) — deliberately NOT table-based ========== -->
+      <section class="view" id="view-discipline" data-view="discipline" hidden>
+        <div class="dashboard-grid">
+          <section class="panel">
+            <div class="panel__header"><h2>ثبت مورد جدید</h2></div>
+            <form id="discipline-form">
+              <label for="dp-student">دانش‌آموز</label>
+              <select id="dp-student" class="select-control"></select>
+
+              <label>نوع</label>
+              <div class="pill-tabs">
+                <button type="button" class="pill-tab is-active" data-dp-type="positive">مثبت</button>
+                <button type="button" class="pill-tab" data-dp-type="warning">تذکر</button>
+              </div>
+
+              <label for="dp-subject">درس (اختیاری)</label>
+              <select id="dp-subject" class="select-control"></select>
+
+              <label for="dp-description">شرح</label>
+              <textarea id="dp-description" required placeholder="مثلاً کمک به هم‌کلاسی در حل تمرین"></textarea>
+
+              <label for="dp-notes">یادداشت معلم (اختیاری)</label>
+              <textarea id="dp-notes" placeholder="اختیاری…"></textarea>
+
+              <button type="submit" class="btn btn--primary btn--block" style="margin-top:var(--space-4)">
+                <svg class="icon"><use href="#i-plus"/></svg> ثبت
+              </button>
+            </form>
+          </section>
+
+          <section class="panel">
+            <div class="panel__header"><h2>سابقه‌ی این دانش‌آموز</h2></div>
+            <div id="dp-history" style="display:flex;flex-direction:column;gap:var(--space-3)"></div>
+            <div class="empty-state" id="dp-history-empty" hidden><p class="empty-state__text">هنوز موردی برای این دانش‌آموز ثبت نشده است.</p></div>
+          </section>
+        </div>
+      </section>
+
+      <!-- ========== NOTES (Phase 10) ========== -->
+      <section class="view" id="view-notes" data-view="notes" hidden>
+        <div class="pill-tabs" id="notes-tabs" style="margin-bottom:var(--space-5)">
+          <button type="button" class="pill-tab is-active" data-note-tab="general">یادداشت‌های کلی</button>
+          <button type="button" class="pill-tab" data-note-tab="private">یادداشت خصوصی دانش‌آموز</button>
+        </div>
+
+        <section class="panel" id="notes-general">
+          <div class="panel__header"><h2>یادداشت‌های کلی معلم</h2></div>
+          <textarea id="general-notes-full" rows="14" placeholder="یادداشت‌های روزانه، نکات کلاس، برنامه‌ها…" style="resize:vertical"></textarea>
+          <p style="font-size:11.5px;color:var(--color-ink-faint);margin-top:8px">به‌صورت خودکار ذخیره می‌شود · همان یادداشت داشبورد است</p>
+        </section>
+
+        <section class="panel" id="notes-private" hidden>
+          <div class="panel__header">
+            <h2>یادداشت خصوصی دانش‌آموز</h2>
+            <div style="min-width:200px"><select id="note-student" class="select-control"></select></div>
+          </div>
+          <textarea id="student-note-full" rows="12" placeholder="یادداشت خصوصی درباره این دانش‌آموز…" style="resize:vertical"></textarea>
+          <p style="font-size:11.5px;color:var(--color-ink-faint);margin-top:8px">با خروج از فیلد ذخیره می‌شود</p>
+        </section>
+      </section>
+
+      <!-- ========== PROGRESS (Phase 11) ========== -->
+      <section class="view" id="view-progress" data-view="progress" hidden>
+        <div class="toolbar" style="display:flex;align-items:flex-end;justify-content:space-between;gap:var(--space-4);margin-bottom:var(--space-5);flex-wrap:wrap">
+          <div style="display:flex;gap:var(--space-3);flex-wrap:wrap">
+            <div style="min-width:200px"><label for="pr-student">دانش‌آموز</label><select id="pr-student" class="select-control"></select></div>
+            <div id="progress-subject-picker" hidden style="min-width:160px"><label for="pr-subject">درس</label><select id="pr-subject" class="select-control"></select></div>
+          </div>
+        </div>
+
+        <div class="stat-grid" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr))">
+          <article class="stat-card stat-card--a"><p class="stat-card__value" id="pr-stat-attendance">—</p><p class="stat-card__label">درصد حضور کلی</p></article>
+          <article class="stat-card stat-card--b"><p class="stat-card__value" id="pr-stat-evals">۰</p><p class="stat-card__label">تعداد ارزشیابی</p></article>
+          <article class="stat-card stat-card--c"><p class="stat-card__value" id="pr-stat-positive">۰</p><p class="stat-card__label">انضباط مثبت</p></article>
+          <article class="stat-card stat-card--d"><p class="stat-card__value" id="pr-stat-warning">۰</p><p class="stat-card__label">تذکر انضباطی</p></article>
+        </div>
+
+        <div class="pill-tabs" id="progress-mode-tabs" style="margin-bottom:var(--space-4)">
+          <button type="button" class="pill-tab is-active" data-mode="subjects">همه درس‌ها</button>
+          <button type="button" class="pill-tab" data-mode="trend">روند ماهانه یک درس</button>
+        </div>
+
+        <section class="panel">
+          <div class="panel__header"><h2>پیشرفت</h2></div>
+          <div id="progress-bars"></div>
+        </section>
+      </section>
+
+      <!-- ========== PLANNING (Phase 12) ========== -->
+      <section class="view" id="view-planning" data-view="planning" hidden>
+        <div class="pill-tabs" id="plan-tabs" style="margin-bottom:var(--space-5)">
+          <button type="button" class="pill-tab is-active" data-plan-tab="weekly">برنامه هفتگی</button>
+          <button type="button" class="pill-tab" data-plan-tab="budget">بودجه‌بندی سالانه</button>
+        </div>
+
+        <section class="panel" id="plan-weekly">
+          <div class="panel__header">
+            <h2>برنامه هفتگی کلاس</h2>
+            <button type="button" class="btn btn--secondary btn--sm" id="btn-edit-schedule"><svg class="icon"><use href="#i-edit"/></svg>ویرایش برنامه</button>
+            <div id="schedule-edit-actions" hidden style="display:flex;gap:8px">
+              <button type="button" class="btn btn--ghost btn--sm" id="btn-cancel-schedule">انصراف</button>
+              <button type="button" class="btn btn--primary btn--sm" id="btn-save-schedule"><svg class="icon"><use href="#i-check"/></svg>ثبت برنامه</button>
+            </div>
+          </div>
+          <p style="font-size:11.5px;color:var(--color-ink-faint);margin-bottom:var(--space-3)">برای جلوگیری از تغییر ناخواسته، ابتدا «ویرایش برنامه» را بزنید و در پایان «ثبت برنامه» را فراموش نکنید.</p>
+          <div class="schedule-grid" id="schedule-grid"></div>
+        </section>
+
+        <section class="panel" id="plan-budget" hidden>
+          <div class="panel__header">
+            <div><h2>بودجه‌بندی سالانه</h2><span style="font-size:11.5px;color:var(--color-ink-faint)">ویژه‌ی <strong id="budget-grade-label">—</strong> (بر اساس اطلاعات ثبت‌شده در خوش‌آمدگویی)</span></div>
+            <div style="min-width:200px"><select id="budget-subject" class="select-control"></select></div>
+          </div>
+          <div class="plan-grid" id="budget-rows"></div>
+        </section>
+      </section>
+
+      <!-- ========== REPORTS (Phase 13) ========== -->
+      <section class="view" id="view-reports" data-view="reports" hidden>
+        <div class="toolbar" style="display:flex;align-items:flex-end;justify-content:space-between;gap:var(--space-4);margin-bottom:var(--space-5);flex-wrap:wrap">
+          <div style="display:flex;gap:var(--space-3);flex-wrap:wrap">
+            <div style="min-width:160px">
+              <label for="rp-scope">محدوده گزارش</label>
+              <select id="rp-scope" class="select-control">
+                <option value="student">دانش‌آموز خاص</option>
+                <option value="class">کل کلاس</option>
+              </select>
+            </div>
+            <div id="rp-student-picker" style="min-width:200px"><label for="rp-student">دانش‌آموز</label><select id="rp-student" class="select-control"></select></div>
+            <div style="min-width:180px">
+              <label for="rp-period">بازه گزارش</label>
+              <select id="rp-period" class="select-control">
+                <option value="weekly">هفتگی</option>
+                <option value="monthly">ماهانه</option>
+                <option value="term1" selected>نیمسال اول (مهر تا دی)</option>
+                <option value="term2">نیمسال دوم (بهمن تا خرداد)</option>
+              </select>
+            </div>
+            <div id="rp-month-picker" hidden style="min-width:140px"><label for="rp-month">ماه</label><select id="rp-month" class="select-control"></select></div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button type="button" class="btn btn--secondary" id="btn-export-excel"><svg class="icon"><use href="#i-clipboard"/></svg>خروجی اکسل</button>
+            <button type="button" class="btn btn--primary" id="btn-export-pdf"><svg class="icon"><use href="#i-print"/></svg>خروجی PDF</button>
+          </div>
+        </div>
+        <div class="panel report-preview" id="report-preview"></div>
+      </section>
+
+      <!-- ========== SETTINGS (Phase 14) ========== -->
+      <section class="view" id="view-settings" data-view="settings" hidden>
+        <section class="panel" style="margin-bottom:var(--space-5)">
+          <div class="panel__header"><h2>مشخصات کلاس</h2></div>
+          <form id="settings-form">
+            <label for="set-name">نام و نام خانوادگی معلم</label>
+            <input type="text" id="set-name" required />
+
+            <label for="set-school">نام مدرسه</label>
+            <input type="text" id="set-school" required />
+
+            <div class="form-row">
+              <div><label for="set-grade">پایه</label><select id="set-grade" class="select-control"></select></div>
+              <div><label for="set-class">نام کلاس</label><input type="text" id="set-class" required /></div>
+            </div>
+
+            <label for="set-year">سال تحصیلی</label>
+            <input type="text" id="set-year" required />
+
+            <label>رنگ پوسته</label>
+            <div class="theme-swatch-row" id="settings-swatches"></div>
+
+            <button type="submit" class="btn btn--primary" style="margin-top:var(--space-5)">
+              <svg class="icon"><use href="#i-check"/></svg> ذخیره تغییرات
+            </button>
+          </form>
+        </section>
+
+        <section class="panel" style="margin-bottom:var(--space-5)">
+          <div class="panel__header"><h2>پشتیبان‌گیری و بازیابی</h2></div>
+          <p style="font-size:13px;color:var(--color-ink-soft);margin-bottom:var(--space-4)">
+            چون همه‌ی اطلاعات فقط در همین مرورگر ذخیره می‌شود، هر چند وقت یک‌بار یک فایل پشتیبان بگیرید
+            و جایی امن (گوگل‌درایو، ایمیل به خودتان) نگه دارید — تا با پاک شدن حافظه‌ی مرورگر یا تعویض گوشی چیزی از دست نرود.
+          </p>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button type="button" class="btn btn--primary" id="btn-export-backup"><svg class="icon"><use href="#i-clipboard"/></svg>دانلود فایل پشتیبان</button>
+            <button type="button" class="btn btn--secondary" id="btn-import-backup"><svg class="icon"><use href="#i-refresh"/></svg>بازیابی از فایل پشتیبان</button>
+            <input type="file" id="backup-file-input" accept="application/json,.json" hidden />
+          </div>
+        </section>
+
+        <section class="panel" style="margin-bottom:var(--space-5)">
+          <div class="panel__header"><h2>حساب کاربری</h2></div>
+          <button type="button" class="btn btn--secondary" id="btn-sign-out"><svg class="icon"><use href="#i-back"/></svg>خروج از حساب</button>
+        </section>
+
+        <section class="panel" style="border-color:var(--color-danger-tint)">
+          <div class="panel__header"><h2 style="color:var(--color-danger)">منطقه‌ی خطر</h2></div>
+          <p style="font-size:13px;color:var(--color-ink-soft);margin-bottom:var(--space-4)">شروع سال تحصیلی جدید همه‌ی داده‌های امسال را پاک می‌کند و غیرقابل بازگشت است.</p>
+          <button type="button" class="btn btn--danger" id="btn-new-year-settings"><svg class="icon"><use href="#i-refresh"/></svg>شروع سال تحصیلی جدید</button>
+        </section>
+      </section>
+    </main>
+  </div>
+</div>
+
+<!-- MODAL: Add / edit student (Phase 4) -->
+<dialog class="modal" id="modal-student">
+  <form class="modal__form" id="student-form">
+    <header class="modal__header"><h2 id="student-modal-title">افزودن دانش‌آموز</h2>
+      <button type="button" class="modal__close" data-close><svg class="icon"><use href="#i-close"/></svg></button></header>
+    <div class="modal__body">
+      <input type="hidden" id="student-id" />
+      <label for="student-name">نام و نام خانوادگی</label>
+      <input type="text" id="student-name" required placeholder="مثلاً سارا احمدی" />
+      <label for="student-national-id">کد ملی</label>
+      <input type="text" id="student-national-id" required inputmode="numeric" maxlength="10" placeholder="۱۰ رقم" />
+      <label for="student-phone">شماره تماس والدین (اختیاری)</label>
+      <input type="tel" id="student-phone" placeholder="۰۹۱۲۳۴۵۶۷۸۹" />
+      <p style="font-size:11px;color:var(--color-ink-faint);margin:4px 0 0">گروه دانش‌آموز را بعداً از تب «گروه‌بندی» مشخص کنید.</p>
+      <label for="student-notes">یادداشت</label>
+      <textarea id="student-notes" placeholder="اختیاری…"></textarea>
+      <p class="empty-state__text" id="student-error" style="color:var(--color-danger);text-align:right;padding:0;margin-top:6px"></p>
+    </div>
+    <footer class="modal__footer">
+      <button type="button" class="btn btn--ghost" data-close>انصراف</button>
+      <button type="submit" class="btn btn--primary">ذخیره</button>
+    </footer>
+  </form>
+</dialog>
+
+<!-- MODAL: Record a science experiment (Phase 8) -->
+<dialog class="modal" id="modal-lab">
+  <form class="modal__form" id="lab-form">
+    <header class="modal__header"><h2 id="lab-modal-title">ثبت آزمایش علوم</h2>
+      <button type="button" class="modal__close" data-close><svg class="icon"><use href="#i-close"/></svg></button></header>
+    <div class="modal__body">
+      <label for="lab-title">عنوان آزمایش</label>
+      <input type="text" id="lab-title" required placeholder="مثلاً تبخیر آب" />
+
+      <label>تاریخ آزمایش</label>
+      <div class="date-trigger" id="lab-date-preview" style="width:fit-content"></div>
+
+      <label for="lab-desc">شرح آزمایش</label>
+      <textarea id="lab-desc" placeholder="مواد لازم، مراحل انجام…"></textarea>
+
+      <label for="lab-images">تصاویر آزمایش</label>
+      <input type="file" id="lab-images" accept="image/*" multiple />
+      <div class="image-thumbs" id="lab-thumbs"></div>
+
+      <label for="lab-notes">یادداشت معلم</label>
+      <textarea id="lab-notes" placeholder="نتیجه‌گیری، نکات کلاس…"></textarea>
+    </div>
+    <footer class="modal__footer">
+      <button type="button" class="btn btn--ghost" data-close>انصراف</button>
+      <button type="submit" class="btn btn--primary">ذخیره آزمایش</button>
+    </footer>
+  </form>
+</dialog>
+
+<div class="toast-container" id="toast-container" role="status" aria-live="polite"></div>
+
+<!-- SheetJS — for generating real .xlsx files (Reports → خروجی اکسل) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<!-- Supabase client — for the multi-user backend (Teacher + Parent roles) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
