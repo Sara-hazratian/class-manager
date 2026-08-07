@@ -137,7 +137,100 @@ function renderStudentReport() {
 }
 
 /* ---------- Tab 3 (super_admin only): user management ---------- */
-const ROLE_LABELS = { teacher: "معلم", admin: "مدیر", vice_principal: "معاون", parent: "ولی", super_admin: "سوپر ادمین" };
+const ROLE_LABELS = { teacher: "معلم", admin: "مدیر", vice_principal: "معاون", parent: "ولی", super_admin: "سوپر ادمین", rahbar: "راهبر", group_leader: "سرگروه آموزشی" };
+
+/* ---------- Promote a teacher to رahbar/سرگروه (admin/VP/super_admin only) ---------- */
+function renderPromotePanel() {
+  const sel = $("#promote-teacher-select");
+  // Anyone currently teacher/rahbar/group_leader can be toggled between those three.
+  const eligible = teachers.filter(t => ["teacher", "rahbar", "group_leader"].includes(t.role));
+  sel.innerHTML = eligible.map(t => `<option value="${t.id}">${t.fullName || t.username} — ${ROLE_LABELS[t.role]}${t.role === "group_leader" && t.assignedGrade ? ` (${GRADE_LABELS[t.assignedGrade] || t.assignedGrade})` : ""}</option>`).join("");
+
+  const toggleGradeVisibility = () => {
+    $("#promote-grade-wrap").hidden = $("#promote-role-select").value !== "group_leader";
+  };
+  $("#promote-role-select").addEventListener("change", toggleGradeVisibility);
+  toggleGradeVisibility();
+}
+
+/* ---------- init ---------- */
+export function initAdmin() {
+  const profile = getProfile();
+  const isSuperAdmin = profile?.role === "super_admin";
+  const canManageSchoolRoles = ["admin", "vice_principal", "super_admin"].includes(profile?.role);
+  const label = $("#admin-role-label");
+  if (label) label.textContent = ROLE_LABELS[profile?.role] || "مدیر";
+
+  // Approving/rejecting admin & vice-principal accounts, and all user
+  // management, are exclusively the super_admin's job now — a regular
+  // admin/vice_principal only ever sees the Classes tab.
+  const queueTabBtn = $('[data-admin-tab="queue"]');
+  const usersTabBtn = $('[data-admin-tab="users"]');
+  if (queueTabBtn) queueTabBtn.hidden = !isSuperAdmin;
+  if (usersTabBtn) usersTabBtn.hidden = !isSuperAdmin;
+
+  // Only admin/vice_principal/super_admin can grant راهبر/سرگروه — not
+  // راهبر itself, and not سرگروه, matching the database's own rule.
+  $("#admin-promote-panel").hidden = !canManageSchoolRoles;
+
+  const defaultTab = isSuperAdmin ? "queue" : "classes";
+  $$("#admin-tabs .pill-tab").forEach(b => b.classList.toggle("is-active", b.dataset.adminTab === defaultTab));
+  $("#admin-tab-queue").hidden = defaultTab !== "queue";
+  $("#admin-tab-classes").hidden = defaultTab !== "classes";
+  $("#admin-tab-users").hidden = true;
+  if (defaultTab === "classes") renderTeacherList().then(renderPromotePanel);
+
+  $$("#admin-tabs .pill-tab").forEach(b => b.addEventListener("click", () => {
+    if (b.hidden) return; // safety: never activate a tab this role can't see
+    $$("#admin-tabs .pill-tab").forEach(x => x.classList.toggle("is-active", x === b));
+    const tab = b.dataset.adminTab;
+    $("#admin-tab-queue").hidden = tab !== "queue";
+    $("#admin-tab-classes").hidden = tab !== "classes";
+    $("#admin-tab-users").hidden = tab !== "users";
+    if (tab === "classes" && !teachers.length) renderTeacherList().then(renderPromotePanel);
+    if (tab === "users") renderUserManagement();
+  }));
+
+  $("#admin-promote-form")?.addEventListener("submit", async e => {
+    e.preventDefault();
+    const teacherId = $("#promote-teacher-select").value;
+    const role = $("#promote-role-select").value;
+    const grade = $("#promote-grade-select").value;
+    if (!teacherId) return;
+
+    const { setTeacherLeaderRole } = await import("./store.js");
+    const roleLabel = ROLE_LABELS[role];
+    if (!confirm(`این معلم به «${roleLabel}»${role === "group_leader" ? ` پایه‌ی ${GRADE_LABELS[grade]}` : ""} تبدیل شود؟`)) return;
+
+    try {
+      await setTeacherLeaderRole(teacherId, role, role === "group_leader" ? grade : null);
+      toast("نقش با موفقیت اعمال شد");
+      await renderTeacherList();
+      renderPromotePanel();
+    } catch (err) {
+      alert("اعمال نقش ناموفق بود: " + translateError(err));
+    }
+  });
+
+  $("#admin-back-to-teachers")?.addEventListener("click", () => {
+    $("#admin-teacher-picker").hidden = false;
+    $("#admin-student-picker").hidden = true;
+    selectedStudentId = null;
+  });
+
+  $$("#admin-period-tabs .pill-tab").forEach(b => b.addEventListener("click", () => {
+    selectedPeriod = b.dataset.period;
+    $$("#admin-period-tabs .pill-tab").forEach(x => x.classList.toggle("is-active", x === b));
+    renderStudentReport();
+  }));
+
+  $("#admin-sign-out")?.addEventListener("click", async () => {
+    await signOut();
+    window.location.reload();
+  });
+
+  if (isSuperAdmin) renderQueue();
+}
 
 async function renderUserManagement() {
   const { loadAllUsers } = await import("./store.js");
@@ -185,54 +278,3 @@ async function renderUserManagement() {
 }
 
 /* ---------- init ---------- */
-export function initAdmin() {
-  const profile = getProfile();
-  const isSuperAdmin = profile?.role === "super_admin";
-  const label = $("#admin-role-label");
-  if (label) label.textContent = ROLE_LABELS[profile?.role] || "مدیر";
-
-  // Approving/rejecting admin & vice-principal accounts, and all user
-  // management, are exclusively the super_admin's job now — a regular
-  // admin/vice_principal only ever sees the Classes tab.
-  const queueTabBtn = $('[data-admin-tab="queue"]');
-  const usersTabBtn = $('[data-admin-tab="users"]');
-  if (queueTabBtn) queueTabBtn.hidden = !isSuperAdmin;
-  if (usersTabBtn) usersTabBtn.hidden = !isSuperAdmin;
-
-  const defaultTab = isSuperAdmin ? "queue" : "classes";
-  $$("#admin-tabs .pill-tab").forEach(b => b.classList.toggle("is-active", b.dataset.adminTab === defaultTab));
-  $("#admin-tab-queue").hidden = defaultTab !== "queue";
-  $("#admin-tab-classes").hidden = defaultTab !== "classes";
-  $("#admin-tab-users").hidden = true;
-  if (defaultTab === "classes") renderTeacherList();
-
-  $$("#admin-tabs .pill-tab").forEach(b => b.addEventListener("click", () => {
-    if (b.hidden) return; // safety: never activate a tab this role can't see
-    $$("#admin-tabs .pill-tab").forEach(x => x.classList.toggle("is-active", x === b));
-    const tab = b.dataset.adminTab;
-    $("#admin-tab-queue").hidden = tab !== "queue";
-    $("#admin-tab-classes").hidden = tab !== "classes";
-    $("#admin-tab-users").hidden = tab !== "users";
-    if (tab === "classes" && !teachers.length) renderTeacherList();
-    if (tab === "users") renderUserManagement();
-  }));
-
-  $("#admin-back-to-teachers")?.addEventListener("click", () => {
-    $("#admin-teacher-picker").hidden = false;
-    $("#admin-student-picker").hidden = true;
-    selectedStudentId = null;
-  });
-
-  $$("#admin-period-tabs .pill-tab").forEach(b => b.addEventListener("click", () => {
-    selectedPeriod = b.dataset.period;
-    $$("#admin-period-tabs .pill-tab").forEach(x => x.classList.toggle("is-active", x === b));
-    renderStudentReport();
-  }));
-
-  $("#admin-sign-out")?.addEventListener("click", async () => {
-    await signOut();
-    window.location.reload();
-  });
-
-  if (isSuperAdmin) renderQueue();
-}

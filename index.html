@@ -120,7 +120,7 @@
   <main class="main-content">
     <div class="pill-tabs" id="admin-tabs" style="margin-bottom:var(--space-5)">
       <button type="button" class="pill-tab is-active" data-admin-tab="queue">درخواست‌های در انتظار تأیید</button>
-      <button type="button" class="pill-tab" data-admin-tab="classes">کلاس‌های مدرسه</button>
+      <button type="button" class="pill-tab" data-admin-tab="classes">مدارس</button>
       <button type="button" class="pill-tab" data-admin-tab="users" hidden>مدیریت کاربران</button>
     </div>
 
@@ -135,6 +135,35 @@
     </section>
 
     <section id="admin-tab-classes" hidden>
+      <section class="panel" id="admin-promote-panel" style="margin-bottom:var(--space-5)" hidden>
+        <div class="panel__header"><h2>افزودن راهبر یا سرگروه آموزشی</h2></div>
+        <p style="font-size:12.5px;color:var(--color-ink-soft);margin-bottom:var(--space-4)">
+          راهبر همه‌ی کلاس‌های مدرسه را می‌بیند. سرگروه فقط کلاس‌های همان پایه‌ای که به او اختصاص می‌دهید را می‌بیند.
+        </p>
+        <form id="admin-promote-form" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+          <div style="flex:1;min-width:160px">
+            <label for="promote-teacher-select">معلم</label>
+            <select id="promote-teacher-select" required></select>
+          </div>
+          <div style="min-width:140px">
+            <label for="promote-role-select">نقش جدید</label>
+            <select id="promote-role-select">
+              <option value="rahbar">راهبر</option>
+              <option value="group_leader">سرگروه آموزشی</option>
+            </select>
+          </div>
+          <div id="promote-grade-wrap" style="min-width:140px">
+            <label for="promote-grade-select">پایه</label>
+            <select id="promote-grade-select">
+              <option value="grade1">پایه اول</option><option value="grade2">پایه دوم</option>
+              <option value="grade3">پایه سوم</option><option value="grade4">پایه چهارم</option>
+              <option value="grade5">پایه پنجم</option><option value="grade6">پایه ششم</option>
+            </select>
+          </div>
+          <button type="submit" class="btn btn--primary">اعمال</button>
+        </form>
+      </section>
+
       <div id="admin-teacher-picker">
         <p class="empty-state__text" style="text-align:right;padding:0;margin-bottom:var(--space-4)">یک معلم را انتخاب کنید تا کلاس او را ببینید</p>
         <div id="admin-teacher-list"></div>

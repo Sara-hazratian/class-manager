@@ -81,6 +81,7 @@ function dbRowToProfile(row) {
     themeColor: row.theme_color || "blue", role: row.role,
     username: row.username || "", personnelCode: row.personnel_code || "",
     position: row.position || "", verified: row.verified, documentPath: row.document_path || "",
+    assignedGrade: row.assigned_grade || "",
   };
 }
 
@@ -495,6 +496,19 @@ export async function loadAllUsers() {
 export async function changeUserRole(userId, newRole) {
   const { sb } = await import("./supabase-client.js");
   const { error } = await sb.from("profiles").update({ role: newRole }).eq("id", userId);
+  if (error) throw error;
+}
+
+/** Admin/vice_principal/rahbar-scoped action: promote a teacher to رahbar
+    (whole-school view) or سرگروه آموزشی (grade-scoped view), or demote back
+    to teacher. Only 'teacher' <-> 'rahbar'/'group_leader' is actually
+    permitted by the database trigger — anything else silently reverts. */
+export async function setTeacherLeaderRole(teacherId, role, assignedGrade = null) {
+  const { sb } = await import("./supabase-client.js");
+  const patch = { role };
+  if (role === "group_leader") patch.assigned_grade = assignedGrade;
+  if (role === "teacher") patch.assigned_grade = null;
+  const { error } = await sb.from("profiles").update(patch).eq("id", teacherId);
   if (error) throw error;
 }
 
