@@ -81,7 +81,7 @@ function dbRowToProfile(row) {
     themeColor: row.theme_color || "blue", role: row.role,
     username: row.username || "", personnelCode: row.personnel_code || "",
     position: row.position || "", verified: row.verified, documentPath: row.document_path || "",
-    assignedGrade: row.assigned_grade || "",
+    assignedGrade: row.assigned_grade || "", phoneNumber: row.phone_number || "", schoolId: row.school_id || "",
   };
 }
 
@@ -418,6 +418,28 @@ export async function addChildByNationalId(nationalId) {
   const { data, error } = await sb.rpc("link_child_to_parent", { p_national_id: nationalId });
   if (error) throw error;
   if (!data.success) throw new Error(data.error || "دانش‌آموزی با این کد ملی پیدا نشد.");
+  return data;
+}
+
+/** Admin/vice_principal: look up a teacher by EXACT personnel code + phone
+    match (both required) before adding them — never a free browse/search
+    of the teacher list. See migration-add-teacher.sql's find_teacher_for_school. */
+export async function findTeacherForSchool(personnelCode, phone) {
+  const { sb } = await import("./supabase-client.js");
+  const { data, error } = await sb.rpc("find_teacher_for_school", { p_personnel_code: personnelCode, p_phone: phone });
+  if (error) throw error;
+  if (!data.success) throw new Error(data.error || "معلمی با این مشخصات پیدا نشد.");
+  return data;
+}
+
+/** Admin/vice_principal: add that same matched teacher to their own school.
+    Re-verifies the exact match server-side — never trusts a previously
+    fetched ID alone, and can never link a teacher already at another school. */
+export async function addTeacherToMySchool(personnelCode, phone) {
+  const { sb } = await import("./supabase-client.js");
+  const { data, error } = await sb.rpc("add_teacher_to_my_school", { p_personnel_code: personnelCode, p_phone: phone });
+  if (error) throw error;
+  if (!data.success) throw new Error(data.error || "افزودن معلم ناموفق بود.");
   return data;
 }
 

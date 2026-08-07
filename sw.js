@@ -4,12 +4,13 @@
    Bump CACHE_NAME whenever any precached file changes so
    returning users get the update instead of a stale cache.
    ============================================================ */
-const CACHE_NAME = "classpilot-v11";
+const CACHE_NAME = "classpilot-v14";
 
 const PRECACHE_URLS = [
   "./",
   "./index.html",
-  "./manifest.webmanifest",
+  "./superadmin.html",
+  "./manifest.webmanifest?v=3",
   "./css/tokens.css",
   "./css/base.css",
   "./css/layout.css",
@@ -20,6 +21,8 @@ const PRECACHE_URLS = [
   "./js/auth.js",
   "./js/parent.js",
   "./js/admin.js",
+  "./js/superadmin.js",
+  "./js/superadmin-app.js",
   "./js/jalali.js",
   "./js/theme.js",
   "./js/ui.js",
@@ -40,11 +43,11 @@ const PRECACHE_URLS = [
   "./js/reports.js",
   "./js/settings.js",
   "./js/reset.js",
-  "./icons/icon-192.png",
-  "./icons/icon-512.png",
-  "./icons/icon-maskable-512.png",
-  "./icons/apple-touch-icon.png",
-  "./icons/favicon.png",
+  "./icons/icon-192.png?v=3",
+  "./icons/icon-512.png?v=3",
+  "./icons/icon-maskable-512.png?v=3",
+  "./icons/apple-touch-icon.png?v=3",
+  "./icons/favicon.png?v=3",
   "./icons/logo-horizontal.png",
 ];
 
@@ -71,14 +74,17 @@ self.addEventListener("fetch", event => {
   // Navigations (opening/refreshing the app): try the network first so
   // updates are picked up when online, fall back to the cached shell offline.
   if (req.mode === "navigate") {
+    const url = new URL(req.url);
+    const isSuperAdmin = url.pathname.endsWith("/superadmin.html");
+    const shellPath = isSuperAdmin ? "./superadmin.html" : "./index.html";
     event.respondWith(
       fetch(req)
         .then(res => {
           const copy = res.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put("./index.html", copy));
+          caches.open(CACHE_NAME).then(cache => cache.put(shellPath, copy));
           return res;
         })
-        .catch(() => caches.match("./index.html"))
+        .catch(() => caches.match(shellPath))
     );
     return;
   }

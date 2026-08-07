@@ -30,7 +30,7 @@ import { initSettings } from "./settings.js";
 import { initParent } from "./parent.js";
 import { initAdmin } from "./admin.js";
 
-const SCREENS = ["auth-screen", "setup-screen", "pending-screen", "parent-screen", "admin-screen", "app"];
+const SCREENS = ["auth-screen", "setup-screen", "pending-screen", "superadmin-redirect-screen", "parent-screen", "admin-screen", "app"];
 
 function registerServiceWorker() {
   if (!("serviceWorker" in navigator)) return;
@@ -78,7 +78,18 @@ async function afterAuthSuccess() {
     return;
   }
 
-  if (["admin", "vice_principal", "super_admin", "rahbar", "group_leader"].includes(profile.role)) {
+  // Super Admin has NO screen or option anywhere in the main school app —
+  // by design, it's a fully separate panel (superadmin.html), even though
+  // both connect to the same Supabase project. If a super_admin account
+  // somehow signs into THIS app, they're told where to go instead of
+  // ever seeing any admin UI here.
+  if (profile.role === "super_admin") {
+    showScreen("superadmin-redirect-screen");
+    $bindSignOut("superadmin-redirect-sign-out");
+    return;
+  }
+
+  if (["admin", "vice_principal", "rahbar", "group_leader"].includes(profile.role)) {
     showScreen("admin-screen");
     initAdmin();
     return;

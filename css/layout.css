@@ -4,7 +4,7 @@
    ============================================================ */
 
 /* ---------- Auth + Setup + Pending screens (full-viewport overlays) ---------- */
-#auth-screen, #setup-screen, #pending-screen {
+#auth-screen, #setup-screen, #pending-screen, #superadmin-redirect-screen {
   position: fixed; inset: 0; z-index: 100;
   display: grid; place-items: center;
   overflow-y: auto;
@@ -14,7 +14,7 @@
     var(--color-bg);
   padding: var(--space-6);
 }
-#auth-screen[hidden], #setup-screen[hidden], #pending-screen[hidden] { display: none; }
+#auth-screen[hidden], #setup-screen[hidden], #pending-screen[hidden], #superadmin-redirect-screen[hidden] { display: none; }
 
 /* On phone-sized screens, the card becomes a true full-screen page —
    edge to edge, sized to the viewport — instead of a floating card with a

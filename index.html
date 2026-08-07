@@ -5,9 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>ClassPilot — دفتر مدیریت کلاسی</title>
 <meta name="theme-color" content="#2F6FED" />
-<link rel="manifest" href="manifest.webmanifest" />
-<link rel="icon" href="icons/icon-192.png" type="image/png" />
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+<link rel="manifest" href="manifest.webmanifest?v=3" />
+<link rel="icon" href="icons/icon-192.png?v=3" type="image/png" />
+<link rel="icon" href="icons/favicon.png?v=3" type="image/png" sizes="32x32" />
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=3" />
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -69,6 +70,21 @@
   </div>
 </div>
 
+<!-- ===== SUPER ADMIN REDIRECT — Super Admin has no UI in the main app by design ===== -->
+<div id="superadmin-redirect-screen" hidden>
+  <div class="panel setup-card animate-in" style="text-align:center">
+    <span class="brand__mark" style="margin:0 auto var(--space-4);width:56px;height:56px">
+      <svg class="icon" style="width:28px;height:28px"><use href="#i-book"/></svg>
+    </span>
+    <h1 style="font-size:19px;margin-bottom:8px">این حساب مخصوص پنل مدیریت جداگانه است</h1>
+    <p style="color:var(--color-ink-soft);font-size:13.5px;line-height:1.9;margin-bottom:var(--space-5)">
+      حساب‌های Super Admin از برنامه‌ی اصلی ClassPilot وارد نمی‌شوند. برای دسترسی، از پنل مدیریت جداگانه استفاده کنید.
+    </p>
+    <a href="superadmin.html" class="btn btn--primary btn--block" style="margin-bottom:var(--space-3)">رفتن به پنل مدیریت</a>
+    <button type="button" class="btn btn--secondary btn--block" id="superadmin-redirect-sign-out">خروج از حساب</button>
+  </div>
+</div>
+
 <!-- ===== PARENT VIEW — read-only ===== -->
 <div id="parent-screen" hidden style="min-height:100vh;background:var(--color-bg)">
   <header class="app-header">
@@ -107,7 +123,7 @@
   </main>
 </div>
 
-<!-- ===== ADMIN / VICE-PRINCIPAL VIEW ===== -->
+<!-- ===== ADMIN / VICE-PRINCIPAL / راهبر / سرگروه VIEW ===== -->
 <div id="admin-screen" hidden style="min-height:100vh;background:var(--color-bg)">
   <header class="app-header">
     <div style="display:flex;align-items:center;gap:12px">
@@ -118,23 +134,27 @@
     <button type="button" class="btn btn--secondary btn--sm" id="admin-sign-out">خروج</button>
   </header>
   <main class="main-content">
-    <div class="pill-tabs" id="admin-tabs" style="margin-bottom:var(--space-5)">
-      <button type="button" class="pill-tab is-active" data-admin-tab="queue">درخواست‌های در انتظار تأیید</button>
-      <button type="button" class="pill-tab" data-admin-tab="classes">مدارس</button>
-      <button type="button" class="pill-tab" data-admin-tab="users" hidden>مدیریت کاربران</button>
-    </div>
-
-    <section id="admin-tab-queue">
-      <section class="panel">
-        <div class="panel__header"><h2>درخواست‌های در انتظار تأیید</h2></div>
-        <div id="admin-pending-list"></div>
-        <div class="empty-state" id="admin-pending-empty" hidden>
-          <p class="empty-state__text">درخواست در انتظاری وجود ندارد.</p>
-        </div>
+    <section id="admin-tab-classes">
+      <section class="panel" id="admin-add-teacher-panel" style="margin-bottom:var(--space-5)" hidden>
+        <div class="panel__header"><h2>افزودن معلم</h2></div>
+        <p style="font-size:12.5px;color:var(--color-ink-soft);margin-bottom:var(--space-4)">
+          کد پرسنلی و شماره موبایل معلم را وارد کنید — فقط در صورت تطابق کامل هر دو، معلم پیدا و قابل افزودن به مدرسه‌ی شما خواهد بود.
+        </p>
+        <form id="admin-find-teacher-form" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+          <div style="flex:1;min-width:160px">
+            <label for="find-teacher-code">کد پرسنلی</label>
+            <input type="text" id="find-teacher-code" required />
+          </div>
+          <div style="flex:1;min-width:160px">
+            <label for="find-teacher-phone">شماره موبایل</label>
+            <input type="tel" id="find-teacher-phone" required inputmode="numeric" placeholder="09xxxxxxxxx" />
+          </div>
+          <button type="submit" class="btn btn--secondary">جستجو</button>
+        </form>
+        <p id="find-teacher-error" style="color:var(--color-danger);font-size:12.5px;margin-top:8px;min-height:1em"></p>
+        <div id="find-teacher-result" style="margin-top:12px"></div>
       </section>
-    </section>
 
-    <section id="admin-tab-classes" hidden>
       <section class="panel" id="admin-promote-panel" style="margin-bottom:var(--space-5)" hidden>
         <div class="panel__header"><h2>افزودن راهبر یا سرگروه آموزشی</h2></div>
         <p style="font-size:12.5px;color:var(--color-ink-soft);margin-bottom:var(--space-4)">
@@ -187,17 +207,6 @@
         </div>
         <div id="admin-student-report"></div>
       </div>
-    </section>
-
-    <section id="admin-tab-users" hidden>
-      <section class="panel">
-        <div class="panel__header"><h2>مدیریت کاربران</h2></div>
-        <p class="empty-state__text" style="text-align:right;padding:0;margin-bottom:var(--space-4)">تغییر نقش، فعال/غیرفعال کردن، یا حذف هر حسابی در سامانه.</p>
-        <div id="admin-user-list"></div>
-        <div class="empty-state" id="admin-users-empty" hidden>
-          <p class="empty-state__text">کاربری یافت نشد.</p>
-        </div>
-      </section>
     </section>
   </main>
 </div>

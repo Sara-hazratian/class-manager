@@ -84,6 +84,8 @@ function signupFieldsHTML() {
       </div>
       <label for="auth-username">${un.label}</label>
       <input type="text" id="auth-username" required placeholder="${un.placeholder}" />
+      <label for="su-phone">شماره موبایل</label>
+      <input type="tel" id="su-phone" required inputmode="numeric" placeholder="09xxxxxxxxx" />
       <label for="su-email">ایمیل (برای بازیابی رمز عبور)</label>
       <input type="email" id="su-email" required placeholder="you@example.com" />`;
   }
@@ -100,6 +102,8 @@ function signupFieldsHTML() {
       </select>
       <label for="auth-username">${un.label}</label>
       <input type="text" id="auth-username" required placeholder="${un.placeholder}" />
+      <label for="su-phone">شماره موبایل</label>
+      <input type="tel" id="su-phone" required inputmode="numeric" placeholder="09xxxxxxxxx" />
       <label for="su-email">ایمیل (برای بازیابی رمز عبور)</label>
       <input type="email" id="su-email" required placeholder="you@example.com" />
       <label for="su-document">آپلود آخرین حکم یا ابلاغ کارگزینی (PDF یا تصویر)</label>
@@ -231,11 +235,13 @@ function renderAuthForm() {
           meta.grade = $("#su-grade").value;
           meta.class_name = $("#su-class").value.trim();
           meta.personnel_code = username;
+          meta.phone_number = $("#su-phone").value.trim();
         }
         if (signupRole === "admin_vp") {
           meta.school_name = $("#su-school").value.trim();
           meta.position = $("#su-position").value;
           meta.personnel_code = username;
+          meta.phone_number = $("#su-phone").value.trim();
           if (!pendingDocumentFile) { errorEl.textContent = "آپلود حکم یا ابلاغ کارگزینی الزامی است."; btn.disabled = false; btn.textContent = "ثبت‌نام"; return; }
         }
 
