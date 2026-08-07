@@ -191,7 +191,7 @@ export function renderReport() {
         <p class="report-letterhead__school">${profile.schoolName || ""}</p>
         <p class="report-letterhead__meta">${profile.fullName || ""} · ${GRADE_LABELS[profile.grade] || ""} · کلاس ${profile.className || ""} · سال تحصیلی ${profile.academicYear || ""}</p>
       </div>
-      <div class="report-letterhead__badge">دفتر مدیریت کلاسی</div>
+      <img src="icons/logo-horizontal.png" alt="ClassPilot" style="height:38px;width:auto" />
     </div>` : "";
 
   const header = `

@@ -479,6 +479,40 @@ export async function rejectAccount(userId) {
 }
 
 /* ================================================================
+   SUPER ADMIN — every function here relies entirely on the database's
+   own rules (is_super_admin() / protect_role_and_verified trigger in
+   schema-v3.sql) to actually work; a non-super-admin calling these
+   gets a silently-reverted no-op or an RLS-denied error, not a real
+   change — this file doesn't (and can't) grant privilege on its own.
+   ================================================================ */
+export async function loadAllUsers() {
+  const { sb } = await import("./supabase-client.js");
+  const { data, error } = await sb.from("profiles").select("*");
+  if (error) { console.error("ClassPilot: could not load all users", error); return []; }
+  return data.map(row => ({ id: row.id, ...dbRowToProfile(row) }));
+}
+
+export async function changeUserRole(userId, newRole) {
+  const { sb } = await import("./supabase-client.js");
+  const { error } = await sb.from("profiles").update({ role: newRole }).eq("id", userId);
+  if (error) throw error;
+}
+
+export async function setUserActive(userId, active) {
+  const { sb } = await import("./supabase-client.js");
+  const { error } = await sb.from("profiles").update({ verified: active }).eq("id", userId);
+  if (error) throw error;
+}
+
+export async function deleteUser(userId) {
+  const { sb } = await import("./supabase-client.js");
+  // Same limitation as rejectAccount(): removes the profile row (blocking
+  // all app access), not the underlying auth.users row (needs service_role).
+  const { error } = await sb.from("profiles").delete().eq("id", userId);
+  if (error) throw error;
+}
+
+/* ================================================================
    RESET (Settings → "start over") — deletes every row this teacher
    owns across every table, then clears all local caches.
    ================================================================ */

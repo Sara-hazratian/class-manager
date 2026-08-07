@@ -63,12 +63,22 @@ async function afterAuthSuccess() {
   const profile = await loadProfile();
   if (!profile) { showScreen("auth-screen"); initAuth(afterAuthSuccess); return; }
 
-  if (profile.role === "admin" || profile.role === "vice_principal") {
-    if (!profile.verified) {
-      showScreen("pending-screen");
-      $bindSignOut("pending-sign-out");
-      return;
-    }
+  // verified now gates EVERY role — a super_admin can deactivate any account,
+  // not just reject a pending admin/VP signup.
+  if (!profile.verified) {
+    showScreen("pending-screen");
+    const isPendingApproval = profile.role === "admin" || profile.role === "vice_principal";
+    const heading = document.querySelector("#pending-screen h1");
+    const body = document.querySelector("#pending-screen p");
+    if (heading) heading.textContent = isPendingApproval ? "حساب شما در انتظار تأیید است" : "حساب شما غیرفعال شده است";
+    if (body) body.textContent = isPendingApproval
+      ? "درخواست ثبت‌نام شما به‌عنوان مدیر/معاون ثبت شد و برای بررسی مدرک ابلاغ/حکم کارگزینی نزد مدیریت سامانه ارسال شد. پس از تأیید، با همین کد و رمز عبور می‌توانید وارد شوید."
+      : "دسترسی شما توسط مدیریت سامانه غیرفعال شده است. برای اطلاعات بیشتر با مدیریت سامانه تماس بگیرید.";
+    $bindSignOut("pending-sign-out");
+    return;
+  }
+
+  if (profile.role === "admin" || profile.role === "vice_principal" || profile.role === "super_admin") {
     showScreen("admin-screen");
     initAdmin();
     return;

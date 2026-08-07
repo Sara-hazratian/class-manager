@@ -18,6 +18,26 @@ export function toast(message, type = "success") {
   }, 2600);
 }
 
+/** Turns any error (Supabase/Postgres, network, or otherwise) into a plain-
+    Persian message — used everywhere an error might be shown to the person,
+    so no raw English/technical text ever leaks into the UI. */
+export function translateError(err) {
+  const msg = (err && err.message) || (typeof err === "string" ? err : "") || "";
+  if (!msg) return "خطایی رخ داد. لطفاً دوباره تلاش کنید.";
+  // Already a Persian message (e.g. a custom database function's own error
+  // text, like link_child_to_parent's) — pass it through untouched.
+  if (/[\u0600-\u06FF]/.test(msg)) return msg;
+  if (msg.includes("Invalid login credentials")) return "کد ورود یا رمز عبور اشتباه است.";
+  if (msg.includes("User already registered")) return "این ایمیل قبلاً ثبت‌نام کرده است.";
+  if (msg.includes("Password should be at least")) return "رمز عبور باید حداقل ۶ کاراکتر باشد.";
+  if (msg.includes("duplicate key") || msg.toLowerCase().includes("already exists")) return "این مورد قبلاً ثبت شده است.";
+  if (msg.toLowerCase().includes("row-level security") || msg.toLowerCase().includes("permission denied")) return "شما اجازه‌ی انجام این کار را ندارید.";
+  if (msg.toLowerCase().includes("not found")) return "مورد مورد نظر پیدا نشد.";
+  if (msg.toLowerCase().includes("network") || msg.toLowerCase().includes("fetch failed") || msg.toLowerCase().includes("failed to fetch")) return "خطا در اتصال به اینترنت. اتصال خود را بررسی و دوباره تلاش کنید.";
+  // Never show a raw English/technical message — fall back to a generic Persian one.
+  return "خطایی در ارتباط با سرور رخ داد. لطفاً دوباره تلاش کنید.";
+}
+
 export function openModal(id) { document.getElementById(id)?.showModal(); }
 export function closeModal(id) { document.getElementById(id)?.close(); }
 

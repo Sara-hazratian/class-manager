@@ -10,7 +10,7 @@
    ============================================================ */
 import { getStudents, addChildByNationalId, getProfile } from "./store.js";
 import { buildStudentReport } from "./reports.js";
-import { $, $$, toast } from "./ui.js";
+import { $, $$, toast, translateError } from "./ui.js";
 import { fa } from "./jalali.js";
 import { signOut } from "./auth.js";
 
@@ -119,7 +119,7 @@ export function initParent() {
       renderParentView();
       toast("فرزند اضافه شد");
     } catch (err) {
-      errorEl.textContent = err.message || "افزودن فرزند ناموفق بود.";
+      errorEl.textContent = translateError(err);
     }
   });
 

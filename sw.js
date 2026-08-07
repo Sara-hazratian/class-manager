@@ -4,7 +4,7 @@
    Bump CACHE_NAME whenever any precached file changes so
    returning users get the update instead of a stale cache.
    ============================================================ */
-const CACHE_NAME = "classpilot-v7";
+const CACHE_NAME = "classpilot-v10";
 
 const PRECACHE_URLS = [
   "./",
@@ -44,6 +44,8 @@ const PRECACHE_URLS = [
   "./icons/icon-512.png",
   "./icons/icon-maskable-512.png",
   "./icons/apple-touch-icon.png",
+  "./icons/favicon.png",
+  "./icons/logo-horizontal.png",
 ];
 
 self.addEventListener("install", event => {

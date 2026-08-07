@@ -72,9 +72,10 @@
 <!-- ===== PARENT VIEW — read-only ===== -->
 <div id="parent-screen" hidden style="min-height:100vh;background:var(--color-bg)">
   <header class="app-header">
-    <div>
-      <p class="app-header__school">ClassPilot</p>
-      <h1 class="app-header__teacher">پنل ولی</h1>
+    <div style="display:flex;align-items:center;gap:12px">
+      <img src="icons/logo-horizontal.png" alt="ClassPilot" style="height:34px;width:auto" />
+      <div style="width:1px;height:28px;background:var(--color-border)"></div>
+      <h1 class="app-header__teacher" style="margin:0">پنل ولی</h1>
     </div>
     <button type="button" class="btn btn--secondary btn--sm" id="parent-sign-out">خروج</button>
   </header>
@@ -109,9 +110,10 @@
 <!-- ===== ADMIN / VICE-PRINCIPAL VIEW ===== -->
 <div id="admin-screen" hidden style="min-height:100vh;background:var(--color-bg)">
   <header class="app-header">
-    <div>
-      <p class="app-header__school">ClassPilot</p>
-      <h1 class="app-header__teacher" id="admin-title">پنل <span id="admin-role-label">مدیر</span></h1>
+    <div style="display:flex;align-items:center;gap:12px">
+      <img src="icons/logo-horizontal.png" alt="ClassPilot" style="height:34px;width:auto" />
+      <div style="width:1px;height:28px;background:var(--color-border)"></div>
+      <h1 class="app-header__teacher" id="admin-title" style="margin:0">پنل <span id="admin-role-label">مدیر</span></h1>
     </div>
     <button type="button" class="btn btn--secondary btn--sm" id="admin-sign-out">خروج</button>
   </header>
@@ -119,6 +121,7 @@
     <div class="pill-tabs" id="admin-tabs" style="margin-bottom:var(--space-5)">
       <button type="button" class="pill-tab is-active" data-admin-tab="queue">درخواست‌های در انتظار تأیید</button>
       <button type="button" class="pill-tab" data-admin-tab="classes">کلاس‌های مدرسه</button>
+      <button type="button" class="pill-tab" data-admin-tab="users" hidden>مدیریت کاربران</button>
     </div>
 
     <section id="admin-tab-queue">
@@ -156,6 +159,17 @@
         <div id="admin-student-report"></div>
       </div>
     </section>
+
+    <section id="admin-tab-users" hidden>
+      <section class="panel">
+        <div class="panel__header"><h2>مدیریت کاربران</h2></div>
+        <p class="empty-state__text" style="text-align:right;padding:0;margin-bottom:var(--space-4)">تغییر نقش، فعال/غیرفعال کردن، یا حذف هر حسابی در سامانه.</p>
+        <div id="admin-user-list"></div>
+        <div class="empty-state" id="admin-users-empty" hidden>
+          <p class="empty-state__text">کاربری یافت نشد.</p>
+        </div>
+      </section>
+    </section>
   </main>
 </div>
 
@@ -163,7 +177,7 @@
 <div id="app" hidden>
   <aside class="sidebar">
     <div class="sidebar__brand">
-      <span class="brand__mark"><svg class="icon"><use href="#i-book"/></svg></span>
+      <span class="brand__mark"><img src="icons/icon-192.png" alt="ClassPilot" style="width:100%;height:100%;object-fit:contain;border-radius:inherit" /></span>
       <span class="brand__title">ClassPilot<small>دفتر مدیریت کلاسی</small></span>
     </div>
     <nav class="nav-tabs">
@@ -184,10 +198,14 @@
 
   <div class="workspace">
     <header class="app-header">
-      <div>
-        <p class="app-header__school" id="header-school"></p>
-        <h1 class="app-header__teacher" id="header-teacher"></h1>
-        <div class="app-header__meta" id="header-meta"></div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <img src="icons/logo-horizontal.png" alt="ClassPilot" style="height:34px;width:auto;flex-shrink:0" />
+        <div style="width:1px;height:28px;background:var(--color-border);flex-shrink:0"></div>
+        <div>
+          <p class="app-header__school" id="header-school"></p>
+          <h1 class="app-header__teacher" id="header-teacher"></h1>
+          <div class="app-header__meta" id="header-meta"></div>
+        </div>
       </div>
       <time class="app-header__date" id="header-date"></time>
     </header>

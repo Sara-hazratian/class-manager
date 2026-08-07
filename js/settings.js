@@ -5,7 +5,7 @@
    addition) from here too, in addition to the sidebar shortcut.
    ============================================================ */
 import { getProfile, setProfile, THEME_COLORS, exportBackup, importBackup } from "./store.js";
-import { $, $$, toast } from "./ui.js";
+import { $, $$, toast, translateError } from "./ui.js";
 import { applyTheme } from "./theme.js";
 import { registerTitle, onViewChange } from "./router.js";
 import { renderHeader } from "./header.js";
@@ -88,7 +88,7 @@ function restoreBackup(file) {
       window.location.reload();
     } catch (err) {
       console.error("ClassPilot restore failed:", err);
-      alert(`بازیابی ناموفق بود: ${err.message}\n\nلطفاً دوباره تلاش کنید یا این پیام را برای بررسی نگه دارید.`);
+      alert(`بازیابی ناموفق بود: ${translateError(err)}\n\nلطفاً دوباره تلاش کنید یا این پیام را برای بررسی نگه دارید.`);
     }
   };
   reader.readAsText(file);

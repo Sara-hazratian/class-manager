@@ -34,7 +34,7 @@ function renderSetupForm() {
   root.innerHTML = `
     <div class="panel setup-card animate-in">
       <span class="brand__mark" style="margin:0 auto var(--space-4);width:56px;height:56px">
-        <svg class="icon" style="width:28px;height:28px"><use href="#i-book"/></svg>
+        <img src="icons/icon-192.png" alt="ClassPilot" style="width:100%;height:100%;object-fit:contain;border-radius:inherit" />
       </span>
       <h1 style="font-size:21px;text-align:center;margin-bottom:4px">به ClassPilot خوش آمدید</h1>
       <p style="text-align:center;color:var(--color-ink-faint);font-size:11.5px;margin-bottom:var(--space-2)">دفتر مدیریت کلاسی</p>
