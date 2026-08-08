@@ -33,11 +33,10 @@ async function renderTeacherList() {
   $("#admin-teachers-empty").hidden = teachers.length > 0;
 
   wrap.innerHTML = teachers.map(t => `
-    <button type="button" class="card card--interactive" data-teacher="${t.id}" style="text-align:center;aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:var(--space-4)">
-      <svg class="icon" style="width:32px;height:32px;color:var(--color-primary)"><use href="#i-users"/></svg>
-      <p style="font-weight:700;font-size:14px">${t.fullName || t.username}</p>
-      <p style="font-size:11.5px;color:var(--color-ink-soft)">${t.schoolName || ""}</p>
-      <p style="font-size:11.5px;color:var(--color-ink-soft)">${GRADE_LABELS[t.grade] || ""} · کلاس ${t.className || ""}</p>
+    <button type="button" class="card card--interactive" data-teacher="${t.id}" style="text-align:center;aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:var(--space-2)">
+      <svg class="icon" style="width:22px;height:22px;color:var(--color-primary)"><use href="#i-users"/></svg>
+      <p style="font-weight:700;font-size:12px;line-height:1.3">${t.fullName || t.username}</p>
+      <p style="font-size:10px;color:var(--color-ink-soft)">${GRADE_LABELS[t.grade] || ""} · ${t.className || ""}</p>
     </button>`).join("");
 
   $$("[data-teacher]", wrap).forEach(b => b.addEventListener("click", () => {

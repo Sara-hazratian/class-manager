@@ -28,6 +28,9 @@
 #app { display: flex; min-height: 100vh; }
 #app[hidden] { display: none; }
 
+#admin-screen { display: flex; min-height: 100vh; background: var(--color-bg); }
+#admin-screen[hidden] { display: none; }
+
 .sidebar {
   width: var(--sidebar-width); flex-shrink: 0;
   background: linear-gradient(180deg, #16232A 0%, #0E181D 100%);

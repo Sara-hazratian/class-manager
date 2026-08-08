@@ -124,7 +124,7 @@
 </div>
 
 <!-- ===== ADMIN / VICE-PRINCIPAL / راهبر / سرگروه VIEW ===== -->
-<div id="admin-screen" hidden style="min-height:100vh;background:var(--color-bg);display:flex">
+<div id="admin-screen" hidden>
   <aside class="sidebar">
     <div class="sidebar__brand">
       <span class="brand__mark"><img src="icons/icon-192.png" alt="ClassPilot" style="width:100%;height:100%;object-fit:contain;border-radius:inherit" /></span>
@@ -150,7 +150,7 @@
       <section class="admin-view" data-admin-view="classes">
         <div id="admin-teacher-picker">
           <p class="empty-state__text" style="text-align:right;padding:0;margin-bottom:var(--space-4)">یک کلاس را انتخاب کنید</p>
-          <div id="admin-teacher-list" class="stat-grid"></div>
+          <div id="admin-teacher-list" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(120px, 1fr));gap:var(--space-3)"></div>
           <div class="empty-state" id="admin-teachers-empty" hidden>
             <p class="empty-state__text">هنوز معلمی در سامانه ثبت‌نام نکرده است.</p>
           </div>
