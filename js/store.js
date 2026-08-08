@@ -537,6 +537,13 @@ export async function loadMyOversightGrants() {
     user to see, into the same shared caches reports.js already knows how
     to read — no separate rendering logic needed. */
 export async function loadOversightData() {
+  if (previewModeActive) {
+    applyPreviewCollections();
+    return [
+      { id: "prev-teacher", role: "teacher", fullName: "خانم رضایی (نمونه)", username: "PREVIEW", schoolName: "دبستان نمونه ۱", schoolId: "prev-school-A", grade: "grade3", className: "الف", verified: true },
+      { id: "prev-teacher-2", role: "teacher", fullName: "آقای احمدی (نمونه)", username: "PREVIEW2", schoolName: "دبستان نمونه ۲", schoolId: "prev-school-B", grade: "grade5", className: "ب", verified: true },
+    ];
+  }
   const { sb } = await import("./supabase-client.js");
   const [students, attendance, evaluations, homework, discipline, profilesRes] = await Promise.all([
     sb.from("students").select("*"),

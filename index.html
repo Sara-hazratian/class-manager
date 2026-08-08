@@ -132,6 +132,7 @@
     </div>
     <nav class="nav-tabs">
       <button class="nav-tab is-active" data-admin-view="classes"><svg class="icon"><use href="#i-grid"/></svg><span class="nav-tab__label">کلاس‌ها</span></button>
+      <button class="nav-tab" data-admin-view="schools" id="admin-nav-schools" hidden><svg class="icon"><use href="#i-map"/></svg><span class="nav-tab__label">مدارس</span></button>
       <button class="nav-tab" data-admin-view="add-teacher" id="admin-nav-add-teacher"><svg class="icon"><use href="#i-users"/></svg><span class="nav-tab__label">افزودن معلم</span></button>
       <button class="nav-tab" data-admin-view="add-leader" id="admin-nav-add-leader"><svg class="icon"><use href="#i-shield"/></svg><span class="nav-tab__label">افزودن راهبر/سرگروه</span></button>
     </nav>
@@ -170,6 +171,21 @@
             </div>
           </div>
           <div id="admin-student-report"></div>
+        </div>
+      </section>
+
+      <section class="admin-view" data-admin-view="schools" hidden>
+        <div id="admin-school-picker">
+          <p class="empty-state__text" style="text-align:right;padding:0;margin-bottom:var(--space-4)">یک مدرسه را انتخاب کنید</p>
+          <div id="admin-school-list" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(140px, 1fr));gap:var(--space-3)"></div>
+          <div class="empty-state" id="admin-schools-empty" hidden>
+            <p class="empty-state__text">هنوز دسترسی به مدرسه‌ای ندارید.</p>
+          </div>
+        </div>
+        <div id="admin-school-classes-picker" hidden>
+          <button type="button" class="btn btn--ghost btn--sm" id="admin-back-to-schools" style="margin-bottom:var(--space-4)"><svg class="icon"><use href="#i-back"/></svg>بازگشت به لیست مدارس</button>
+          <p class="empty-state__text" style="text-align:right;padding:0;margin-bottom:var(--space-4)">کلاس‌های <span id="admin-selected-school-name"></span></p>
+          <div id="admin-school-teacher-list" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(120px, 1fr));gap:var(--space-3)"></div>
         </div>
       </section>
 

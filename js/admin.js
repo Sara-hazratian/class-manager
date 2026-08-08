@@ -46,6 +46,12 @@ async function renderTeacherList() {
 }
 
 function renderStudentList() {
+  // Report UI lives inside the "کلاس‌ها" tab's markup — force that tab
+  // active so the report is actually visible, even when reached via
+  // «مدارس» → a specific school → a class.
+  $$("button[data-admin-view]").forEach(x => x.classList.toggle("is-active", x.dataset.adminView === "classes"));
+  $$("section.admin-view[data-admin-view]").forEach(v => { v.hidden = v.dataset.adminView !== "classes"; });
+
   $("#admin-teacher-picker").hidden = true;
   $("#admin-student-picker").hidden = false;
   const teacher = teachers.find(t => t.id === selectedTeacherId);
@@ -60,6 +66,52 @@ function renderStudentList() {
     $$("[data-student]", wrap).forEach(x => x.classList.toggle("is-active", x === b));
     renderStudentReport();
   }));
+}
+
+/* ---------- «مدارس» (oversight mode only): مدرسه را انتخاب کن، بعد
+   کلاس‌های همان مدرسه را ببین — همان داده‌ی «کلاس‌ها» فقط گروه‌بندی‌شده
+   بر اساس مدرسه، به‌جای یک لیست تخت. ---------- */
+function renderSchoolsView() {
+  const bySchool = new Map();
+  teachers.forEach(t => {
+    const key = t.schoolId || t.schoolName || "نامشخص";
+    if (!bySchool.has(key)) bySchool.set(key, { name: t.schoolName || "نامشخص", teachers: [] });
+    bySchool.get(key).teachers.push(t);
+  });
+
+  const wrap = $("#admin-school-list");
+  const schools = [...bySchool.entries()];
+  $("#admin-schools-empty").hidden = schools.length > 0;
+  wrap.innerHTML = schools.map(([key, s]) => `
+    <button type="button" class="card card--interactive" data-school="${key}" style="text-align:center;aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:var(--space-2)">
+      <svg class="icon" style="width:24px;height:24px;color:var(--color-primary)"><use href="#i-map"/></svg>
+      <p style="font-weight:700;font-size:12.5px">${s.name}</p>
+      <p style="font-size:10px;color:var(--color-ink-soft)">${fa(s.teachers.length)} کلاس</p>
+    </button>`).join("");
+
+  $$("[data-school]", wrap).forEach(b => b.addEventListener("click", () => {
+    const s = bySchool.get(b.dataset.school);
+    $("#admin-school-picker").hidden = true;
+    $("#admin-school-classes-picker").hidden = false;
+    $("#admin-selected-school-name").textContent = s.name;
+
+    const listWrap = $("#admin-school-teacher-list");
+    listWrap.innerHTML = s.teachers.map(t => `
+      <button type="button" class="card card--interactive" data-teacher="${t.id}" style="text-align:center;aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:var(--space-2)">
+        <svg class="icon" style="width:22px;height:22px;color:var(--color-primary)"><use href="#i-users"/></svg>
+        <p style="font-weight:700;font-size:12px;line-height:1.3">${t.fullName || t.username}</p>
+        <p style="font-size:10px;color:var(--color-ink-soft)">${GRADE_LABELS[t.grade] || ""} · ${t.className || ""}</p>
+      </button>`).join("");
+    $$("[data-teacher]", listWrap).forEach(tb => tb.addEventListener("click", () => {
+      selectedTeacherId = tb.dataset.teacher; selectedStudentId = null;
+      renderStudentList();
+    }));
+  }));
+
+  $("#admin-back-to-schools")?.addEventListener("click", () => {
+    $("#admin-school-picker").hidden = false;
+    $("#admin-school-classes-picker").hidden = true;
+  });
 }
 
 function renderStudentReport() {
@@ -147,6 +199,16 @@ function renderAddTeacherPanel() {
 /* ---------- init ---------- */
 export function initAdmin(oversightMode = false) {
   isOversightMode = oversightMode;
+
+  // Wire the sidebar navigation FIRST, before anything else — this way,
+  // even if a later step throws for an unrelated reason, clicking between
+  // "کلاس‌ها" / "افزودن معلم" / "افزودن راهبر/سرگروه" always still works.
+  $$("button[data-admin-view]").forEach(b => b.addEventListener("click", () => {
+    if (b.hidden) return;
+    $$("button[data-admin-view]").forEach(x => x.classList.toggle("is-active", x === b));
+    $$("section.admin-view[data-admin-view]").forEach(v => { v.hidden = v.dataset.adminView !== b.dataset.adminView; });
+  }));
+
   const profile = getProfile();
   const canManageSchoolRoles = !oversightMode && ["admin", "vice_principal"].includes(profile?.role);
   const label = $("#admin-role-label");
@@ -158,17 +220,20 @@ export function initAdmin(oversightMode = false) {
   // own separate role elsewhere, never manages the granting school).
   // These sidebar entries are entirely hidden for anyone else, not just
   // their content — nothing to click through to in the first place.
-  $("#admin-nav-add-teacher").hidden = !canManageSchoolRoles;
-  $("#admin-nav-add-leader").hidden = !canManageSchoolRoles;
+  const addTeacherNav = $("#admin-nav-add-teacher");
+  const addLeaderNav = $("#admin-nav-add-leader");
+  const schoolsNav = $("#admin-nav-schools");
+  if (addTeacherNav) addTeacherNav.hidden = !canManageSchoolRoles;
+  if (addLeaderNav) addLeaderNav.hidden = !canManageSchoolRoles;
+  // «مدارس» فقط برای راهبر/سرگروه معنا دارد — مدیر/معاون خودش یک مدرسه
+  // است، چیزی برای گروه‌بندی وجود ندارد.
+  if (schoolsNav) schoolsNav.hidden = !oversightMode;
   if (canManageSchoolRoles) renderAddTeacherPanel();
 
-  $$("button[data-admin-view]").forEach(b => b.addEventListener("click", () => {
-    if (b.hidden) return;
-    $$("button[data-admin-view]").forEach(x => x.classList.toggle("is-active", x === b));
-    $$("section.admin-view[data-admin-view]").forEach(v => { v.hidden = v.dataset.adminView !== b.dataset.adminView; });
-  }));
-
-  renderTeacherList().then(renderPromotePanel);
+  renderTeacherList().then(() => {
+    renderPromotePanel();
+    if (oversightMode) renderSchoolsView();
+  });
 
   $("#admin-promote-form")?.addEventListener("submit", async e => {
     e.preventDefault();
