@@ -381,6 +381,15 @@ function renderAuthForm() {
           <div style="display:flex;flex-direction:column;gap:6px">
             ${DEV_QUICK_LOGINS.map((q, i) => `<button type="button" class="btn btn--secondary btn--sm" data-quick-login="${i}">${q.label}</button>`).join("")}
           </div>
+        </div>
+        <div style="margin-bottom:var(--space-4);padding:12px;background:var(--color-primary-tint);border-radius:var(--radius-md)">
+          <p style="font-size:11px;color:var(--color-ink-soft);font-weight:700;margin-bottom:8px">پیش‌نمایش صفحات (بدون ورود، بدون اینترنت، فقط ظاهر با داده‌ی نمونه)</p>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <button type="button" class="btn btn--secondary btn--sm" data-preview="teacher">صفحه‌ی معلم</button>
+            <button type="button" class="btn btn--secondary btn--sm" data-preview="admin">صفحه‌ی مدیر/معاون</button>
+            <button type="button" class="btn btn--secondary btn--sm" data-preview="rahbar">صفحه‌ی راهبر/سرگروه</button>
+            <button type="button" class="btn btn--secondary btn--sm" data-preview="parent">صفحه‌ی ولی</button>
+          </div>
         </div>` : ""}
 
       <div class="pill-tabs" id="signup-role-tabs" style="width:100%;justify-content:center;margin-bottom:var(--space-4)">
@@ -435,6 +444,11 @@ function renderAuthForm() {
       errorEl.textContent = translateAuthError(err.message);
       b.disabled = false;
     }
+  }));
+
+  $$("[data-preview]", root).forEach(b => b.addEventListener("click", async () => {
+    const { showPreview } = await import("./app.js");
+    await showPreview(b.dataset.preview);
   }));
 
   $("#su-document")?.addEventListener("change", e => { pendingDocumentFile = e.target.files[0] || null; });

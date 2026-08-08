@@ -352,9 +352,69 @@ export async function setAnnualPlan(plan) {
 }
 
 /* ================================================================
+   PREVIEW MODE — لغو کامل ورود واقعی، برای دیدن سریع ظاهر هر صفحه
+   با داده‌ی نمونه. هیچ تماسی با Supabase نمی‌گیرد. فقط برای بررسی
+   طراحی صفحات است — قبل از استفاده‌ی واقعی باید خاموش/حذف شود.
+   ================================================================ */
+let previewModeActive = false;
+const _previewToday = new Date().toISOString().slice(0, 10);
+
+const PREVIEW_STUDENTS = [
+  { id: "prev-s1", name: "آرمان کریمی", nationalId: "1111111111", phone: "", groupId: null, notes: "", teacherId: "prev-teacher" },
+  { id: "prev-s2", name: "ستایش رضایی", nationalId: "2222222222", phone: "", groupId: null, notes: "", teacherId: "prev-teacher" },
+  { id: "prev-s3", name: "پارسا احمدی", nationalId: "3333333333", phone: "", groupId: null, notes: "", teacherId: "prev-teacher" },
+];
+const PREVIEW_EVALUATIONS = [
+  { id: "prev-e1", studentId: "prev-s1", subjectId: "math", period: "daily", kind: "participation", level: "excellent", date: _previewToday, pageFrom: 1, pageTo: 10 },
+  { id: "prev-e2", studentId: "prev-s2", subjectId: "persian", period: "daily", kind: "oral", level: "good", date: _previewToday, pageFrom: 5, pageTo: 12 },
+  { id: "prev-e3", studentId: "prev-s3", subjectId: "science", period: "daily", kind: "activity", level: "needs-improvement", date: _previewToday, pageFrom: 20, pageTo: 25 },
+];
+const PREVIEW_ATTENDANCE = [
+  { id: "prev-a1", studentId: "prev-s1", date: _previewToday, status: "present" },
+  { id: "prev-a2", studentId: "prev-s2", date: _previewToday, status: "late", minutes: 10 },
+  { id: "prev-a3", studentId: "prev-s3", date: _previewToday, status: "absent" },
+];
+const PREVIEW_DISCIPLINE = [
+  { id: "prev-d1", studentId: "prev-s1", date: _previewToday, type: "positive", subjectId: "", description: "کمک به هم‌کلاسی", notes: "" },
+];
+
+function applyPreviewCollections() {
+  studentsCache = PREVIEW_STUDENTS;
+  evaluationsCache = PREVIEW_EVALUATIONS;
+  attendanceCache = PREVIEW_ATTENDANCE;
+  disciplineCache = PREVIEW_DISCIPLINE;
+  homeworkCache = [];
+  groupsCache = [];
+  labsCache = [];
+  tasksCache = [{ id: "prev-t1", text: "تصحیح دفتر ریاضی", done: false }];
+  settingsCache = { generalNotes: "این یک یادداشت نمونه است.", schedule: defaultSchedule(), annualPlan: {} };
+}
+
+/** One call: fills the profile + every data cache with realistic sample
+    content for the given role, so you can click through that role's real
+    screens without any backend/login involved. */
+export function enablePreviewMode(role) {
+  previewModeActive = true;
+  currentUserId = "prev-teacher";
+
+  const base = { username: "PREVIEW", verified: true, phoneVerified: true, themeColor: "blue" };
+  if (role === "teacher") {
+    profileCache = { ...base, role: "teacher", fullName: "خانم رضایی (نمونه)", schoolName: "دبستان نمونه", grade: "grade3", className: "الف", academicYear: "1405-1406" };
+  } else if (role === "admin" || role === "vice_principal") {
+    profileCache = { ...base, role, fullName: "مدیر نمونه", schoolName: "دبستان نمونه", position: role === "admin" ? "مدیر" : "معاون" };
+  } else if (role === "rahbar" || role === "group_leader") {
+    profileCache = { ...base, role, fullName: "راهبر نمونه", schoolName: "دبستان نمونه", assignedGrade: "grade3" };
+  } else if (role === "parent") {
+    profileCache = { ...base, role: "parent", fullName: "ولی نمونه" };
+  }
+  applyPreviewCollections();
+}
+
+/* ================================================================
    LOAD EVERYTHING — called once right after loadProfile() succeeds.
    ================================================================ */
 export async function loadAllCollections() {
+  if (previewModeActive) { applyPreviewCollections(); return; }
   const teacherId = await requireUserId();
   const { sb } = await import("./supabase-client.js");
 
@@ -395,6 +455,7 @@ export async function loadAllCollections() {
    report-building logic (reports.js) works unchanged for parents too.
    ================================================================ */
 export async function loadParentData() {
+  if (previewModeActive) { applyPreviewCollections(); return; }
   const { sb } = await import("./supabase-client.js");
   // No .eq("teacher_id", …) filters here on purpose — RLS alone decides
   // what a parent account is allowed to see (their linked children only).
@@ -456,6 +517,10 @@ export async function addTeacherToMySchool(personnelCode, phone) {
     function itself applies no filtering, same principle as loadParentData).
     Returns the list of teachers for the admin's "Classes" browser. */
 export async function loadAdminData() {
+  if (previewModeActive) {
+    applyPreviewCollections();
+    return [{ id: "prev-teacher", role: "teacher", fullName: "خانم رضایی (نمونه)", username: "PREVIEW", schoolName: "دبستان نمونه", grade: "grade3", className: "الف", verified: true }];
+  }
   const { sb } = await import("./supabase-client.js");
   const [students, attendance, evaluations, homework, discipline, groups, teachers] = await Promise.all([
     sb.from("students").select("*"),

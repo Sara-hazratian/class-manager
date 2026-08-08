@@ -7,7 +7,7 @@
      - admin / vice_principal, verified: admin panel
      - parent: read-only parent panel
    ============================================================ */
-import { isSetupComplete, loadProfile, loadAllCollections, loadParentData } from "./store.js";
+import { isSetupComplete, loadProfile, loadAllCollections, loadParentData, enablePreviewMode } from "./store.js";
 import { initTheme } from "./theme.js";
 import { initModals } from "./ui.js";
 import { initRouter, switchView } from "./router.js";
@@ -152,6 +152,26 @@ export async function showApp() {
   initReports();
   initSettings();
   switchView("dashboard");
+}
+
+/** بدون هیچ ورود واقعی — مستقیم صفحه‌ی واقعی همون نقش رو با داده‌ی
+    نمونه نشون می‌ده. فقط برای بررسی سریع ظاهر صفحات، قبل از اینکه
+    سیستم ورود واقعی (SMS) را نهایی کنیم. */
+export async function showPreview(role) {
+  enablePreviewMode(role);
+
+  if (["admin", "vice_principal", "rahbar", "group_leader"].includes(role)) {
+    showScreen("admin-screen");
+    initAdmin();
+    return;
+  }
+  if (role === "parent") {
+    showScreen("parent-screen");
+    initParent();
+    return;
+  }
+  // teacher
+  await showApp();
 }
 
 if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
