@@ -97,6 +97,9 @@ export async function loadProfile() {
   if (error) { console.error("ClassPilot: could not load profile", error); profileCache = null; return null; }
 
   profileCache = dbRowToProfile(data);
+  // Whether the account's phone number has been confirmed via SMS OTP —
+  // read straight from Supabase Auth's own user record, not a custom column.
+  profileCache.phoneVerified = Boolean(userData.user.phone_confirmed_at);
   return profileCache;
 }
 

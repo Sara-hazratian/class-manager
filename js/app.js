@@ -11,7 +11,7 @@ import { isSetupComplete, loadProfile, loadAllCollections, loadParentData } from
 import { initTheme } from "./theme.js";
 import { initModals } from "./ui.js";
 import { initRouter, switchView } from "./router.js";
-import { initAuth, getSession, signOut } from "./auth.js";
+import { initAuth, getSession, signOut, PHONE_VERIFICATION_ENABLED } from "./auth.js";
 import { initSetup } from "./setup.js";
 import { initHeader } from "./header.js";
 import { initDashboard } from "./dashboard.js";
@@ -62,6 +62,21 @@ async function boot() {
 async function afterAuthSuccess() {
   const profile = await loadProfile();
   if (!profile) { showScreen("auth-screen"); initAuth(afterAuthSuccess); return; }
+
+  // Every role except super_admin must confirm their phone via SMS OTP
+  // before the account is usable at all — checked here so it applies on
+  // every page load with an existing session, not just right after signup.
+  if (PHONE_VERIFICATION_ENABLED && profile.role !== "super_admin" && !profile.phoneVerified) {
+    const { sb } = await import("./supabase-client.js");
+    const { data: userData } = await sb.auth.getUser();
+    const phone = userData?.user?.phone;
+    if (phone) {
+      showScreen("auth-screen");
+      const { initPhoneVerify } = await import("./auth.js");
+      initPhoneVerify(phone, afterAuthSuccess);
+      return;
+    }
+  }
 
   // verified now gates EVERY role — a super_admin can deactivate any account,
   // not just reject a pending admin/VP signup.
