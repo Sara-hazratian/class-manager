@@ -124,91 +124,116 @@
 </div>
 
 <!-- ===== ADMIN / VICE-PRINCIPAL / راهبر / سرگروه VIEW ===== -->
-<div id="admin-screen" hidden style="min-height:100vh;background:var(--color-bg)">
-  <header class="app-header">
-    <div style="display:flex;align-items:center;gap:12px">
-      <img src="icons/logo-horizontal.png" alt="ClassPilot" style="height:34px;width:auto" />
-      <div style="width:1px;height:28px;background:var(--color-border)"></div>
-      <h1 class="app-header__teacher" id="admin-title" style="margin:0">پنل <span id="admin-role-label">مدیر</span></h1>
+<div id="admin-screen" hidden style="min-height:100vh;background:var(--color-bg);display:flex">
+  <aside class="sidebar">
+    <div class="sidebar__brand">
+      <span class="brand__mark"><img src="icons/icon-192.png" alt="ClassPilot" style="width:100%;height:100%;object-fit:contain;border-radius:inherit" /></span>
+      <span class="brand__title">ClassPilot<small>پنل <span id="admin-role-label">مدیر</span></small></span>
     </div>
-    <button type="button" class="btn btn--secondary btn--sm" id="admin-sign-out">خروج</button>
-  </header>
-  <main class="main-content">
-    <section id="admin-tab-classes">
-      <section class="panel" id="admin-add-teacher-panel" style="margin-bottom:var(--space-5)" hidden>
-        <div class="panel__header"><h2>افزودن معلم</h2></div>
-        <p style="font-size:12.5px;color:var(--color-ink-soft);margin-bottom:var(--space-4)">
-          کد پرسنلی و شماره موبایل معلم را وارد کنید — فقط در صورت تطابق کامل هر دو، معلم پیدا و قابل افزودن به مدرسه‌ی شما خواهد بود.
-        </p>
-        <form id="admin-find-teacher-form" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
-          <div style="flex:1;min-width:160px">
-            <label for="find-teacher-code">کد پرسنلی</label>
-            <input type="text" id="find-teacher-code" required />
-          </div>
-          <div style="flex:1;min-width:160px">
-            <label for="find-teacher-phone">شماره موبایل</label>
-            <input type="tel" id="find-teacher-phone" required inputmode="numeric" placeholder="09xxxxxxxxx" />
-          </div>
-          <button type="submit" class="btn btn--secondary">جستجو</button>
-        </form>
-        <p id="find-teacher-error" style="color:var(--color-danger);font-size:12.5px;margin-top:8px;min-height:1em"></p>
-        <div id="find-teacher-result" style="margin-top:12px"></div>
-      </section>
+    <nav class="nav-tabs">
+      <button class="nav-tab is-active" data-admin-view="classes"><svg class="icon"><use href="#i-grid"/></svg><span class="nav-tab__label">کلاس‌ها</span></button>
+      <button class="nav-tab" data-admin-view="add-teacher" id="admin-nav-add-teacher"><svg class="icon"><use href="#i-users"/></svg><span class="nav-tab__label">افزودن معلم</span></button>
+      <button class="nav-tab" data-admin-view="add-leader" id="admin-nav-add-leader"><svg class="icon"><use href="#i-shield"/></svg><span class="nav-tab__label">افزودن راهبر/سرگروه</span></button>
+    </nav>
+  </aside>
 
-      <section class="panel" id="admin-promote-panel" style="margin-bottom:var(--space-5)" hidden>
-        <div class="panel__header"><h2>افزودن راهبر یا سرگروه آموزشی</h2></div>
-        <p style="font-size:12.5px;color:var(--color-ink-soft);margin-bottom:var(--space-4)">
-          راهبر همه‌ی کلاس‌های مدرسه را می‌بیند. سرگروه فقط کلاس‌های همان پایه‌ای که به او اختصاص می‌دهید را می‌بیند.
-        </p>
-        <form id="admin-promote-form" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
-          <div style="flex:1;min-width:160px">
-            <label for="promote-teacher-select">معلم</label>
-            <select id="promote-teacher-select" required></select>
-          </div>
-          <div style="min-width:140px">
-            <label for="promote-role-select">نقش جدید</label>
-            <select id="promote-role-select">
-              <option value="rahbar">راهبر</option>
-              <option value="group_leader">سرگروه آموزشی</option>
-            </select>
-          </div>
-          <div id="promote-grade-wrap" style="min-width:140px">
-            <label for="promote-grade-select">پایه</label>
-            <select id="promote-grade-select">
-              <option value="grade1">پایه اول</option><option value="grade2">پایه دوم</option>
-              <option value="grade3">پایه سوم</option><option value="grade4">پایه چهارم</option>
-              <option value="grade5">پایه پنجم</option><option value="grade6">پایه ششم</option>
-            </select>
-          </div>
-          <button type="submit" class="btn btn--primary">اعمال</button>
-        </form>
-      </section>
-
-      <div id="admin-teacher-picker">
-        <p class="empty-state__text" style="text-align:right;padding:0;margin-bottom:var(--space-4)">یک معلم را انتخاب کنید تا کلاس او را ببینید</p>
-        <div id="admin-teacher-list"></div>
-        <div class="empty-state" id="admin-teachers-empty" hidden>
-          <p class="empty-state__text">هنوز معلمی در سامانه ثبت‌نام نکرده است.</p>
-        </div>
+  <div class="workspace">
+    <header class="app-header">
+      <h1 class="app-header__teacher" id="admin-title" style="margin:0">کلاس‌های مدرسه</h1>
+      <div style="display:flex;gap:8px">
+        <button type="button" class="btn btn--secondary btn--sm" id="admin-back-to-dashboard" hidden>بازگشت به داشبورد من</button>
+        <button type="button" class="btn btn--secondary btn--sm" id="admin-sign-out">خروج</button>
       </div>
+    </header>
+    <main class="main-content">
 
-      <div id="admin-student-picker" hidden>
-        <button type="button" class="btn btn--ghost btn--sm" id="admin-back-to-teachers" style="margin-bottom:var(--space-4)"><svg class="icon"><use href="#i-back"/></svg>بازگشت به لیست معلم‌ها</button>
-        <div class="panel" style="margin-bottom:var(--space-5)">
-          <div class="panel__header"><h2>کلاس <span id="admin-selected-teacher-name"></span></h2></div>
-          <div id="admin-student-list" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:var(--space-3)"></div>
-          <div class="empty-state" id="admin-students-empty" hidden>
-            <p class="empty-state__text">این معلم هنوز دانش‌آموزی ثبت نکرده است.</p>
-          </div>
-          <div class="pill-tabs" id="admin-period-tabs">
-            <button type="button" class="pill-tab is-active" data-period="term1">نیمسال اول</button>
-            <button type="button" class="pill-tab" data-period="term2">نیمسال دوم</button>
+      <section class="admin-view" data-admin-view="classes">
+        <div id="admin-teacher-picker">
+          <p class="empty-state__text" style="text-align:right;padding:0;margin-bottom:var(--space-4)">یک کلاس را انتخاب کنید</p>
+          <div id="admin-teacher-list" class="stat-grid"></div>
+          <div class="empty-state" id="admin-teachers-empty" hidden>
+            <p class="empty-state__text">هنوز معلمی در سامانه ثبت‌نام نکرده است.</p>
           </div>
         </div>
-        <div id="admin-student-report"></div>
-      </div>
-    </section>
-  </main>
+
+        <div id="admin-student-picker" hidden>
+          <button type="button" class="btn btn--ghost btn--sm" id="admin-back-to-teachers" style="margin-bottom:var(--space-4)"><svg class="icon"><use href="#i-back"/></svg>بازگشت به لیست کلاس‌ها</button>
+          <div class="panel" style="margin-bottom:var(--space-5)">
+            <div class="panel__header"><h2>کلاس <span id="admin-selected-teacher-name"></span></h2></div>
+            <div id="admin-student-list" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:var(--space-3)"></div>
+            <div class="empty-state" id="admin-students-empty" hidden>
+              <p class="empty-state__text">این معلم هنوز دانش‌آموزی ثبت نکرده است.</p>
+            </div>
+            <div class="pill-tabs" id="admin-period-tabs">
+              <button type="button" class="pill-tab is-active" data-period="term1">نیمسال اول</button>
+              <button type="button" class="pill-tab" data-period="term2">نیمسال دوم</button>
+            </div>
+          </div>
+          <div id="admin-student-report"></div>
+        </div>
+      </section>
+
+      <section class="admin-view" data-admin-view="add-teacher" hidden>
+        <section class="panel" id="admin-add-teacher-panel">
+          <div class="panel__header"><h2>افزودن معلم</h2></div>
+          <p style="font-size:12.5px;color:var(--color-ink-soft);margin-bottom:var(--space-4)">
+            کد پرسنلی و شماره موبایل معلم را وارد کنید — فقط در صورت تطابق کامل هر دو، معلم پیدا و قابل افزودن به مدرسه‌ی شما خواهد بود.
+          </p>
+          <form id="admin-find-teacher-form" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+            <div style="flex:1;min-width:160px">
+              <label for="find-teacher-code">کد پرسنلی</label>
+              <input type="text" id="find-teacher-code" required />
+            </div>
+            <div style="flex:1;min-width:160px">
+              <label for="find-teacher-phone">شماره موبایل</label>
+              <input type="tel" id="find-teacher-phone" required inputmode="numeric" placeholder="09xxxxxxxxx" />
+            </div>
+            <button type="submit" class="btn btn--secondary">جستجو</button>
+          </form>
+          <p id="find-teacher-error" style="color:var(--color-danger);font-size:12.5px;margin-top:8px;min-height:1em"></p>
+          <div id="find-teacher-result" style="margin-top:12px"></div>
+        </section>
+      </section>
+
+      <section class="admin-view" data-admin-view="add-leader" hidden>
+        <section class="panel" id="admin-promote-panel">
+          <div class="panel__header"><h2>افزودن راهبر یا سرگروه آموزشی</h2></div>
+          <p style="font-size:12.5px;color:var(--color-ink-soft);margin-bottom:var(--space-4)">
+            راهبر همه‌ی کلاس‌های این مدرسه را می‌بیند. سرگروه فقط کلاس‌های همان پایه‌ای که مشخص می‌کنید را می‌بیند.
+            فرد لازم نیست معلم همین مدرسه باشد — دسترسی افزوده است و نقش/مدرسه‌ی خودش را تغییر نمی‌دهد.
+          </p>
+          <form id="admin-promote-form" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+            <div style="flex:1;min-width:150px">
+              <label for="promote-new-code">کد پرسنلی</label>
+              <input type="text" id="promote-new-code" required />
+            </div>
+            <div style="flex:1;min-width:150px">
+              <label for="promote-new-phone">شماره موبایل</label>
+              <input type="tel" id="promote-new-phone" required inputmode="numeric" placeholder="09xxxxxxxxx" />
+            </div>
+            <div style="min-width:140px">
+              <label for="promote-role-select">نوع دسترسی</label>
+              <select id="promote-role-select">
+                <option value="rahbar">راهبر (کل مدرسه)</option>
+                <option value="group_leader">سرگروه آموزشی (یک پایه)</option>
+              </select>
+            </div>
+            <div id="promote-grade-wrap" style="min-width:140px">
+              <label for="promote-grade-select">پایه</label>
+              <select id="promote-grade-select">
+                <option value="grade1">پایه اول</option><option value="grade2">پایه دوم</option>
+                <option value="grade3">پایه سوم</option><option value="grade4">پایه چهارم</option>
+                <option value="grade5">پایه پنجم</option><option value="grade6">پایه ششم</option>
+              </select>
+            </div>
+            <button type="submit" class="btn btn--primary">اعطای دسترسی</button>
+          </form>
+          <p id="promote-error" style="color:var(--color-danger);font-size:12.5px;margin-top:8px;min-height:1em"></p>
+        </section>
+      </section>
+
+    </main>
+  </div>
 </div>
 
 <!-- ===== APP SHELL — Phase 3+ fill in the real dashboard/pages ===== -->
@@ -245,6 +270,7 @@
           <div class="app-header__meta" id="header-meta"></div>
         </div>
       </div>
+      <button type="button" class="btn btn--secondary btn--sm" id="header-oversight-btn" hidden>🏫 مدارس تحت نظارت</button>
       <time class="app-header__date" id="header-date"></time>
     </header>
 

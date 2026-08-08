@@ -174,5 +174,13 @@ export async function showPreview(role) {
   await showApp();
 }
 
+/** خودِ معلم/ولی (یا هر نقشی) که دسترسی نظارتی راهبر/سرگروه به یک یا
+    چند مدرسه‌ی دیگر دارد، با این دکمه وارد همان صفحه‌ی مرور کلاس‌ها
+    می‌شود — بدون این‌که نقش یا داشبورد خودش عوض شود. */
+export async function showOversightView() {
+  showScreen("admin-screen");
+  initAdmin(true);
+}
+
 if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
 else boot();

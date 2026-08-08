@@ -11,7 +11,7 @@
    js/superadmin.js), per design. Approving accounts, rejecting
    them, and full user management live there exclusively.
    ============================================================ */
-import { getProfile, loadAdminData, getStudents, setTeacherLeaderRole, findTeacherForSchool, addTeacherToMySchool } from "./store.js";
+import { getProfile, loadAdminData, loadOversightData, getStudents, findTeacherForSchool, addTeacherToMySchool, findPersonForAccessGrant, grantSchoolAccess } from "./store.js";
 import { buildStudentReport } from "./reports.js";
 import { $, $$, toast, translateError } from "./ui.js";
 import { fa } from "./jalali.js";
@@ -24,17 +24,20 @@ let teachers = [];
 let selectedTeacherId = null;
 let selectedStudentId = null;
 let selectedPeriod = "term1";
+let isOversightMode = false;
 
 /* ---------- teachers → students → report ---------- */
 async function renderTeacherList() {
-  teachers = await loadAdminData();
+  teachers = isOversightMode ? await loadOversightData() : await loadAdminData();
   const wrap = $("#admin-teacher-list");
   $("#admin-teachers-empty").hidden = teachers.length > 0;
 
   wrap.innerHTML = teachers.map(t => `
-    <button type="button" class="card card--interactive" data-teacher="${t.id}" style="text-align:right;width:100%;margin-bottom:var(--space-2);display:block">
+    <button type="button" class="card card--interactive" data-teacher="${t.id}" style="text-align:center;aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:var(--space-4)">
+      <svg class="icon" style="width:32px;height:32px;color:var(--color-primary)"><use href="#i-users"/></svg>
       <p style="font-weight:700;font-size:14px">${t.fullName || t.username}</p>
-      <p style="font-size:12px;color:var(--color-ink-soft)">${t.schoolName || ""} · ${GRADE_LABELS[t.grade] || ""} · کلاس ${t.className || ""}</p>
+      <p style="font-size:11.5px;color:var(--color-ink-soft)">${t.schoolName || ""}</p>
+      <p style="font-size:11.5px;color:var(--color-ink-soft)">${GRADE_LABELS[t.grade] || ""} · کلاس ${t.className || ""}</p>
     </button>`).join("");
 
   $$("[data-teacher]", wrap).forEach(b => b.addEventListener("click", () => {
@@ -89,12 +92,11 @@ function renderStudentReport() {
     </section>`;
 }
 
-/* ---------- promote a teacher to راهبر/سرگروه (admin/VP only — enforced by the database) ---------- */
+/* ---------- اعطای دسترسی نظارتی راهبر/سرگروه (admin/VP only) — دسترسی
+   افزوده است، نه جایگزین نقش؛ فرد همچنان معلم/نقش خودش باقی می‌ماند و
+   می‌تواند به‌طور همزمان به چند مدرسه‌ی دیگر هم دسترسی نظارتی داشته
+   باشد. لازم نیست از قبل معلم همین مدرسه یا حتی معلم باشد. ---------- */
 function renderPromotePanel() {
-  const sel = $("#promote-teacher-select");
-  const eligible = teachers.filter(t => ["teacher", "rahbar", "group_leader"].includes(t.role));
-  sel.innerHTML = eligible.map(t => `<option value="${t.id}">${t.fullName || t.username} — ${ROLE_LABELS[t.role]}${t.role === "group_leader" && t.assignedGrade ? ` (${GRADE_LABELS[t.assignedGrade] || t.assignedGrade})` : ""}</option>`).join("");
-
   const toggleGradeVisibility = () => {
     $("#promote-grade-wrap").hidden = $("#promote-role-select").value !== "group_leader";
   };
@@ -144,37 +146,55 @@ function renderAddTeacherPanel() {
 }
 
 /* ---------- init ---------- */
-export function initAdmin() {
+export function initAdmin(oversightMode = false) {
+  isOversightMode = oversightMode;
   const profile = getProfile();
-  const canManageSchoolRoles = ["admin", "vice_principal"].includes(profile?.role);
+  const canManageSchoolRoles = !oversightMode && ["admin", "vice_principal"].includes(profile?.role);
   const label = $("#admin-role-label");
-  if (label) label.textContent = ROLE_LABELS[profile?.role] || "مدیر";
+  if (label) label.textContent = oversightMode ? "نظارت" : (ROLE_LABELS[profile?.role] || "مدیر");
 
   // Only admin/vice_principal can grant راهبر/سرگروه OR add teachers to
-  // the school — not راهبر itself, and not سرگروه.
-  $("#admin-promote-panel").hidden = !canManageSchoolRoles;
-  $("#admin-add-teacher-panel").hidden = !canManageSchoolRoles;
+  // the school — not راهبر itself, and not سرگروه, and never in
+  // oversight-mode (someone BROWSING via a grant, regardless of their
+  // own separate role elsewhere, never manages the granting school).
+  // These sidebar entries are entirely hidden for anyone else, not just
+  // their content — nothing to click through to in the first place.
+  $("#admin-nav-add-teacher").hidden = !canManageSchoolRoles;
+  $("#admin-nav-add-leader").hidden = !canManageSchoolRoles;
   if (canManageSchoolRoles) renderAddTeacherPanel();
+
+  $$("button[data-admin-view]").forEach(b => b.addEventListener("click", () => {
+    if (b.hidden) return;
+    $$("button[data-admin-view]").forEach(x => x.classList.toggle("is-active", x === b));
+    $$("section.admin-view[data-admin-view]").forEach(v => { v.hidden = v.dataset.adminView !== b.dataset.adminView; });
+  }));
 
   renderTeacherList().then(renderPromotePanel);
 
   $("#admin-promote-form")?.addEventListener("submit", async e => {
     e.preventDefault();
-    const teacherId = $("#promote-teacher-select").value;
     const role = $("#promote-role-select").value;
     const grade = $("#promote-grade-select").value;
-    if (!teacherId) return;
-
     const roleLabel = ROLE_LABELS[role];
-    if (!confirm(`این معلم به «${roleLabel}»${role === "group_leader" ? ` پایه‌ی ${GRADE_LABELS[grade]}` : ""} تبدیل شود؟`)) return;
+    const errorEl = $("#promote-error");
+    errorEl.textContent = "";
+
+    // این شخص می‌تواند از هر مدرسه‌ای (یا اصلاً بدون نقش تدریس) باشد —
+    // find_person_for_access_grant هیچ محدودیت هم‌مدرسه‌ای ندارد، برخلاف
+    // «افزودن معلم» معمولی.
+    const code = $("#promote-new-code").value.trim();
+    const phone = $("#promote-new-phone").value.trim();
+    if (!code || !phone) { errorEl.textContent = "کد پرسنلی و شماره موبایل را وارد کنید."; return; }
 
     try {
-      await setTeacherLeaderRole(teacherId, role, role === "group_leader" ? grade : null);
-      toast("نقش با موفقیت اعمال شد");
-      await renderTeacherList();
-      renderPromotePanel();
+      const found = await findPersonForAccessGrant(code, phone);
+      if (!confirm(`«${found.full_name || "این فرد"}» دسترسی «${roleLabel}»${role === "group_leader" ? ` برای پایه‌ی ${GRADE_LABELS[grade]}` : ""} به این مدرسه داده شود؟`)) return;
+
+      await grantSchoolAccess(code, phone, role === "group_leader" ? grade : null);
+      toast("دسترسی با موفقیت اعطا شد");
+      $("#admin-promote-form").reset();
     } catch (err) {
-      alert("اعمال نقش ناموفق بود: " + translateError(err));
+      errorEl.textContent = translateError(err);
     }
   });
 
@@ -194,4 +214,13 @@ export function initAdmin() {
     await signOut();
     window.location.reload();
   });
+
+  const backBtn = $("#admin-back-to-dashboard");
+  if (backBtn) {
+    backBtn.hidden = !oversightMode;
+    backBtn.addEventListener("click", async () => {
+      const { showApp } = await import("./app.js");
+      await showApp();
+    });
+  }
 }

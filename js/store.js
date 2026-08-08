@@ -496,6 +496,72 @@ export async function findTeacherForSchool(personnelCode, phone) {
   return data;
 }
 
+/** Finds ANY account (any school, any role — not restricted to this
+    admin's own school) by exact personnel code + phone match, for
+    granting راهبر/سرگروه access. Unlike findTeacherForSchool, this is
+    NOT restricted to teachers already at your school — a district group
+    leader teaching elsewhere, or someone with no teaching role at all,
+    can both be found here. */
+export async function findPersonForAccessGrant(personnelCode, phone) {
+  const { sb } = await import("./supabase-client.js");
+  const { data, error } = await sb.rpc("find_person_for_access_grant", { p_personnel_code: personnelCode, p_phone: phone });
+  if (error) throw error;
+  if (!data.success) throw new Error(data.error || "شخصی با این مشخصات پیدا نشد.");
+  return data;
+}
+
+/** Grants that person رahbar (grade=null → whole school) or سرگروه
+    (grade set → just that grade) access to YOUR school — repeatable, so
+    one person can be granted access to several schools by their
+    respective admins, independent of where they actually teach. This is
+    ADDITIVE — it never changes the person's own role or school. */
+export async function grantSchoolAccess(personnelCode, phone, grade) {
+  const { sb } = await import("./supabase-client.js");
+  const { data, error } = await sb.rpc("grant_oversight_access", { p_personnel_code: personnelCode, p_phone: phone, p_grade: grade });
+  if (error) throw error;
+  if (!data.success) throw new Error(data.error || "اعطای دسترسی ناموفق بود.");
+  return data;
+}
+
+/** Every school (+ optional grade) the CURRENTLY signed-in person has been
+    granted oversight access to — used to show/hide the "مدارس تحت نظارت"
+    entry point and to list which schools to browse. */
+export async function loadMyOversightGrants() {
+  const { sb } = await import("./supabase-client.js");
+  const { data, error } = await sb.from("oversight_grants").select("*, schools(name)").eq("person_id", await requireUserId());
+  if (error) { console.error("ClassPilot: could not load oversight grants", error); return []; }
+  return data.map(row => ({ id: row.id, schoolId: row.school_id, schoolName: row.schools?.name || "", grade: row.grade }));
+}
+
+/** Loads whatever RLS's has_oversight_access() policies allow the current
+    user to see, into the same shared caches reports.js already knows how
+    to read — no separate rendering logic needed. */
+export async function loadOversightData() {
+  const { sb } = await import("./supabase-client.js");
+  const [students, attendance, evaluations, homework, discipline, profilesRes] = await Promise.all([
+    sb.from("students").select("*"),
+    sb.from("attendance").select("*"),
+    sb.from("evaluations").select("*"),
+    sb.from("homework").select("*"),
+    sb.from("discipline").select("*"),
+    sb.from("profiles").select("*"),
+  ]);
+  const check = (res, label) => { if (res.error) console.error(`ClassPilot: failed to load "${label}" for oversight`, res.error); return res.data || []; };
+
+  studentsCache = check(students, "students").map(dbToStudent);
+  attendanceCache = check(attendance, "attendance").map(dbToAttendance);
+  evaluationsCache = check(evaluations, "evaluations").map(dbToEvaluation);
+  homeworkCache = check(homework, "homework").map(dbToHomework);
+  disciplineCache = check(discipline, "discipline").map(dbToDiscipline);
+
+  // Teachers visible via oversight RLS (a subset of "profiles" the
+  // has_oversight_access-backed policies let this user see students for).
+  const teacherIdsWithStudents = new Set(studentsCache.map(s => s.teacherId));
+  return check(profilesRes, "profiles")
+    .filter(p => teacherIdsWithStudents.has(p.id))
+    .map(row => ({ id: row.id, ...dbRowToProfile(row) }));
+}
+
 /** Admin/vice_principal: add that same matched teacher to their own school.
     Re-verifies the exact match server-side — never trusts a previously
     fetched ID alone, and can never link a teacher already at another school. */
