@@ -116,11 +116,14 @@ function renderSchoolsView() {
 
 function renderStudentReport() {
   const box = $("#admin-student-report");
-  if (!selectedStudentId) { box.innerHTML = ""; return; }
+  const printBtn = $("#admin-print-report-btn");
+  if (!selectedStudentId) { box.innerHTML = ""; if (printBtn) printBtn.hidden = true; return; }
   const monthKey = selectedPeriod === "monthly" ? $("#admin-month-select")?.value : null;
   const data = buildStudentReport(selectedStudentId, selectedPeriod === "all" ? null : selectedPeriod, monthKey);
-  if (!data) { box.innerHTML = ""; return; }
+  if (!data) { box.innerHTML = ""; if (printBtn) printBtn.hidden = true; return; }
   box.innerHTML = `<section class="panel">${renderStudentReportHTML(data)}</section>`;
+  // فقط مدیر/معاون — راهبر/سرگروه فقط نظارت می‌کنند، نه چاپ گزارش رسمی.
+  if (printBtn) printBtn.hidden = isOversightMode;
 }
 
 /* ---------- اعطای دسترسی نظارتی راهبر/سرگروه (admin/VP only) — دسترسی
@@ -287,6 +290,11 @@ export function initAdmin(oversightMode = false) {
   const label = $("#admin-role-label");
   if (label) label.textContent = oversightMode ? "نظارت" : (ROLE_LABELS[profile?.role] || "مدیر");
 
+  const titleEl = $("#admin-title");
+  const schoolEl = $("#admin-school-name");
+  if (titleEl) titleEl.textContent = `${profile?.fullName || profile?.username || ""} — ${oversightMode ? "نظارت (راهبر/سرگروه)" : (ROLE_LABELS[profile?.role] || "مدیر")}`;
+  if (schoolEl) schoolEl.textContent = (!oversightMode && profile?.schoolName) ? profile.schoolName : "";
+
   // Only admin/vice_principal can grant راهبر/سرگروه OR add teachers to
   // the school — not راهبر itself, and not سرگروه, and never in
   // oversight-mode (someone BROWSING via a grant, regardless of their
@@ -356,6 +364,8 @@ export function initAdmin(oversightMode = false) {
     renderStudentReport();
   }));
   monthSel?.addEventListener("change", renderStudentReport);
+
+  $("#admin-print-report-btn")?.addEventListener("click", () => window.print());
 
   $("#admin-sign-out")?.addEventListener("click", async () => {
     await signOut();

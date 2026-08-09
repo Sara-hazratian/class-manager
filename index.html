@@ -36,6 +36,7 @@
   <symbol id="i-chart" viewBox="0 0 24 24"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6" rx="1"/><rect x="12.5" y="8" width="3" height="10" rx="1"/><rect x="18" y="5" width="3" height="13" rx="1"/></symbol>
   <symbol id="i-map" viewBox="0 0 24 24"><path d="m9 4-6 2v16l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v16M15 6v16"/></symbol>
   <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></symbol>
+  <symbol id="i-printer" viewBox="0 0 24 24"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></symbol>
   <symbol id="i-report" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h1.5a1.5 1.5 0 0 1 0 3H8zM13 13v4M17 13v4"/></symbol>
   <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 2 3 6v6c0 5 4 8.5 9 10 5-1.5 9-5 9-10V6Z"/></symbol>
   <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></symbol>
@@ -145,7 +146,10 @@
 
   <div class="workspace">
     <header class="app-header">
-      <h1 class="app-header__teacher" id="admin-title" style="margin:0">کلاس‌های مدرسه</h1>
+      <div>
+        <h1 class="app-header__teacher" id="admin-title" style="margin:0"></h1>
+        <p class="app-header__school" id="admin-school-name" style="margin:2px 0 0"></p>
+      </div>
       <div style="display:flex;gap:8px">
         <button type="button" class="btn btn--secondary btn--sm" id="admin-back-to-dashboard" hidden>بازگشت به داشبورد من</button>
         <button type="button" class="btn btn--secondary btn--sm" id="admin-sign-out">خروج</button>
@@ -182,6 +186,7 @@
               <label for="admin-month-select">ماه</label>
               <select id="admin-month-select" class="select-control"></select>
             </div>
+            <button type="button" class="btn btn--secondary btn--sm" id="admin-print-report-btn" style="margin-top:var(--space-4)" hidden><svg class="icon"><use href="#i-printer"/></svg> چاپ گزارش</button>
           </div>
           <div id="admin-student-report"></div>
         </div>
