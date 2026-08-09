@@ -12,7 +12,7 @@
    them, and full user management live there exclusively.
    ============================================================ */
 import { getProfile, loadAdminData, loadOversightData, getStudents, findTeacherForSchool, addTeacherToMySchool, findPersonForAccessGrant, grantSchoolAccess, loadTeacherSchedule, applyTeacherSchedule, DAYS, PERIODS, SUBJECTS } from "./store.js";
-import { buildStudentReport, renderStudentReportHTML } from "./reports.js";
+import { buildStudentReport, renderStudentReportHTML, ACADEMIC_MONTHS } from "./reports.js";
 import { $, $$, toast, translateError } from "./ui.js";
 import { fa } from "./jalali.js";
 import { signOut } from "./auth.js";
@@ -117,7 +117,8 @@ function renderSchoolsView() {
 function renderStudentReport() {
   const box = $("#admin-student-report");
   if (!selectedStudentId) { box.innerHTML = ""; return; }
-  const data = buildStudentReport(selectedStudentId, selectedPeriod === "all" ? null : selectedPeriod, null);
+  const monthKey = selectedPeriod === "monthly" ? $("#admin-month-select")?.value : null;
+  const data = buildStudentReport(selectedStudentId, selectedPeriod === "all" ? null : selectedPeriod, monthKey);
   if (!data) { box.innerHTML = ""; return; }
   box.innerHTML = `<section class="panel">${renderStudentReportHTML(data)}</section>`;
 }
@@ -345,11 +346,16 @@ export function initAdmin(oversightMode = false) {
     selectedStudentId = null;
   });
 
+  const monthSel = $("#admin-month-select");
+  if (monthSel) monthSel.innerHTML = ACADEMIC_MONTHS.map(([key, label]) => `<option value="${key}">${label}</option>`).join("");
+
   $$("#admin-period-tabs .pill-tab").forEach(b => b.addEventListener("click", () => {
     selectedPeriod = b.dataset.period;
     $$("#admin-period-tabs .pill-tab").forEach(x => x.classList.toggle("is-active", x === b));
+    $("#admin-month-picker").hidden = selectedPeriod !== "monthly";
     renderStudentReport();
   }));
+  monthSel?.addEventListener("change", renderStudentReport);
 
   $("#admin-sign-out")?.addEventListener("click", async () => {
     await signOut();

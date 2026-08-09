@@ -106,7 +106,7 @@ async function afterAuthSuccess() {
 
   if (["admin", "vice_principal", "rahbar", "group_leader"].includes(profile.role)) {
     showScreen("admin-screen");
-    initAdmin();
+    initAdmin(profile.role === "rahbar" || profile.role === "group_leader");
     return;
   }
 

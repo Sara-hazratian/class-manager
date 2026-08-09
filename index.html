@@ -117,6 +117,7 @@
       <div class="pill-tabs" id="parent-child-tabs" style="margin-bottom:var(--space-4)"></div>
       <div class="pill-tabs" id="parent-period-tabs" style="margin-bottom:var(--space-5)">
         <button type="button" class="pill-tab is-active" data-period="all">همه</button>
+        <button type="button" class="pill-tab" data-period="weekly">هفتگی</button>
         <button type="button" class="pill-tab" data-period="term1">نیمسال اول</button>
         <button type="button" class="pill-tab" data-period="term2">نیمسال دوم</button>
       </div>
@@ -171,8 +172,15 @@
             </div>
             <div class="pill-tabs" id="admin-period-tabs">
               <button type="button" class="pill-tab is-active" data-period="all">همه</button>
+              <button type="button" class="pill-tab" data-period="daily">روزانه</button>
+              <button type="button" class="pill-tab" data-period="weekly">هفتگی</button>
+              <button type="button" class="pill-tab" data-period="monthly">ماهانه</button>
               <button type="button" class="pill-tab" data-period="term1">نیمسال اول</button>
               <button type="button" class="pill-tab" data-period="term2">نیمسال دوم</button>
+            </div>
+            <div id="admin-month-picker" hidden style="margin-top:var(--space-3);max-width:200px">
+              <label for="admin-month-select">ماه</label>
+              <select id="admin-month-select" class="select-control"></select>
             </div>
           </div>
           <div id="admin-student-report"></div>
@@ -677,6 +685,7 @@
             <div style="min-width:180px">
               <label for="rp-period">بازه گزارش</label>
               <select id="rp-period" class="select-control">
+                <option value="daily">روزانه</option>
                 <option value="weekly">هفتگی</option>
                 <option value="monthly">ماهانه</option>
                 <option value="term1" selected>نیمسال اول (مهر تا دی)</option>

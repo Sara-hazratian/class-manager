@@ -52,6 +52,7 @@
   background: transparent; border: none; color: rgba(255,255,255,.72); border-radius: var(--radius-sm);
   text-align: right; font-size: 13.5px; font-weight: 600; position: relative; transition: background .15s, color .15s;
 }
+.nav-tab[hidden] { display: none; }
 .nav-tab .icon { width: 18px; height: 18px; opacity: .9; }
 .nav-tab:hover { background: rgba(255,255,255,.08); color: #fff; }
 .nav-tab.is-active { color: #fff; background: rgba(255,255,255,.13); }

@@ -41,3 +41,10 @@ a { color: var(--color-primary); }
 @media (prefers-reduced-motion: reduce) {
   * , *::before, *::after { animation-duration: .001ms !important; transition-duration: .001ms !important; scroll-behavior: auto !important; }
 }
+
+/* حیاتی: هر جزئی که کلاسش خودش display:flex/grid/... تعیین کرده باشد، آن
+   قانون روی رفتار پیش‌فرض [hidden] برنده می‌شود مگر این‌که این قانون
+   عمومی و قطعی، صریحاً override کند — این دقیقاً همان باگی بود که دوبار
+   (admin-screen، nav-tab) پیدا شد؛ این یک‌بار برای همیشه جلوی تکرارش
+   در هر جای دیگری از برنامه را می‌گیرد. */
+[hidden] { display: none !important; }

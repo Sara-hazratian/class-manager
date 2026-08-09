@@ -19,7 +19,7 @@ const SCORE = { excellent: 4, good: 3, acceptable: 2, "needs-improvement": 1 };
 const LABEL = { 4: "عالی", 3: "خوب", 2: "قابل قبول", 1: "نیاز به تلاش بیشتر" };
 
 const MONTH_KEY_BY_JM = { 7: "mehr", 8: "aban", 9: "azar", 10: "dey", 11: "bahman", 12: "esfand", 1: "farvardin", 2: "ordibehesht", 3: "khordad" };
-const ACADEMIC_MONTHS = [["mehr","مهر"],["aban","آبان"],["azar","آذر"],["dey","دی"],["bahman","بهمن"],["esfand","اسفند"],["farvardin","فروردین"],["ordibehesht","اردیبهشت"],["khordad","خرداد"]];
+export const ACADEMIC_MONTHS = [["mehr","مهر"],["aban","آبان"],["azar","آذر"],["dey","دی"],["bahman","بهمن"],["esfand","اسفند"],["farvardin","فروردین"],["ordibehesht","اردیبهشت"],["khordad","خرداد"]];
 
 /* ---------- date-range filters ---------- */
 function inWeek(iso) {
@@ -32,6 +32,7 @@ function inMonth(iso, monthKey) { return MONTH_KEY_BY_JM[toJalali(isoToDate(iso)
 
 function matchesPeriod(iso, period, monthKey) {
   if (period === null || period === undefined || period === "all") return true; // همه — بدون فیلتر تاریخ
+  if (period === "daily") return iso === todayISO();
   if (period === "weekly") return inWeek(iso);
   if (period === "monthly") return inMonth(iso, monthKey);
   if (period === "term1") return inTerm(iso, 1);
@@ -39,6 +40,7 @@ function matchesPeriod(iso, period, monthKey) {
 }
 
 function periodLabel(period, monthKey) {
+  if (period === "daily") return "امروز";
   if (period === "weekly") return "هفته اخیر (۷ روز گذشته)";
   if (period === "monthly") return `ماه ${ACADEMIC_MONTHS.find(m => m[0] === monthKey)?.[1] || monthKey}`;
   if (period === "term1") return "نیمسال اول (مهر تا دی)";
