@@ -12,7 +12,7 @@
    them, and full user management live there exclusively.
    ============================================================ */
 import { getProfile, loadAdminData, loadOversightData, getStudents, findTeacherForSchool, addTeacherToMySchool, findPersonForAccessGrant, grantSchoolAccess, loadTeacherSchedule, applyTeacherSchedule, DAYS, PERIODS, SUBJECTS } from "./store.js";
-import { buildStudentReport, renderStudentReportHTML, ACADEMIC_MONTHS } from "./reports.js";
+import { buildStudentReport, renderStudentReportHTML, ACADEMIC_MONTHS, buildLetterhead } from "./reports.js";
 import { $, $$, toast, translateError } from "./ui.js";
 import { fa } from "./jalali.js";
 import { signOut } from "./auth.js";
@@ -121,7 +121,9 @@ function renderStudentReport() {
   const monthKey = selectedPeriod === "monthly" ? $("#admin-month-select")?.value : null;
   const data = buildStudentReport(selectedStudentId, selectedPeriod === "all" ? null : selectedPeriod, monthKey);
   if (!data) { box.innerHTML = ""; if (printBtn) printBtn.hidden = true; return; }
-  box.innerHTML = `<section class="panel">${renderStudentReportHTML(data)}</section>`;
+  const teacherProfile = teachers.find(t => t.id === selectedTeacherId);
+  const letterhead = buildLetterhead(teacherProfile, data.student?.name);
+  box.innerHTML = `${letterhead}<section class="panel">${renderStudentReportHTML(data)}</section>`;
   // فقط مدیر/معاون — راهبر/سرگروه فقط نظارت می‌کنند، نه چاپ گزارش رسمی.
   if (printBtn) printBtn.hidden = isOversightMode;
 }

@@ -181,7 +181,19 @@ export function renderStudentReportHTML(data) {
 
 const GRADE_LABELS = { grade1: "پایه اول", grade2: "پایه دوم", grade3: "پایه سوم", grade4: "پایه چهارم", grade5: "پایه پنجم", grade6: "پایه ششم" };
 
-export function renderReport() {
+export function buildLetterhead(profile, studentName) {
+  if (!profile) return "";
+  return `
+    <div class="report-letterhead">
+      <div>
+        <p class="report-letterhead__school">${profile.schoolName || ""}</p>
+        <p class="report-letterhead__meta">${studentName ? `دانش‌آموز: ${studentName} · ` : ""}${profile.fullName || ""} · ${GRADE_LABELS[profile.grade] || ""} ${profile.className ? "· کلاس " + profile.className : ""} ${profile.academicYear ? "· سال تحصیلی " + profile.academicYear : ""}</p>
+      </div>
+      <img src="icons/logo-horizontal.png" alt="ClassPilot" style="height:38px;width:auto" />
+    </div>`;
+}
+
+function renderReport() {
   const box = $("#report-preview"); if (!box) return;
   const scope = $("#rp-scope")?.value || "student";
   const period = $("#rp-period")?.value || "term1";
@@ -191,14 +203,7 @@ export function renderReport() {
   if (!students.length) { box.innerHTML = `<p class="empty-state empty-state--inline">ابتدا از صفحه‌ی «دانش‌آموزان» دانش‌آموزان کلاس را اضافه کنید.</p>`; return; }
 
   const profile = getProfile();
-  const letterhead = profile ? `
-    <div class="report-letterhead">
-      <div>
-        <p class="report-letterhead__school">${profile.schoolName || ""}</p>
-        <p class="report-letterhead__meta">${profile.fullName || ""} · ${GRADE_LABELS[profile.grade] || ""} · کلاس ${profile.className || ""} · سال تحصیلی ${profile.academicYear || ""}</p>
-      </div>
-      <img src="icons/logo-horizontal.png" alt="ClassPilot" style="height:38px;width:auto" />
-    </div>` : "";
+  const letterhead = buildLetterhead(profile);
 
   const header = `
     <p style="font-family:var(--font-mono);font-size:12px;color:var(--color-ink-faint);margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--color-border)">
