@@ -72,10 +72,13 @@ function groupAttendanceByMonth(records) {
     const key = `${jy}-${jm}`;
     if (!groups[key]) groups[key] = { jy, jm, label: JMONTHS[jm - 1], present: 0, absentDates: [], lateEntries: [], leftDates: [] };
     const g = groups[key];
-    if (r.status === "present") g.present++;
-    else if (r.status === "absent") g.absentDates.push(formatJalali(isoToDate(r.date)));
-    else if (r.status === "late") g.lateEntries.push(`${formatJalali(isoToDate(r.date))}${r.minutes ? ` (${fa(r.minutes)} دقیقه)` : ""}`);
-    else if (r.status === "left") g.leftDates.push(formatJalali(isoToDate(r.date)));
+    if (r.status === "present") {
+      g.present++;
+      if (r.lateMinutes != null) g.lateEntries.push(`${formatJalali(isoToDate(r.date))}${r.lateMinutes ? ` (${fa(r.lateMinutes)} دقیقه)` : ""}`);
+      if (r.earlyExit) g.leftDates.push(formatJalali(isoToDate(r.date)));
+    } else if (r.status === "absent") {
+      g.absentDates.push(formatJalali(isoToDate(r.date)));
+    }
   });
   return Object.values(groups).sort((a, b) => a.jy - b.jy || a.jm - b.jm);
 }

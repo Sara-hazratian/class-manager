@@ -9,7 +9,7 @@
        seed (DEFAULT_BUDGET below) that the teacher can still
        edit — their edits always win over the seed.
    ============================================================ */
-import { SUBJECTS, DAYS, PERIODS, getSchedule, setSchedule, getAnnualPlan, setAnnualPlan, getProfile, SUBJECT_PAGE_COUNTS, subjectById } from "./store.js";
+import { SUBJECTS, DAYS, PERIODS, getSchedule, setSchedule, getAnnualPlan, setAnnualPlan, getProfile, SUBJECT_PAGE_COUNTS, subjectById, getStudents, getEvaluations } from "./store.js";
 import { $, $$, toast, debounce } from "./ui.js";
 import { fa } from "./jalali.js";
 import { registerTitle, onViewChange } from "./router.js";
@@ -169,12 +169,126 @@ function renderBudgetSubjectDropdown() {
   subjSel.value = budgetSubjectId || "";
 }
 
+/* ============================================================
+   تحلیل عملکرد کلاس (نه بودجه‌بندی) — بر اساس ارزشیابی‌های ثبت‌شده،
+   نه یک فهرست صفحات. هر سطح کیفی (عالی/خوب/قابل قبول/نیاز به تلاش)
+   به یک امتیاز عددی تبدیل می‌شود تا بشود میانگین گرفت، دقیقاً مثل
+   مثال‌های سند: «کسرها → ۴۳٪ → نیاز به تقویت».
+   ============================================================ */
+const PERFORMANCE_SCORE_MAP = { excellent: 95, good: 80, acceptable: 60, "needs-improvement": 30 };
+const NEEDS_IMPROVEMENT_THRESHOLD = 50;
+
+function performanceLabel(score) {
+  if (score < NEEDS_IMPROVEMENT_THRESHOLD) return { label: "نیاز به تقویت", cls: "chip--danger" };
+  if (score < 70) return { label: "متوسط", cls: "chip--warning" };
+  return { label: "خوب", cls: "chip--excellent" };
+}
+
+export function computeClassPerformance() {
+  const evaluations = getEvaluations();
+  const bySubject = {};
+
+  evaluations.forEach(e => {
+    const score = PERFORMANCE_SCORE_MAP[e.level];
+    if (score === undefined) return;
+    const topicKey = e.topic?.trim() || "سایر";
+    bySubject[e.subjectId] ??= {};
+    bySubject[e.subjectId][topicKey] ??= {};
+    (bySubject[e.subjectId][topicKey][e.studentId] ??= []).push(score);
+  });
+
+  const subjects = Object.entries(bySubject).map(([subjectId, topics]) => {
+    const topicRows = Object.entries(topics).map(([topic, byStudent]) => {
+      const studentAverages = Object.values(byStudent).map(scores => scores.reduce((a, b) => a + b, 0) / scores.length);
+      const avg = Math.round(studentAverages.reduce((a, b) => a + b, 0) / studentAverages.length);
+      const needingCount = studentAverages.filter(s => s < NEEDS_IMPROVEMENT_THRESHOLD).length;
+      const needingPct = Math.round((needingCount / studentAverages.length) * 100);
+      return { topic, avg, ...performanceLabel(avg), studentCount: studentAverages.length, needingPct };
+    }).sort((a, b) => a.avg - b.avg); // weakest topic first
+
+    const allScores = Object.values(topics).flatMap(byStudent => Object.values(byStudent).flat());
+    const subjectAvg = allScores.length ? Math.round(allScores.reduce((a, b) => a + b, 0) / allScores.length) : null;
+
+    return {
+      subjectId,
+      subjectName: subjectById(subjectId)?.name || subjectId,
+      avg: subjectAvg,
+      ...(subjectAvg !== null ? performanceLabel(subjectAvg) : { label: "—", cls: "" }),
+      topics: topicRows,
+    };
+  }).sort((a, b) => (a.avg ?? 100) - (b.avg ?? 100));
+
+  const insights = [];
+  subjects.forEach(s => {
+    const weakest = s.topics[0];
+    if (weakest && weakest.avg < NEEDS_IMPROVEMENT_THRESHOLD) {
+      insights.push(`ضعیف‌ترین موضوع در «${s.subjectName}»، «${weakest.topic}» است (${fa(weakest.avg)}٪).`);
+    }
+    s.topics.forEach(t => {
+      if (t.needingPct >= 50) {
+        insights.push(`${fa(t.needingPct)}٪ از دانش‌آموزان به تمرین بیشتر در «${t.topic}» (${s.subjectName}) نیاز دارند.`);
+      }
+    });
+  });
+
+  const subjectsWithAvg = subjects.filter(s => s.avg !== null);
+  const overallAvg = subjectsWithAvg.length
+    ? Math.round(subjectsWithAvg.reduce((a, s) => a + s.avg, 0) / subjectsWithAvg.length)
+    : null;
+
+  return { subjects, insights, overallAvg, totalStudents: getStudents().length };
+}
+
+function renderClassPerformance() {
+  const data = computeClassPerformance();
+
+  const summaryBox = $("#performance-summary");
+  summaryBox.innerHTML = `
+    <div class="panel__header"><h2>خلاصه‌ی عملکرد کلاس</h2></div>
+    ${data.overallAvg !== null ? `
+      <p style="font-size:15px">میانگین کلی کلاس: <strong>${fa(data.overallAvg)}٪</strong>
+        <span class="chip ${performanceLabel(data.overallAvg).cls}" style="margin-inline-start:8px">${performanceLabel(data.overallAvg).label}</span>
+      </p>` : `<p class="empty-state empty-state--inline">هنوز ارزشیابی‌ای با موضوع مشخص ثبت نشده — از صفحه‌ی «ارزشیابی درس»، فیلد «موضوع» را پر کنید تا این تحلیل نمایش داده شود.</p>`}
+  `;
+
+  const insightsBox = $("#performance-insights");
+  insightsBox.innerHTML = data.insights.length ? `
+    <section class="panel">
+      <div class="panel__header"><h2>یافته‌های خودکار</h2></div>
+      ${data.insights.map(i => `<p style="font-size:13.5px;margin-bottom:6px">💡 ${i}</p>`).join("")}
+    </section>` : "";
+
+  const subjectsBox = $("#performance-subjects");
+  subjectsBox.innerHTML = data.subjects.map(s => `
+    <section class="panel" style="margin-bottom:var(--space-4)">
+      <div class="panel__header">
+        <h2>${s.subjectName}</h2>
+        ${s.avg !== null ? `<span class="chip ${s.cls}">${fa(s.avg)}٪ · ${s.label}</span>` : ""}
+      </div>
+      ${s.topics.length ? `
+        <div class="eval-table-wrap">
+          <table class="eval-table">
+            <thead><tr><th>موضوع</th><th>میانگین</th><th>وضعیت</th><th>نیاز به تمرین بیشتر</th></tr></thead>
+            <tbody>${s.topics.map(t => `
+              <tr>
+                <td>${t.topic}</td>
+                <td>${fa(t.avg)}٪</td>
+                <td><span class="chip ${t.cls}">${t.label}</span></td>
+                <td>${t.needingPct > 0 ? `${fa(t.needingPct)}٪ از ${fa(t.studentCount)} دانش‌آموز` : "—"}</td>
+              </tr>`).join("")}</tbody>
+          </table>
+        </div>` : `<p class="empty-state empty-state--inline">ارزشیابی‌ای با موضوع مشخص برای این درس ثبت نشده است.</p>`}
+    </section>`).join("") || `<p class="empty-state empty-state--inline">هنوز داده‌ای برای تحلیل وجود ندارد.</p>`;
+}
+
 export function initPlanning() {
   $$("#plan-tabs .pill-tab").forEach(b => b.addEventListener("click", () => {
     $$("#plan-tabs .pill-tab").forEach(x => x.classList.toggle("is-active", x === b));
-    const weekly = b.dataset.planTab === "weekly";
-    $("#plan-weekly").hidden = !weekly;
-    $("#plan-budget").hidden = weekly;
+    const tab = b.dataset.planTab;
+    $("#plan-weekly").hidden = tab !== "weekly";
+    $("#plan-performance").hidden = tab !== "performance";
+    $("#plan-budget").hidden = tab !== "budget";
+    if (tab === "performance") renderClassPerformance();
   }));
 
   $("#btn-edit-schedule")?.addEventListener("click", enterScheduleEdit);
@@ -188,6 +302,7 @@ export function initPlanning() {
     if ($("#view-planning").hidden) return;
     renderBudgetSubjectDropdown(); // grade may have changed via Settings
     renderBudget();
+    if (!$("#plan-performance").hidden) renderClassPerformance();
   });
   renderSchedule();
   renderBudgetSubjectDropdown();

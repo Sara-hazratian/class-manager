@@ -35,6 +35,7 @@
   <symbol id="i-note" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 15h6M9 11h2"/></symbol>
   <symbol id="i-chart" viewBox="0 0 24 24"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6" rx="1"/><rect x="12.5" y="8" width="3" height="10" rx="1"/><rect x="18" y="5" width="3" height="13" rx="1"/></symbol>
   <symbol id="i-map" viewBox="0 0 24 24"><path d="m9 4-6 2v16l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v16M15 6v16"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></symbol>
   <symbol id="i-report" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h1.5a1.5 1.5 0 0 1 0 3H8zM13 13v4M17 13v4"/></symbol>
   <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 2 3 6v6c0 5 4 8.5 9 10 5-1.5 9-5 9-10V6Z"/></symbol>
   <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></symbol>
@@ -135,6 +136,8 @@
       <button class="nav-tab" data-admin-view="schools" id="admin-nav-schools" hidden><svg class="icon"><use href="#i-map"/></svg><span class="nav-tab__label">مدارس</span></button>
       <button class="nav-tab" data-admin-view="add-teacher" id="admin-nav-add-teacher"><svg class="icon"><use href="#i-users"/></svg><span class="nav-tab__label">افزودن معلم</span></button>
       <button class="nav-tab" data-admin-view="add-leader" id="admin-nav-add-leader"><svg class="icon"><use href="#i-shield"/></svg><span class="nav-tab__label">افزودن راهبر/سرگروه</span></button>
+      <button class="nav-tab" data-admin-view="schedule" id="admin-nav-schedule"><svg class="icon"><use href="#i-calendar"/></svg><span class="nav-tab__label">برنامه‌ی هفتگی</span></button>
+      <button class="nav-tab" data-admin-view="all-students" id="admin-nav-all-students"><svg class="icon"><use href="#i-search"/></svg><span class="nav-tab__label">همه‌ی دانش‌آموزان</span></button>
     </nav>
   </aside>
 
@@ -246,6 +249,34 @@
           </form>
           <p id="promote-error" style="color:var(--color-danger);font-size:12.5px;margin-top:8px;min-height:1em"></p>
         </section>
+      </section>
+
+      <section class="admin-view" data-admin-view="schedule" hidden>
+        <section class="panel">
+          <div class="panel__header"><h2>برنامه‌ی هفتگی مدرسه</h2></div>
+          <p style="font-size:12.5px;color:var(--color-ink-soft);margin-bottom:var(--space-4)">
+            یک کلاس را انتخاب کنید، برنامه‌اش را بسازید یا ویرایش کنید، و در پایان «تأیید و اعمال برنامه» را بزنید — بلافاصله در صفحه‌ی همان معلم قابل مشاهده خواهد بود.
+          </p>
+          <div style="margin-bottom:var(--space-4)">
+            <label for="admin-schedule-teacher-select">کلاس</label>
+            <select id="admin-schedule-teacher-select"></select>
+          </div>
+          <div class="schedule-grid" id="admin-schedule-grid"></div>
+          <button type="button" class="btn btn--primary" id="admin-schedule-apply-btn" style="margin-top:var(--space-4)">تأیید و اعمال برنامه</button>
+          <p id="admin-schedule-status" style="font-size:12.5px;color:var(--color-success);margin-top:8px;min-height:1em"></p>
+        </section>
+      </section>
+
+      <section class="admin-view" data-admin-view="all-students" hidden>
+        <div id="admin-all-students-search-wrap">
+          <div style="margin-bottom:var(--space-4)">
+            <input type="text" id="admin-all-students-search" placeholder="جستجوی نام دانش‌آموز…" />
+          </div>
+          <div id="admin-all-students-list" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(140px, 1fr));gap:var(--space-3)"></div>
+          <div class="empty-state" id="admin-all-students-empty" hidden>
+            <p class="empty-state__text">دانش‌آموزی پیدا نشد.</p>
+          </div>
+        </div>
       </section>
 
     </main>
@@ -452,6 +483,10 @@
           <div class="pill-tabs" id="kind-tabs" style="margin-bottom:var(--space-4)"></div>
 
           <div id="eval-range-picker" class="panel" style="background:var(--color-primary-tint);border:none;padding:12px 16px;margin-bottom:var(--space-4);display:flex;align-items:center;gap:8px;flex-wrap:wrap" hidden></div>
+          <div class="panel" style="background:var(--color-primary-tint);border:none;padding:12px 16px;margin-bottom:var(--space-4);display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span style="font-size:12.5px;color:var(--color-ink-soft);font-weight:700">موضوع این ارزشیابی چیست؟ <span style="color:var(--color-danger)">*</span></span>
+            <input type="text" id="eval-topic" required placeholder="مثلاً کسرها (برای تحلیل عملکرد کلاس لازم است)" style="flex:1;min-width:200px" />
+          </div>
 
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">
             <span style="font-size:12.5px;color:var(--color-ink-soft);font-weight:700">ثبت سریع برای کل کلاس:</span>
@@ -593,6 +628,7 @@
       <section class="view" id="view-planning" data-view="planning" hidden>
         <div class="pill-tabs" id="plan-tabs" style="margin-bottom:var(--space-5)">
           <button type="button" class="pill-tab is-active" data-plan-tab="weekly">برنامه هفتگی</button>
+          <button type="button" class="pill-tab" data-plan-tab="performance">تحلیل عملکرد کلاس</button>
           <button type="button" class="pill-tab" data-plan-tab="budget">بودجه‌بندی سالانه</button>
         </div>
 
@@ -607,6 +643,12 @@
           </div>
           <p style="font-size:11.5px;color:var(--color-ink-faint);margin-bottom:var(--space-3)">برای جلوگیری از تغییر ناخواسته، ابتدا «ویرایش برنامه» را بزنید و در پایان «ثبت برنامه» را فراموش نکنید.</p>
           <div class="schedule-grid" id="schedule-grid"></div>
+        </section>
+
+        <section id="plan-performance" hidden>
+          <section class="panel" style="margin-bottom:var(--space-4)" id="performance-summary"></section>
+          <div id="performance-insights" style="margin-bottom:var(--space-4)"></div>
+          <div id="performance-subjects"></div>
         </section>
 
         <section class="panel" id="plan-budget" hidden>

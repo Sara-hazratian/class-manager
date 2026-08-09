@@ -199,10 +199,10 @@ let attendanceCache = [];
 export const getAttendance = () => attendanceCache;
 
 function attendanceToDb(a, teacherId) {
-  return { id: a.id, teacher_id: teacherId, student_id: a.studentId, date: a.date, status: a.status, minutes: a.minutes ?? null, exit_info: a.exit || null };
+  return { id: a.id, teacher_id: teacherId, student_id: a.studentId, date: a.date, status: a.status, late_minutes: a.lateMinutes ?? null, early_exit: !!a.earlyExit, exit_info: a.exit || null };
 }
 function dbToAttendance(r) {
-  return { id: r.id, studentId: r.student_id, date: r.date, status: r.status, minutes: r.minutes, exit: r.exit_info || "" };
+  return { id: r.id, studentId: r.student_id, date: r.date, status: r.status, lateMinutes: r.late_minutes, earlyExit: !!r.early_exit, exit: r.exit_info || "" };
 }
 
 export async function setAttendance(newList) {
@@ -219,10 +219,10 @@ let evaluationsCache = [];
 export const getEvaluations = () => evaluationsCache;
 
 function evaluationToDb(e, teacherId) {
-  return { id: e.id, teacher_id: teacherId, student_id: e.studentId, subject_id: e.subjectId, period: e.period, kind: e.kind || null, level: e.level, date: e.date, page_from: e.pageFrom ?? null, page_to: e.pageTo ?? null };
+  return { id: e.id, teacher_id: teacherId, student_id: e.studentId, subject_id: e.subjectId, period: e.period, kind: e.kind || null, level: e.level, date: e.date, page_from: e.pageFrom ?? null, page_to: e.pageTo ?? null, topic: e.topic || null };
 }
 function dbToEvaluation(r) {
-  return { id: r.id, studentId: r.student_id, subjectId: r.subject_id, period: r.period, kind: r.kind || "", level: r.level, date: r.date, pageFrom: r.page_from, pageTo: r.page_to };
+  return { id: r.id, studentId: r.student_id, subjectId: r.subject_id, period: r.period, kind: r.kind || "", level: r.level, date: r.date, pageFrom: r.page_from, pageTo: r.page_to, topic: r.topic || "" };
 }
 
 export async function setEvaluations(newList) {
@@ -371,7 +371,7 @@ const PREVIEW_EVALUATIONS = [
 ];
 const PREVIEW_ATTENDANCE = [
   { id: "prev-a1", studentId: "prev-s1", date: _previewToday, status: "present" },
-  { id: "prev-a2", studentId: "prev-s2", date: _previewToday, status: "late", minutes: 10 },
+  { id: "prev-a2", studentId: "prev-s2", date: _previewToday, status: "present", lateMinutes: 10 },
   { id: "prev-a3", studentId: "prev-s3", date: _previewToday, status: "absent" },
 ];
 const PREVIEW_DISCIPLINE = [
@@ -534,8 +534,30 @@ export async function loadMyOversightGrants() {
 }
 
 /** Loads whatever RLS's has_oversight_access() policies allow the current
-    user to see, into the same shared caches reports.js already knows how
-    to read — no separate rendering logic needed. */
+    user to see. Per spec, راهبر/سرگروه get READ-ONLY access to evaluations
+    and student rosters ONLY — never attendance, discipline, homework, or a
+    teacher's personal notes. */
+/** Admin/vice_principal: read a specific teacher's current weekly schedule
+    (to pre-fill the editor before they change anything). */
+export async function loadTeacherSchedule(teacherId) {
+  if (previewModeActive) return defaultSchedule();
+  const { sb } = await import("./supabase-client.js");
+  const { data, error } = await sb.from("teacher_settings").select("schedule").eq("teacher_id", teacherId).maybeSingle();
+  if (error) { console.error("ClassPilot: could not load teacher's schedule", error); return defaultSchedule(); }
+  return (data?.schedule && Object.keys(data.schedule).length) ? data.schedule : defaultSchedule();
+}
+
+/** Admin/vice_principal: "تأیید و اعمال برنامه" — writes the built schedule
+    straight to that teacher's own classroom page (same storage the teacher's
+    own Settings page reads from), for a teacher at THEIR school only —
+    enforced by teacher_settings_admin_update/_insert (same_school_teacher_ids()). */
+export async function applyTeacherSchedule(teacherId, schedule) {
+  if (previewModeActive) return; // no-op in preview — nothing real to save
+  const { sb } = await import("./supabase-client.js");
+  const { error } = await sb.from("teacher_settings").upsert({ teacher_id: teacherId, schedule }, { onConflict: "teacher_id" });
+  if (error) throw error;
+}
+
 export async function loadOversightData() {
   if (previewModeActive) {
     applyPreviewCollections();
@@ -545,24 +567,22 @@ export async function loadOversightData() {
     ];
   }
   const { sb } = await import("./supabase-client.js");
-  const [students, attendance, evaluations, homework, discipline, profilesRes] = await Promise.all([
+  const [students, evaluations, profilesRes] = await Promise.all([
     sb.from("students").select("*"),
-    sb.from("attendance").select("*"),
     sb.from("evaluations").select("*"),
-    sb.from("homework").select("*"),
-    sb.from("discipline").select("*"),
     sb.from("profiles").select("*"),
   ]);
   const check = (res, label) => { if (res.error) console.error(`ClassPilot: failed to load "${label}" for oversight`, res.error); return res.data || []; };
 
   studentsCache = check(students, "students").map(dbToStudent);
-  attendanceCache = check(attendance, "attendance").map(dbToAttendance);
   evaluationsCache = check(evaluations, "evaluations").map(dbToEvaluation);
-  homeworkCache = check(homework, "homework").map(dbToHomework);
-  disciplineCache = check(discipline, "discipline").map(dbToDiscipline);
+  // Never populated in oversight mode — RLS wouldn't return anything for
+  // these anyway, but not even attempting the query keeps the report
+  // renderer's "no access" state unambiguous rather than "empty".
+  attendanceCache = [];
+  homeworkCache = [];
+  disciplineCache = [];
 
-  // Teachers visible via oversight RLS (a subset of "profiles" the
-  // has_oversight_access-backed policies let this user see students for).
   const teacherIdsWithStudents = new Set(studentsCache.map(s => s.teacherId));
   return check(profilesRes, "profiles")
     .filter(p => teacherIdsWithStudents.has(p.id))

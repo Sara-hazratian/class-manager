@@ -39,7 +39,7 @@ export function openLesson(id) {
   $("#lesson-title").textContent = subjectById(id)?.name || "";
   $("#lesson-date").textContent = formatJalaliLong(new Date());
   $$("#period-tabs .pill-tab").forEach(b => b.classList.toggle("is-active", b.dataset.period === "daily"));
-  renderKindTabs(); renderRangePicker(); renderEvalTable();
+  renderKindTabs(); renderRangePicker(); defaultTopicForSession(); renderEvalTable();
   switchView("lesson");
 }
 
@@ -93,6 +93,19 @@ function currentRange() {
   return { pageFrom: from ? Number(from) : null, pageTo: to ? Number(to) : null };
 }
 
+function currentTopic() {
+  const val = $("#eval-topic")?.value?.trim();
+  return val || "";
+}
+
+function defaultTopicForSession() {
+  const recent = getEvaluations()
+    .filter(e => e.subjectId === subjectId && e.period === period && (e.kind || "") === (kind || "") && e.date === todayISO())
+    .slice(-1)[0];
+  const input = $("#eval-topic");
+  if (input) input.value = recent?.topic || "";
+}
+
 function findRecord(list, studentId, date) {
   return list.find(e => e.studentId === studentId && e.subjectId === subjectId
     && e.period === period && (e.kind || "") === (kind || "") && e.date === date);
@@ -127,16 +140,28 @@ function renderMarkAll() {
 
 function setLevel(studentId, level) {
   const date = todayISO();
-  const range = currentRange();
   const list = getEvaluations();
   const existing = findRecord(list, studentId, date);
-  if (existing) {
-    if (existing.level === level) setEvaluations(list.filter(e => e !== existing)); // click again to clear
-    else { existing.level = level; existing.pageFrom = range.pageFrom; existing.pageTo = range.pageTo; setEvaluations(list); }
-  } else {
-    list.push({ id: uid("ev"), studentId, subjectId, period, kind: kind || "", level, date, ...range });
-    setEvaluations(list);
+
+  // Clicking the SAME level again clears the mark — undoing something
+  // never needs a topic, only recording a new/changed one does.
+  if (existing && existing.level === level) {
+    setEvaluations(list.filter(e => e !== existing));
+    renderEvalTable();
+    document.dispatchEvent(new Event("data:changed"));
+    return;
   }
+
+  const topic = currentTopic();
+  if (!topic) {
+    toast("لطفاً قبل از ثبت، «موضوع این ارزشیابی» را بنویسید — برای تحلیل عملکرد کلاس لازم است.", "error");
+    $("#eval-topic")?.focus();
+    return;
+  }
+
+  const range = currentRange();
+  if (existing) { existing.level = level; existing.pageFrom = range.pageFrom; existing.pageTo = range.pageTo; existing.topic = topic; setEvaluations(list); }
+  else { list.push({ id: uid("ev"), studentId, subjectId, period, kind: kind || "", level, date, topic, ...range }); setEvaluations(list); }
   renderEvalTable();
   document.dispatchEvent(new Event("data:changed"));
 }
@@ -144,6 +169,12 @@ function setLevel(studentId, level) {
 function setAllLevel(level) {
   const students = getStudents();
   if (!students.length) return;
+  const topic = currentTopic();
+  if (!topic) {
+    toast("لطفاً قبل از ثبت، «موضوع این ارزشیابی» را بنویسید — برای تحلیل عملکرد کلاس لازم است.", "error");
+    $("#eval-topic")?.focus();
+    return;
+  }
   const levelLabel = LEVELS.find(l => l.id === level).label;
   if (!confirm(`سطح «${levelLabel}» برای همه دانش‌آموزان ثبت شود؟`)) return;
   const date = todayISO();
@@ -151,8 +182,8 @@ function setAllLevel(level) {
   const list = getEvaluations();
   students.forEach(s => {
     const existing = findRecord(list, s.id, date);
-    if (existing) { existing.level = level; existing.pageFrom = range.pageFrom; existing.pageTo = range.pageTo; }
-    else list.push({ id: uid("ev"), studentId: s.id, subjectId, period, kind: kind || "", level, date, ...range });
+    if (existing) { existing.level = level; existing.pageFrom = range.pageFrom; existing.pageTo = range.pageTo; existing.topic = topic; }
+    else list.push({ id: uid("ev"), studentId: s.id, subjectId, period, kind: kind || "", level, date, topic, ...range });
   });
   setEvaluations(list);
   renderEvalTable();
@@ -165,7 +196,7 @@ export function initLesson() {
     period = b.dataset.period;
     kind = KINDS[period][0]?.id || "";
     $$("#period-tabs .pill-tab").forEach(x => x.classList.toggle("is-active", x === b));
-    renderKindTabs(); renderRangePicker(); renderEvalTable();
+    renderKindTabs(); renderRangePicker(); defaultTopicForSession(); renderEvalTable();
   }));
   $("#btn-back-to-lessons")?.addEventListener("click", () => switchView("lessons"));
 }

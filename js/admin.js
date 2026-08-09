@@ -11,7 +11,7 @@
    js/superadmin.js), per design. Approving accounts, rejecting
    them, and full user management live there exclusively.
    ============================================================ */
-import { getProfile, loadAdminData, loadOversightData, getStudents, findTeacherForSchool, addTeacherToMySchool, findPersonForAccessGrant, grantSchoolAccess } from "./store.js";
+import { getProfile, loadAdminData, loadOversightData, getStudents, findTeacherForSchool, addTeacherToMySchool, findPersonForAccessGrant, grantSchoolAccess, loadTeacherSchedule, applyTeacherSchedule, DAYS, PERIODS, SUBJECTS } from "./store.js";
 import { buildStudentReport } from "./reports.js";
 import { $, $$, toast, translateError } from "./ui.js";
 import { fa } from "./jalali.js";
@@ -137,10 +137,11 @@ function renderStudentReport() {
           </table>
         </div>` : `<p class="empty-state empty-state--inline">هنوز ارزشیابی‌ای ثبت نشده است.</p>`}
     </section>
+    ${isOversightMode ? "" : `
     <section class="panel">
       <div class="panel__header"><h2>حضور و غیاب</h2></div>
       ${attendanceHTML}
-    </section>`;
+    </section>`}`;
 }
 
 /* ---------- اعطای دسترسی نظارتی راهبر/سرگروه (admin/VP only) — دسترسی
@@ -196,6 +197,99 @@ function renderAddTeacherPanel() {
   });
 }
 
+/* ---------- برنامه‌ی هفتگی توسط مدیر/معاون — می‌سازند/ویرایش می‌کنند،
+   «تأیید و اعمال» مستقیم در صفحه‌ی همان معلم قابل مشاهده می‌شود.
+   معلم همچنان می‌تواند فقط برنامه‌ی خودش را (از صفحه‌ی تنظیمات) ویرایش
+   کند — این تغییری در آن دسترسی نمی‌دهد. ---------- */
+let adminScheduleDraft = null;
+let adminScheduleTeacherId = null;
+
+function renderAdminScheduleGrid() {
+  const grid = $("#admin-schedule-grid");
+  if (!grid || !adminScheduleDraft) return;
+  let html = `<div class="cell cell--head">زنگ</div>` + DAYS.map(d => `<div class="cell cell--head">${d}</div>`).join("");
+  for (let p = 0; p < PERIODS; p++) {
+    html += `<div class="cell cell--head">زنگ ${fa(p + 1)}</div>`;
+    for (let d = 0; d < DAYS.length; d++) {
+      const current = adminScheduleDraft[d]?.[p] || "";
+      html += `<div class="cell"><select data-day="${d}" data-period="${p}">
+        <option value="">—</option>
+        ${SUBJECTS.map(s => `<option value="${s.id}" ${s.id === current ? "selected" : ""}>${s.name}</option>`).join("")}
+      </select></div>`;
+    }
+  }
+  grid.innerHTML = html;
+  $$("select[data-day]", grid).forEach(sel => sel.addEventListener("change", () => {
+    const d = sel.dataset.day, p = Number(sel.dataset.period);
+    if (!adminScheduleDraft[d]) adminScheduleDraft[d] = [];
+    adminScheduleDraft[d][p] = sel.value;
+  }));
+}
+
+async function renderAdminScheduleTab() {
+  const sel = $("#admin-schedule-teacher-select");
+  sel.innerHTML = teachers.map(t => `<option value="${t.id}">${t.fullName || t.username} — ${GRADE_LABELS[t.grade] || ""} ${t.className || ""}</option>`).join("");
+  if (!teachers.length) { $("#admin-schedule-grid").innerHTML = ""; return; }
+
+  const loadFor = async teacherId => {
+    adminScheduleTeacherId = teacherId;
+    adminScheduleDraft = await loadTeacherSchedule(teacherId);
+    renderAdminScheduleGrid();
+    $("#admin-schedule-status").textContent = "";
+  };
+
+  sel.addEventListener("change", () => loadFor(sel.value));
+  await loadFor(sel.value || teachers[0]?.id);
+
+  $("#admin-schedule-apply-btn").addEventListener("click", async () => {
+    if (!adminScheduleTeacherId) return;
+    try {
+      await applyTeacherSchedule(adminScheduleTeacherId, adminScheduleDraft);
+      $("#admin-schedule-status").textContent = "برنامه با موفقیت اعمال شد و در صفحه‌ی معلم قابل مشاهده است.";
+      toast("برنامه اعمال شد");
+    } catch (err) {
+      $("#admin-schedule-status").style.color = "var(--color-danger)";
+      $("#admin-schedule-status").textContent = translateError(err);
+    }
+  });
+}
+
+/* ---------- «همه‌ی دانش‌آموزان» — لیست تخت با جستجو، کلیک روی هرکدوم
+   مستقیم گزارش همان دانش‌آموز را باز می‌کند (بدون نیاز به رفتن به تب
+   «کلاس‌ها» و انتخاب معلم اول). ---------- */
+function renderAllStudentsList(filterText = "") {
+  const wrap = $("#admin-all-students-list");
+  const allStudents = getStudents();
+  const teacherById = new Map(teachers.map(t => [t.id, t]));
+  const q = filterText.trim().toLowerCase();
+  const filtered = q ? allStudents.filter(s => s.name.toLowerCase().includes(q)) : allStudents;
+
+  $("#admin-all-students-empty").hidden = filtered.length > 0;
+  wrap.innerHTML = filtered.map(s => {
+    const t = teacherById.get(s.teacherId);
+    return `
+    <button type="button" class="card card--interactive" data-all-student="${s.id}" data-owner-teacher="${s.teacherId}" style="text-align:center;aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:var(--space-2)">
+      <svg class="icon" style="width:22px;height:22px;color:var(--color-primary)"><use href="#i-users"/></svg>
+      <p style="font-weight:700;font-size:12px;line-height:1.3">${s.name}</p>
+      <p style="font-size:10px;color:var(--color-ink-soft)">${t ? `${GRADE_LABELS[t.grade] || ""} · ${t.className || ""}` : ""}</p>
+    </button>`;
+  }).join("");
+
+  $$("[data-all-student]", wrap).forEach(b => b.addEventListener("click", () => {
+    selectedTeacherId = b.dataset.ownerTeacher;
+    selectedStudentId = b.dataset.allStudent;
+    renderStudentList();
+    // یک دانش‌آموز مشخص از قبل انتخاب شده — مستقیم گزارشش را نشان بده.
+    $$("[data-student]", $("#admin-student-list")).forEach(x => x.classList.toggle("is-active", x.dataset.student === selectedStudentId));
+    renderStudentReport();
+  }));
+}
+
+function renderAllStudentsTab() {
+  renderAllStudentsList();
+  $("#admin-all-students-search").addEventListener("input", e => renderAllStudentsList(e.target.value));
+}
+
 /* ---------- init ---------- */
 export function initAdmin(oversightMode = false) {
   isOversightMode = oversightMode;
@@ -223,8 +317,12 @@ export function initAdmin(oversightMode = false) {
   const addTeacherNav = $("#admin-nav-add-teacher");
   const addLeaderNav = $("#admin-nav-add-leader");
   const schoolsNav = $("#admin-nav-schools");
+  const scheduleNav = $("#admin-nav-schedule");
+  const allStudentsNav = $("#admin-nav-all-students");
   if (addTeacherNav) addTeacherNav.hidden = !canManageSchoolRoles;
   if (addLeaderNav) addLeaderNav.hidden = !canManageSchoolRoles;
+  if (scheduleNav) scheduleNav.hidden = !canManageSchoolRoles;
+  if (allStudentsNav) allStudentsNav.hidden = !canManageSchoolRoles;
   // «مدارس» فقط برای راهبر/سرگروه معنا دارد — مدیر/معاون خودش یک مدرسه
   // است، چیزی برای گروه‌بندی وجود ندارد.
   if (schoolsNav) schoolsNav.hidden = !oversightMode;
@@ -233,6 +331,7 @@ export function initAdmin(oversightMode = false) {
   renderTeacherList().then(() => {
     renderPromotePanel();
     if (oversightMode) renderSchoolsView();
+    if (canManageSchoolRoles) { renderAdminScheduleTab(); renderAllStudentsTab(); }
   });
 
   $("#admin-promote-form")?.addEventListener("submit", async e => {
