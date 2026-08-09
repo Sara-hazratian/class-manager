@@ -9,21 +9,13 @@
    No edit controls anywhere on this screen, by design.
    ============================================================ */
 import { getStudents, addChildByNationalId, getProfile } from "./store.js";
-import { buildStudentReport } from "./reports.js";
+import { buildStudentReport, renderStudentReportHTML } from "./reports.js";
 import { $, $$, toast, translateError } from "./ui.js";
 import { fa } from "./jalali.js";
 import { signOut } from "./auth.js";
 
-const SCORE = { excellent: 4, good: 3, acceptable: 2, "needs-improvement": 1 };
 let selectedChildId = null;
-let selectedPeriod = "term1";
-
-function subjectScore(studentId, subjectId, evaluations) {
-  const list = evaluations.filter(e => e.studentId === studentId && e.subjectId === subjectId);
-  if (!list.length) return null;
-  const avg = list.reduce((s, e) => s + (SCORE[e.level] || 0), 0) / list.length;
-  return Math.round((avg / 4) * 100);
-}
+let selectedPeriod = "all";
 
 function renderChildTabs() {
   const wrap = $("#parent-child-tabs");
@@ -44,58 +36,15 @@ function renderChildTabs() {
 
 function renderChildContent() {
   if (!selectedChildId) return;
-  const data = buildStudentReport(selectedChildId, selectedPeriod, null);
   const box = $("#parent-report");
+  // null period = the FULL history (daily through semester-level, everything
+  // ever recorded) — a parent should see all of it, not just one term at a
+  // time. The term1/term2 pill-tabs still let them narrow it down if they want.
+  const data = buildStudentReport(selectedChildId, selectedPeriod === "all" ? null : selectedPeriod, null);
   if (!data) { box.innerHTML = ""; return; }
-
-  const attendanceHTML = data.attendanceByMonth.length ? data.attendanceByMonth.map(m => `
-    <p style="margin-bottom:6px;font-size:13.5px">
-      <strong>${m.label}:</strong> حاضر ${fa(m.present)} روز
-      ${m.absentDates.length ? ` · ${fa(m.absentDates.length)} بار غیبت` : ""}
-      ${m.lateEntries.length ? ` · ${fa(m.lateEntries.length)} بار تأخیر` : ""}
-    </p>`).join("") : `<p class="empty-state empty-state--inline">حضوری برای این بازه ثبت نشده است.</p>`;
-
-  const disciplineHTML = data.disciplineRecords.length ? `
-    <ul style="padding-inline-start:18px;list-style:disc">
-      ${data.disciplineRecords.map(d => `<li style="margin-bottom:4px;font-size:13px">
-        <span class="chip ${d.type === "positive" ? "chip--excellent" : "chip--danger"}">${d.type === "positive" ? "مثبت" : "تذکر"}</span>
-        ${d.description}</li>`).join("")}
-    </ul>` : `<p class="empty-state empty-state--inline">موردی ثبت نشده است.</p>`;
-
-  const progressHTML = data.subjectRows.length ? data.subjectRows.map(r => {
-    const pct = Math.round((r.avg / 4) * 100);
-    return `<div style="margin-bottom:12px">
-      <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;margin-bottom:4px">
-        <span>${r.subject.name}</span><span style="font-family:var(--font-mono);color:var(--color-ink-soft)">${fa(pct)}٪</span>
-      </div>
-      <div style="height:9px;background:var(--color-surface-alt);border-radius:999px;overflow:hidden">
-        <div style="height:100%;width:${pct}%;background:${r.subject.color};border-radius:999px"></div>
-      </div>
-    </div>`;
-  }).join("") : `<p class="empty-state empty-state--inline">هنوز ارزشیابی‌ای ثبت نشده است.</p>`;
-
-  box.innerHTML = `
-    <section class="panel" style="margin-bottom:var(--space-4)">
-      <div class="panel__header"><h2>وضعیت کلی</h2></div>
-      ${data.overall !== null ? `<p style="font-size:13.5px">میانگین عملکرد: <strong>${LABEL(data.overall)}</strong></p>` : `<p class="empty-state empty-state--inline">هنوز ارزشیابی‌ای ثبت نشده است.</p>`}
-    </section>
-    <section class="panel" style="margin-bottom:var(--space-4)">
-      <div class="panel__header"><h2>نمودار پیشرفت هر درس</h2></div>
-      ${progressHTML}
-    </section>
-    <section class="panel" style="margin-bottom:var(--space-4)">
-      <div class="panel__header"><h2>حضور و غیاب</h2></div>
-      ${attendanceHTML}
-    </section>
-    <section class="panel">
-      <div class="panel__header"><h2>انضباط</h2></div>
-      ${disciplineHTML}
-    </section>`;
-}
-
-function LABEL(avg) {
-  const r = Math.max(1, Math.min(4, Math.round(avg)));
-  return { 4: "عالی", 3: "خوب", 2: "قابل قبول", 1: "نیاز به تلاش بیشتر" }[r];
+  // Same detailed renderer the teacher/admin views use — full per-topic
+  // breakdown, strengths/needs-work, dated attendance and discipline entries.
+  box.innerHTML = `<section class="panel">${renderStudentReportHTML(data)}</section>`;
 }
 
 export function renderParentView() {

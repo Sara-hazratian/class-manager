@@ -162,7 +162,7 @@ export async function showPreview(role) {
 
   if (["admin", "vice_principal", "rahbar", "group_leader"].includes(role)) {
     showScreen("admin-screen");
-    initAdmin();
+    initAdmin(role === "rahbar" || role === "group_leader");
     return;
   }
   if (role === "parent") {

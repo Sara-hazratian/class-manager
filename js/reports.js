@@ -31,6 +31,7 @@ function inTerm(iso, term) { return termOf(isoToDate(iso)) === term; }
 function inMonth(iso, monthKey) { return MONTH_KEY_BY_JM[toJalali(isoToDate(iso)).jm] === monthKey; }
 
 function matchesPeriod(iso, period, monthKey) {
+  if (period === null || period === undefined || period === "all") return true; // همه — بدون فیلتر تاریخ
   if (period === "weekly") return inWeek(iso);
   if (period === "monthly") return inMonth(iso, monthKey);
   if (period === "term1") return inTerm(iso, 1);
@@ -125,7 +126,7 @@ export function buildStudentReport(studentId, period, monthKey) {
 }
 
 /* ---------- rendering ---------- */
-function renderStudentReportHTML(data) {
+export function renderStudentReportHTML(data) {
   if (!data.subjectRows.length && !data.attendanceByMonth.length && !data.disciplineRecords.length) {
     return `<h3>${data.student.name}</h3><p style="font-size:13.5px;color:var(--color-ink-soft);margin-top:8px">برای این بازه هنوز اطلاعاتی ثبت نشده است.</p>`;
   }

@@ -12,7 +12,7 @@
    them, and full user management live there exclusively.
    ============================================================ */
 import { getProfile, loadAdminData, loadOversightData, getStudents, findTeacherForSchool, addTeacherToMySchool, findPersonForAccessGrant, grantSchoolAccess, loadTeacherSchedule, applyTeacherSchedule, DAYS, PERIODS, SUBJECTS } from "./store.js";
-import { buildStudentReport } from "./reports.js";
+import { buildStudentReport, renderStudentReportHTML } from "./reports.js";
 import { $, $$, toast, translateError } from "./ui.js";
 import { fa } from "./jalali.js";
 import { signOut } from "./auth.js";
@@ -23,7 +23,7 @@ const ROLE_LABELS = { teacher: "معلم", admin: "مدیر", vice_principal: "�
 let teachers = [];
 let selectedTeacherId = null;
 let selectedStudentId = null;
-let selectedPeriod = "term1";
+let selectedPeriod = "all";
 let isOversightMode = false;
 
 /* ---------- teachers → students → report ---------- */
@@ -117,31 +117,9 @@ function renderSchoolsView() {
 function renderStudentReport() {
   const box = $("#admin-student-report");
   if (!selectedStudentId) { box.innerHTML = ""; return; }
-  const data = buildStudentReport(selectedStudentId, selectedPeriod, null);
+  const data = buildStudentReport(selectedStudentId, selectedPeriod === "all" ? null : selectedPeriod, null);
   if (!data) { box.innerHTML = ""; return; }
-
-  const attendanceHTML = data.attendanceByMonth.length ? data.attendanceByMonth.map(m => `
-    <p style="margin-bottom:6px;font-size:13.5px"><strong>${m.label}:</strong> حاضر ${fa(m.present)} روز
-      ${m.absentDates.length ? ` · ${fa(m.absentDates.length)} بار غیبت` : ""}
-      ${m.lateEntries.length ? ` · ${fa(m.lateEntries.length)} بار تأخیر` : ""}</p>`).join("")
-    : `<p class="empty-state empty-state--inline">حضوری برای این بازه ثبت نشده است.</p>`;
-
-  box.innerHTML = `
-    <section class="panel" style="margin-bottom:var(--space-4)">
-      <div class="panel__header"><h2>${data.student.name}</h2></div>
-      ${data.subjectRows.length ? `
-        <div class="eval-table-wrap">
-          <table class="eval-table">
-            <thead><tr><th>درس</th><th>سطح</th><th>تعداد</th></tr></thead>
-            <tbody>${data.subjectRows.map(r => `<tr><td>${r.subject.name}</td><td>${r.label}</td><td>${fa(r.count)}</td></tr>`).join("")}</tbody>
-          </table>
-        </div>` : `<p class="empty-state empty-state--inline">هنوز ارزشیابی‌ای ثبت نشده است.</p>`}
-    </section>
-    ${isOversightMode ? "" : `
-    <section class="panel">
-      <div class="panel__header"><h2>حضور و غیاب</h2></div>
-      ${attendanceHTML}
-    </section>`}`;
+  box.innerHTML = `<section class="panel">${renderStudentReportHTML(data)}</section>`;
 }
 
 /* ---------- اعطای دسترسی نظارتی راهبر/سرگروه (admin/VP only) — دسترسی

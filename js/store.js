@@ -406,6 +406,14 @@ export function enablePreviewMode(role) {
     profileCache = { ...base, role, fullName: "راهبر نمونه", schoolName: "دبستان نمونه", assignedGrade: "grade3" };
   } else if (role === "parent") {
     profileCache = { ...base, role: "parent", fullName: "ولی نمونه" };
+    // یک ولی فقط باید فرزند خودش را ببیند — نه هر سه دانش‌آموز نمونه.
+    applyPreviewCollections();
+    studentsCache = PREVIEW_STUDENTS.slice(0, 1);
+    const onlyChildId = studentsCache[0].id;
+    evaluationsCache = evaluationsCache.filter(e => e.studentId === onlyChildId);
+    attendanceCache = attendanceCache.filter(a => a.studentId === onlyChildId);
+    disciplineCache = disciplineCache.filter(d => d.studentId === onlyChildId);
+    return;
   }
   applyPreviewCollections();
 }
