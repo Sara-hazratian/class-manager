@@ -4,13 +4,13 @@
    Bump CACHE_NAME whenever any precached file changes so
    returning users get the update instead of a stale cache.
    ============================================================ */
-const CACHE_NAME = "classpilot-v35";
+const CACHE_NAME = "classpilot-v36";
 
 const PRECACHE_URLS = [
   "./",
   "./index.html",
   "./superadmin.html",
-  "./manifest.webmanifest?v=3",
+  "./manifest.webmanifest?v=4",
   "./css/tokens.css",
   "./css/base.css",
   "./css/layout.css",
@@ -43,11 +43,11 @@ const PRECACHE_URLS = [
   "./js/reports.js",
   "./js/settings.js",
   "./js/reset.js",
-  "./icons/icon-192.png?v=3",
-  "./icons/icon-512.png?v=3",
-  "./icons/icon-maskable-512.png?v=3",
-  "./icons/apple-touch-icon.png?v=3",
-  "./icons/favicon.png?v=3",
+  "./icons/icon-192.png?v=4",
+  "./icons/icon-512.png?v=4",
+  "./icons/icon-maskable-512.png?v=4",
+  "./icons/apple-touch-icon.png?v=4",
+  "./icons/favicon.png?v=4",
   "./icons/logo-horizontal.png",
 ];
 

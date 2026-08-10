@@ -88,7 +88,7 @@
   .sidebar__brand { justify-content: center; }
 }
 @media (max-width: 720px) {
-  #app { flex-direction: column; }
+  #app, #admin-screen { flex-direction: column; }
   .sidebar { width: 100%; height: auto; flex-direction: row; align-items: center; padding: var(--space-3); position: sticky; z-index: 50; }
   .sidebar__brand { padding: 0 var(--space-3) 0 0; }
   .nav-tabs { flex-direction: row; overflow-x: auto; }
