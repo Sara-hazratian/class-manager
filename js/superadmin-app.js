@@ -50,7 +50,17 @@ async function boot() {
   // "type=recovery" in the URL — check this directly (not just the async
   // PASSWORD_RECOVERY event) so there's no race with getSession() below
   // resolving first and skipping straight past the reset form.
-  const isRecoveryLink = window.location.hash.includes("type=recovery") || window.location.search.includes("type=recovery");
+  // Supabase recovery links come in TWO possible formats depending on the
+  // auth flow configured: the older implicit flow uses a URL hash like
+  // "#access_token=...&type=recovery", while the newer (now default) PKCE
+  // flow uses "?code=xxxxx" with no "type=recovery" anywhere. Checking only
+  // the old format was the actual bug — it silently let the recovery
+  // session log the person straight in without ever changing the password.
+  const params = new URLSearchParams(window.location.search);
+  const isRecoveryLink =
+    window.location.hash.includes("type=recovery") ||
+    window.location.search.includes("type=recovery") ||
+    params.has("code"); // this page never uses "code" for anything else (no OAuth/magic-link sign-in), so its mere presence here means a recovery link
 
   sb.auth.onAuthStateChange((event) => {
     if (event === "PASSWORD_RECOVERY") showScreen("sa-reset-screen");
