@@ -9,7 +9,7 @@
    ============================================================ */
 import { isSetupComplete, loadProfile, loadAllCollections, loadParentData, enablePreviewMode } from "./store.js";
 import { initTheme } from "./theme.js";
-import { initModals } from "./ui.js";
+import { initModals, $ } from "./ui.js";
 import { initRouter, switchView } from "./router.js";
 import { initAuth, getSession, signOut, PHONE_VERIFICATION_ENABLED } from "./auth.js";
 import { initSetup } from "./setup.js";
@@ -82,13 +82,45 @@ async function afterAuthSuccess() {
   // not just reject a pending admin/VP signup.
   if (!profile.verified) {
     showScreen("pending-screen");
-    const isPendingApproval = profile.role === "admin" || profile.role === "vice_principal";
+    const isAdminRole = profile.role === "admin" || profile.role === "vice_principal";
     const heading = document.querySelector("#pending-screen h1");
     const body = document.querySelector("#pending-screen p");
-    if (heading) heading.textContent = isPendingApproval ? "حساب شما در انتظار تأیید است" : "حساب شما غیرفعال شده است";
-    if (body) body.textContent = isPendingApproval
-      ? "درخواست ثبت‌نام شما به‌عنوان مدیر/معاون ثبت شد و برای بررسی مدرک ابلاغ/حکم کارگزینی نزد مدیریت سامانه ارسال شد. پس از تأیید، با همین کد و رمز عبور می‌توانید وارد شوید."
-      : "دسترسی شما توسط مدیریت سامانه غیرفعال شده است. برای اطلاعات بیشتر با مدیریت سامانه تماس بگیرید.";
+    const reasonBox = $("#pending-reason-box");
+    const reasonLabel = $("#pending-reason-label");
+    const reasonText = $("#pending-reason-text");
+    const resubmitBtn = $("#pending-resubmit");
+    reasonBox.hidden = true;
+    resubmitBtn.hidden = true;
+
+    if (isAdminRole && profile.reviewStatus === "rejected") {
+      heading.textContent = "درخواست شما رد شد";
+      body.textContent = "متأسفانه درخواست ثبت‌نام شما به‌عنوان مدیر/معاون رد شد. برای اطلاعات بیشتر با مدیریت سامانه تماس بگیرید.";
+      if (profile.reviewReason) { reasonLabel.textContent = "علت رد:"; reasonText.textContent = profile.reviewReason; reasonBox.hidden = false; }
+    } else if (isAdminRole && profile.reviewStatus === "needs_correction") {
+      heading.textContent = "درخواست شما نیازمند اصلاح است";
+      body.textContent = "لطفاً موارد زیر را اصلاح کنید و دوباره درخواست بدهید.";
+      if (profile.reviewReason) { reasonLabel.textContent = "موارد نیازمند اصلاح:"; reasonText.textContent = profile.reviewReason; reasonBox.hidden = false; }
+      resubmitBtn.hidden = false;
+      resubmitBtn.onclick = async () => {
+        resubmitBtn.disabled = true;
+        resubmitBtn.textContent = "در حال ارسال…";
+        try {
+          const { resubmitRegistrationRequest } = await import("./store.js");
+          await resubmitRegistrationRequest();
+          window.location.reload();
+        } catch (err) {
+          resubmitBtn.disabled = false;
+          resubmitBtn.textContent = "ثبت مجدد درخواست";
+          alert("ثبت مجدد ناموفق بود، دوباره تلاش کنید.");
+        }
+      };
+    } else if (isAdminRole) {
+      heading.textContent = "حساب شما در انتظار تأیید است";
+      body.textContent = "درخواست ثبت‌نام شما به‌عنوان مدیر/معاون ثبت شد و برای بررسی مدرک ابلاغ/حکم کارگزینی نزد مدیریت سامانه ارسال شد. پس از تأیید، با همین کد و رمز عبور می‌توانید وارد شوید.";
+    } else {
+      heading.textContent = "حساب شما غیرفعال شده است";
+      body.textContent = "دسترسی شما توسط مدیریت سامانه غیرفعال شده است. برای اطلاعات بیشتر با مدیریت سامانه تماس بگیرید.";
+    }
     $bindSignOut("pending-sign-out");
     return;
   }

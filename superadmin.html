@@ -25,6 +25,12 @@
     #sa-auth-screen, #sa-denied-screen { padding: 0; align-items: stretch; }
     #sa-auth-screen .setup-card, #sa-denied-screen .setup-card { min-height: 100vh; min-height: 100dvh; border-radius: 0; box-shadow: none; max-width: none; display: flex; flex-direction: column; justify-content: center; }
   }
+  .modal-overlay { position: fixed; inset: 0; z-index: 200; display: grid; place-items: center; background: rgba(10,20,22,.5); backdrop-filter: blur(2px); padding: var(--space-4); }
+  .modal-overlay[hidden] { display: none; }
+  .modal-overlay .modal { padding: var(--space-5); }
+  .modal-overlay textarea { width: 100%; padding: 10px 12px; border-radius: var(--radius-md); border: 1px solid var(--color-border); font-family: inherit; font-size: 13.5px; resize: vertical; margin-top: 6px; }
+  .reason-suggestion { font-size: 11.5px; padding: 5px 10px; border-radius: var(--radius-pill); background: var(--color-surface-alt); border: 1px solid var(--color-border); color: var(--color-ink-soft); cursor: pointer; }
+  .reason-suggestion:hover { background: var(--color-primary-tint); border-color: var(--color-primary); color: var(--color-primary); }
 </style>
 </head>
 <body>
@@ -103,13 +109,25 @@
   </header>
   <main class="main-content">
     <div class="pill-tabs" id="sa-tabs" style="margin-bottom:var(--space-5)">
-      <button type="button" class="pill-tab is-active" data-sa-tab="queue">درخواست‌های در انتظار تأیید</button>
+      <button type="button" class="pill-tab is-active" data-sa-tab="dashboard">داشبورد</button>
+      <button type="button" class="pill-tab" data-sa-tab="queue">درخواست‌های ثبت‌نام</button>
       <button type="button" class="pill-tab" data-sa-tab="users">مدیریت کاربران</button>
     </div>
 
-    <section id="sa-tab-queue">
+    <section id="sa-tab-dashboard">
+      <div id="sa-stat-cards" class="stat-grid"></div>
+      <section class="panel" style="margin-top:var(--space-5)">
+        <div class="panel__header"><h2>آخرین درخواست‌ها</h2></div>
+        <div id="sa-recent-list"></div>
+        <div class="empty-state" id="sa-recent-empty" hidden>
+          <p class="empty-state__text">هنوز درخواستی ثبت نشده است.</p>
+        </div>
+      </section>
+    </section>
+
+    <section id="sa-tab-queue" hidden>
       <section class="panel">
-        <div class="panel__header"><h2>درخواست‌های در انتظار تأیید</h2></div>
+        <div class="panel__header"><h2>درخواست‌های ثبت‌نام</h2></div>
         <div id="sa-pending-list"></div>
         <div class="empty-state" id="sa-pending-empty" hidden>
           <p class="empty-state__text">درخواست در انتظاری وجود ندارد.</p>
@@ -128,6 +146,21 @@
       </section>
     </section>
   </main>
+</div>
+
+<!-- ===== REASON MODAL — used for both «رد درخواست» and «نیازمند اصلاح» ===== -->
+<div id="sa-reason-modal" class="modal-overlay" hidden>
+  <div class="modal">
+    <h2 id="sa-reason-modal-title">رد درخواست</h2>
+    <label for="sa-reason-input" id="sa-reason-modal-label">علت رد درخواست</label>
+    <textarea id="sa-reason-input" rows="4" placeholder="علت رد درخواست را وارد کنید..."></textarea>
+    <div id="sa-reason-suggestions" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px"></div>
+    <p id="sa-reason-error" style="color:var(--color-danger);font-size:12.5px;margin-top:8px;min-height:1em"></p>
+    <div style="display:flex;gap:10px;margin-top:var(--space-4)">
+      <button type="button" class="btn btn--secondary" id="sa-reason-cancel" style="flex:1">انصراف</button>
+      <button type="button" class="btn btn--danger" id="sa-reason-confirm" style="flex:1">رد درخواست</button>
+    </div>
+  </div>
 </div>
 
 <div class="toast-container" id="toast-container" role="status" aria-live="polite"></div>

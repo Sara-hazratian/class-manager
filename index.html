@@ -64,10 +64,15 @@
       <svg class="icon" style="width:28px;height:28px"><use href="#i-check-cal"/></svg>
     </span>
     <h1 style="font-size:19px;margin-bottom:8px">حساب شما در انتظار تأیید است</h1>
-    <p style="color:var(--color-ink-soft);font-size:13.5px;line-height:1.9;margin-bottom:var(--space-5)">
+    <p style="color:var(--color-ink-soft);font-size:13.5px;line-height:1.9;margin-bottom:var(--space-4)">
       درخواست ثبت‌نام شما به‌عنوان مدیر/معاون ثبت شد و برای بررسی مدرک ابلاغ/حکم کارگزینی نزد مدیریت سامانه ارسال شد.
       پس از تأیید، با همین نام کاربری و رمز عبور می‌توانید وارد شوید.
     </p>
+    <div id="pending-reason-box" hidden style="background:var(--color-danger-tint);border-radius:var(--radius-md);padding:var(--space-3);margin-bottom:var(--space-4);text-align:right">
+      <p style="font-size:12px;font-weight:700;color:var(--color-danger);margin-bottom:4px" id="pending-reason-label">علت:</p>
+      <p style="font-size:13px;color:var(--color-ink)" id="pending-reason-text"></p>
+    </div>
+    <button type="button" class="btn btn--primary btn--block" id="pending-resubmit" style="margin-bottom:var(--space-3)" hidden>ثبت مجدد درخواست</button>
     <button type="button" class="btn btn--secondary btn--block" id="pending-sign-out">خروج از حساب</button>
   </div>
 </div>
@@ -131,7 +136,7 @@
 <div id="admin-screen" hidden>
   <aside class="sidebar">
     <div class="sidebar__brand">
-      <span class="brand__mark"><img src="icons/icon-192.png" alt="ClassPilot" style="width:100%;height:100%;object-fit:contain;border-radius:inherit" /></span>
+      <span class="brand__mark" style="background:none;box-shadow:none"><img src="icons/icon-192.png" alt="ClassPilot" style="width:100%;height:100%;object-fit:contain;border-radius:inherit" /></span>
       <span class="brand__title">ClassPilot<small>پنل <span id="admin-role-label">مدیر</span></small></span>
     </div>
     <nav class="nav-tabs">
@@ -302,7 +307,7 @@
 <div id="app" hidden>
   <aside class="sidebar">
     <div class="sidebar__brand">
-      <span class="brand__mark"><img src="icons/icon-192.png" alt="ClassPilot" style="width:100%;height:100%;object-fit:contain;border-radius:inherit" /></span>
+      <span class="brand__mark" style="background:none;box-shadow:none"><img src="icons/icon-192.png" alt="ClassPilot" style="width:100%;height:100%;object-fit:contain;border-radius:inherit" /></span>
       <span class="brand__title">ClassPilot<small>دفتر مدیریت کلاسی</small></span>
     </div>
     <nav class="nav-tabs">

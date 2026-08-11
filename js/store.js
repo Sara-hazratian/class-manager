@@ -82,6 +82,7 @@ function dbRowToProfile(row) {
     username: row.username || "", personnelCode: row.personnel_code || "",
     position: row.position || "", verified: row.verified, documentPath: row.document_path || "",
     assignedGrade: row.assigned_grade || "", phoneNumber: row.phone_number || "", schoolId: row.school_id || "",
+    reviewStatus: row.review_status || "approved", reviewReason: row.review_reason || "",
   };
 }
 
@@ -648,26 +649,59 @@ export async function loadAdminData() {
 export async function loadPendingApprovals() {
   const { sb } = await import("./supabase-client.js");
   const { data, error } = await sb.from("profiles").select("*")
-    .in("role", ["admin", "vice_principal"]).eq("verified", false);
+    .in("role", ["admin", "vice_principal"]).eq("review_status", "pending");
   if (error) { console.error("ClassPilot: could not load pending approvals", error); return []; }
-  return data.map(row => ({ id: row.id, ...dbRowToProfile(row) }));
+  return data.map(row => ({ id: row.id, ...dbRowToProfile(row), reviewStatus: row.review_status, reviewReason: row.review_reason }));
 }
 
+/** یکپارچه: تأیید/رد/نیازمند اصلاح — همه از همین یک تابع. دلیل برای رد و
+    نیازمند اصلاح، هم تو دیتابیس هم اینجا اجباری است (دفاع دوگانه). هرگز
+    ردیف پروفایل حذف نمی‌شود — تاریخچه‌ی کامل در request_reviews می‌ماند. */
+export async function reviewRegistrationRequest(profileId, action, reason = null) {
+  if (["rejected", "needs_correction"].includes(action) && !(reason || "").trim()) {
+    throw new Error("وارد کردن دلیل الزامی است.");
+  }
+  const { sb } = await import("./supabase-client.js");
+  const { data, error } = await sb.rpc("review_registration_request", { p_profile_id: profileId, p_action: action, p_reason: reason });
+  if (error) throw error;
+  if (!data.success) throw new Error(data.error || "عملیات ناموفق بود.");
+  return data;
+}
+
+/** برای سازگاری با کد قبلی — معادل تأیید ساده. */
 export async function approveAccount(userId) {
-  const { sb } = await import("./supabase-client.js");
-  const { error } = await sb.from("profiles").update({ verified: true }).eq("id", userId);
-  if (error) throw error;
+  return reviewRegistrationRequest(userId, "approved");
 }
 
-export async function rejectAccount(userId) {
+/** اگر متقاضی الان در وضعیت «نیازمند اصلاح» است، دوباره درخواست بده تا
+    برگردد به «در انتظار بررسی». */
+export async function resubmitRegistrationRequest() {
   const { sb } = await import("./supabase-client.js");
-  // "Reject" = delete the profile row; the auth.users row is left alone
-  // (deleting auth users requires the service_role key, out of scope for
-  // the client) — a rejected person simply can never pass the pending
-  // screen again since their profile row is gone. Revisit with an Edge
-  // Function later if full account deletion is needed.
-  const { error } = await sb.from("profiles").delete().eq("id", userId);
+  const { data, error } = await sb.rpc("resubmit_registration_request");
   if (error) throw error;
+  if (!data.success) throw new Error(data.error || "درخواست دوباره ناموفق بود.");
+  return data;
+}
+
+/** آمار سطح پلتفرم برای داشبورد سوپر ادمین. */
+export async function loadPlatformStats() {
+  const { sb } = await import("./supabase-client.js");
+  const [schools, profilesRes] = await Promise.all([
+    sb.from("schools").select("id"),
+    sb.from("profiles").select("role, review_status"),
+  ]);
+  const schoolCount = schools.data?.length || 0;
+  const rows = profilesRes.data || [];
+  const count = role => rows.filter(r => r.role === role).length;
+  return {
+    totalSchools: schoolCount,
+    totalTeachers: count("teacher"),
+    totalManagers: count("admin"),
+    totalAssistants: count("vice_principal"),
+    totalParents: count("parent"),
+    pendingManagers: rows.filter(r => r.role === "admin" && r.review_status === "pending").length,
+    pendingAssistants: rows.filter(r => r.role === "vice_principal" && r.review_status === "pending").length,
+  };
 }
 
 /* ================================================================
