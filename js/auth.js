@@ -68,15 +68,12 @@ export async function signIn(username, password) {
   return data;
 }
 
-/** Super Admin ALWAYS signs in with a real email — completely independent
-    of PHONE_VERIFICATION_ENABLED and the phone/fallback logic above, which
-    only apply to teacher/admin/vice_principal/parent. Resolves the
-    personnel-style username to the account's real email via
-    get_email_for_username(), then signs in normally. */
+/** Super Admin — تا وقتی پیامک فعال نشده، دقیقاً مثل بقیه‌ی نقش‌ها از
+    همین شناسه‌ی داخلی موقت استفاده می‌کند (نیازی به ایمیل واقعی و پنل
+    Add User ندارد). وقتی SMS را فعال کردید، همه‌ی نقش‌ها از جمله همین
+    یکی به شماره موبایل واقعی منتقل می‌شوند. */
 export async function signInSuperAdmin(username, password) {
-  const { data: email, error: rpcError } = await sb.rpc("get_email_for_username", { p_username: username.trim() });
-  if (rpcError || !email) throw new Error("Invalid login credentials");
-  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+  const { data, error } = await sb.auth.signInWithPassword({ email: tempFallbackEmail(username), password });
   if (error) throw error;
   return data;
 }
