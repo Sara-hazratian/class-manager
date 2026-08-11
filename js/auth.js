@@ -68,6 +68,19 @@ export async function signIn(username, password) {
   return data;
 }
 
+/** Super Admin ALWAYS signs in with a real email — completely independent
+    of PHONE_VERIFICATION_ENABLED and the phone/fallback logic above, which
+    only apply to teacher/admin/vice_principal/parent. Resolves the
+    personnel-style username to the account's real email via
+    get_email_for_username(), then signs in normally. */
+export async function signInSuperAdmin(username, password) {
+  const { data: email, error: rpcError } = await sb.rpc("get_email_for_username", { p_username: username.trim() });
+  if (rpcError || !email) throw new Error("Invalid login credentials");
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+  if (error) throw error;
+  return data;
+}
+
 export async function signOut() {
   await sb.auth.signOut();
 }

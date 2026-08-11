@@ -5,7 +5,7 @@
    super_admin account can only ever be created directly in the
    database, never through any UI.
    ============================================================ */
-import { signIn, signOut, getSession } from "./auth.js";
+import { signInSuperAdmin, signOut, getSession } from "./auth.js";
 import { loadProfile, getProfile } from "./store.js";
 import { $, translateError } from "./ui.js";
 import { initSuperAdminPanel } from "./superadmin.js";
@@ -108,7 +108,7 @@ async function boot() {
     btn.disabled = true;
     btn.textContent = "لطفاً صبر کنید…";
     try {
-      await signIn(username, password);
+      await signInSuperAdmin(username, password);
       await afterSignIn();
     } catch (err) {
       errorEl.textContent = translateError(err);
