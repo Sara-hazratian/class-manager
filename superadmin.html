@@ -15,14 +15,14 @@
 <link rel="stylesheet" href="css/layout.css" />
 <link rel="stylesheet" href="css/components.css" />
 <style>
-  #sa-auth-screen, #sa-denied-screen {
+  #sa-auth-screen, #sa-denied-screen, #sa-reset-screen {
     position: fixed; inset: 0; z-index: 100; display: grid; place-items: center;
     overflow-y: auto; padding: var(--space-6);
     background: radial-gradient(900px 500px at 15% -10%, color-mix(in srgb, #1E1B4B 12%, transparent), transparent), var(--color-bg);
   }
-  #sa-auth-screen[hidden], #sa-denied-screen[hidden] { display: none; }
+  #sa-auth-screen[hidden], #sa-denied-screen[hidden], #sa-reset-screen[hidden] { display: none; }
   @media (max-width: 640px) {
-    #sa-auth-screen, #sa-denied-screen { padding: 0; align-items: stretch; }
+    #sa-auth-screen, #sa-denied-screen, #sa-reset-screen { padding: 0; align-items: stretch; }
     #sa-auth-screen .setup-card, #sa-denied-screen .setup-card { min-height: 100vh; min-height: 100dvh; border-radius: 0; box-shadow: none; max-width: none; display: flex; flex-direction: column; justify-content: center; }
   }
   .modal-overlay { position: fixed; inset: 0; z-index: 200; display: grid; place-items: center; background: rgba(10,20,22,.5); backdrop-filter: blur(2px); padding: var(--space-4); }
@@ -93,6 +93,25 @@
     </p>
     <a href="index.html" class="btn btn--primary btn--block" style="margin-bottom:var(--space-3)">رفتن به ClassPilot</a>
     <button type="button" class="btn btn--secondary btn--block" id="sa-denied-sign-out">خروج از حساب</button>
+  </div>
+</div>
+
+<!-- ===== RESET PASSWORD — reached only via the recovery link from Supabase's own "Send recovery" email ===== -->
+<div id="sa-reset-screen" hidden>
+  <div class="panel setup-card animate-in">
+    <span class="brand__mark" style="margin:0 auto var(--space-4);width:56px;height:56px;background:#1E1B4B">
+      <svg class="icon" style="width:28px;height:28px"><use href="#i-shield"/></svg>
+    </span>
+    <h1 style="font-size:19px;text-align:center;margin-bottom:4px">تنظیم رمز عبور جدید</h1>
+    <p style="text-align:center;color:var(--color-ink-faint);font-size:11.5px;margin-bottom:var(--space-5)">این حساب Super Admin است</p>
+    <form id="sa-reset-form">
+      <label for="sa-reset-password">رمز عبور جدید</label>
+      <input type="password" id="sa-reset-password" required minlength="6" placeholder="حداقل ۶ کاراکتر" autocomplete="new-password" />
+      <label for="sa-reset-password-confirm">تکرار رمز عبور جدید</label>
+      <input type="password" id="sa-reset-password-confirm" required minlength="6" autocomplete="new-password" />
+      <p id="sa-reset-error" style="color:var(--color-danger);font-size:12.5px;text-align:right;min-height:1em;margin-top:8px"></p>
+      <button type="submit" class="btn btn--primary btn--lg btn--block" style="margin-top:var(--space-4)" id="sa-reset-submit">تنظیم رمز جدید و ورود</button>
+    </form>
   </div>
 </div>
 

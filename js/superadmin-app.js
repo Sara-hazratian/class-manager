@@ -9,9 +9,10 @@ import { signIn, signOut, getSession } from "./auth.js";
 import { loadProfile, getProfile } from "./store.js";
 import { $, translateError } from "./ui.js";
 import { initSuperAdminPanel } from "./superadmin.js";
+import { sb } from "./supabase-client.js";
 
 function showScreen(id) {
-  ["sa-auth-screen", "sa-denied-screen", "sa-panel-screen"].forEach(s => {
+  ["sa-auth-screen", "sa-denied-screen", "sa-panel-screen", "sa-reset-screen"].forEach(s => {
     document.getElementById(s).hidden = (s !== id);
   });
 }
@@ -44,6 +45,44 @@ function bindSignOutButtons() {
 
 async function boot() {
   bindSignOutButtons();
+
+  // Supabase's own "Send recovery" email link lands here with
+  // "type=recovery" in the URL — check this directly (not just the async
+  // PASSWORD_RECOVERY event) so there's no race with getSession() below
+  // resolving first and skipping straight past the reset form.
+  const isRecoveryLink = window.location.hash.includes("type=recovery") || window.location.search.includes("type=recovery");
+
+  sb.auth.onAuthStateChange((event) => {
+    if (event === "PASSWORD_RECOVERY") showScreen("sa-reset-screen");
+  });
+
+  $("#sa-reset-form")?.addEventListener("submit", async e => {
+    e.preventDefault();
+    const pw = $("#sa-reset-password").value;
+    const pwConfirm = $("#sa-reset-password-confirm").value;
+    const btn = $("#sa-reset-submit");
+    const errorEl = $("#sa-reset-error");
+    errorEl.textContent = "";
+
+    if (pw !== pwConfirm) { errorEl.textContent = "رمز عبور و تکرار آن یکسان نیستند."; return; }
+
+    btn.disabled = true;
+    btn.textContent = "لطفاً صبر کنید…";
+    try {
+      const { error } = await sb.auth.updateUser({ password: pw });
+      if (error) throw error;
+      await afterSignIn();
+    } catch (err) {
+      errorEl.textContent = translateError(err);
+      btn.disabled = false;
+      btn.textContent = "تنظیم رمز جدید و ورود";
+    }
+  });
+
+  if (isRecoveryLink) {
+    showScreen("sa-reset-screen");
+    return; // don't fall through to the normal sign-in flow below
+  }
 
   const session = await getSession();
   if (session) { await afterSignIn(); return; }
