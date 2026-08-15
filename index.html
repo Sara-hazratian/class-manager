@@ -57,41 +57,6 @@
 <!-- ===== SETUP SCREEN — populated by js/setup.js after sign-in/sign-up ===== -->
 <div id="setup-screen" hidden></div>
 
-<!-- ===== PENDING APPROVAL — shown to admin/vice-principal accounts until a verified admin approves them ===== -->
-<div id="pending-screen" hidden>
-  <div class="panel setup-card animate-in" style="text-align:center">
-    <span class="brand__mark" style="margin:0 auto var(--space-4);width:56px;height:56px;background:var(--color-warning)">
-      <svg class="icon" style="width:28px;height:28px"><use href="#i-check-cal"/></svg>
-    </span>
-    <h1 style="font-size:19px;margin-bottom:8px">حساب شما در انتظار تأیید است</h1>
-    <p style="color:var(--color-ink-soft);font-size:13.5px;line-height:1.9;margin-bottom:var(--space-4)">
-      درخواست ثبت‌نام شما به‌عنوان مدیر/معاون ثبت شد و برای بررسی مدرک ابلاغ/حکم کارگزینی نزد مدیریت سامانه ارسال شد.
-      پس از تأیید، با همین نام کاربری و رمز عبور می‌توانید وارد شوید.
-    </p>
-    <div id="pending-reason-box" hidden style="background:var(--color-danger-tint);border-radius:var(--radius-md);padding:var(--space-3);margin-bottom:var(--space-4);text-align:right">
-      <p style="font-size:12px;font-weight:700;color:var(--color-danger);margin-bottom:4px" id="pending-reason-label">علت:</p>
-      <p style="font-size:13px;color:var(--color-ink)" id="pending-reason-text"></p>
-    </div>
-    <button type="button" class="btn btn--primary btn--block" id="pending-resubmit" style="margin-bottom:var(--space-3)" hidden>ثبت مجدد درخواست</button>
-    <button type="button" class="btn btn--secondary btn--block" id="pending-sign-out">خروج از حساب</button>
-  </div>
-</div>
-
-<!-- ===== SUPER ADMIN REDIRECT — Super Admin has no UI in the main app by design ===== -->
-<div id="superadmin-redirect-screen" hidden>
-  <div class="panel setup-card animate-in" style="text-align:center">
-    <span class="brand__mark" style="margin:0 auto var(--space-4);width:56px;height:56px">
-      <svg class="icon" style="width:28px;height:28px"><use href="#i-book"/></svg>
-    </span>
-    <h1 style="font-size:19px;margin-bottom:8px">این حساب مخصوص پنل مدیریت جداگانه است</h1>
-    <p style="color:var(--color-ink-soft);font-size:13.5px;line-height:1.9;margin-bottom:var(--space-5)">
-      حساب‌های Super Admin از برنامه‌ی اصلی ClassPilot وارد نمی‌شوند. برای دسترسی، از پنل مدیریت جداگانه استفاده کنید.
-    </p>
-    <a href="superadmin.html" class="btn btn--primary btn--block" style="margin-bottom:var(--space-3)">رفتن به پنل مدیریت</a>
-    <button type="button" class="btn btn--secondary btn--block" id="superadmin-redirect-sign-out">خروج از حساب</button>
-  </div>
-</div>
-
 <!-- ===== PARENT VIEW — read-only ===== -->
 <div id="parent-screen" hidden style="min-height:100vh;background:var(--color-bg)">
   <header class="app-header">
@@ -133,176 +98,6 @@
 </div>
 
 <!-- ===== ADMIN / VICE-PRINCIPAL / راهبر / سرگروه VIEW ===== -->
-<div id="admin-screen" hidden>
-  <aside class="sidebar">
-    <div class="sidebar__brand">
-      <span class="brand__mark" style="background:none;box-shadow:none"><img src="icons/icon-192.png" alt="ClassPilot" style="width:100%;height:100%;object-fit:contain;border-radius:inherit" /></span>
-      <span class="brand__title">ClassPilot<small>پنل <span id="admin-role-label">مدیر</span></small></span>
-    </div>
-    <nav class="nav-tabs">
-      <button class="nav-tab is-active" data-admin-view="classes"><svg class="icon"><use href="#i-grid"/></svg><span class="nav-tab__label">کلاس‌ها</span></button>
-      <button class="nav-tab" data-admin-view="schools" id="admin-nav-schools" hidden><svg class="icon"><use href="#i-map"/></svg><span class="nav-tab__label">مدارس</span></button>
-      <button class="nav-tab" data-admin-view="add-teacher" id="admin-nav-add-teacher"><svg class="icon"><use href="#i-users"/></svg><span class="nav-tab__label">افزودن معلم</span></button>
-      <button class="nav-tab" data-admin-view="add-leader" id="admin-nav-add-leader"><svg class="icon"><use href="#i-shield"/></svg><span class="nav-tab__label">افزودن راهبر/سرگروه</span></button>
-      <button class="nav-tab" data-admin-view="schedule" id="admin-nav-schedule"><svg class="icon"><use href="#i-calendar"/></svg><span class="nav-tab__label">برنامه‌ی هفتگی</span></button>
-      <button class="nav-tab" data-admin-view="all-students" id="admin-nav-all-students"><svg class="icon"><use href="#i-search"/></svg><span class="nav-tab__label">همه‌ی دانش‌آموزان</span></button>
-    </nav>
-  </aside>
-
-  <div class="workspace">
-    <header class="app-header">
-      <div>
-        <h1 class="app-header__teacher" id="admin-title" style="margin:0"></h1>
-        <p class="app-header__school" id="admin-school-name" style="margin:2px 0 0"></p>
-      </div>
-      <div style="display:flex;gap:8px">
-        <button type="button" class="btn btn--secondary btn--sm" id="admin-back-to-dashboard" hidden>بازگشت به داشبورد من</button>
-        <button type="button" class="btn btn--secondary btn--sm" id="admin-sign-out">خروج</button>
-      </div>
-    </header>
-    <main class="main-content">
-
-      <section class="admin-view" data-admin-view="classes">
-        <div id="admin-teacher-picker">
-          <p class="empty-state__text" style="text-align:right;padding:0;margin-bottom:var(--space-4)">یک کلاس را انتخاب کنید</p>
-          <div id="admin-teacher-list" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(120px, 1fr));gap:var(--space-3)"></div>
-          <div class="empty-state" id="admin-teachers-empty" hidden>
-            <p class="empty-state__text">هنوز معلمی در سامانه ثبت‌نام نکرده است.</p>
-          </div>
-        </div>
-
-        <div id="admin-student-picker" hidden>
-          <button type="button" class="btn btn--ghost btn--sm" id="admin-back-to-teachers" style="margin-bottom:var(--space-4)"><svg class="icon"><use href="#i-back"/></svg>بازگشت به لیست کلاس‌ها</button>
-          <div class="panel" style="margin-bottom:var(--space-5)">
-            <div class="panel__header"><h2>کلاس <span id="admin-selected-teacher-name"></span></h2></div>
-            <div id="admin-student-list" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:var(--space-3)"></div>
-            <div class="empty-state" id="admin-students-empty" hidden>
-              <p class="empty-state__text">این معلم هنوز دانش‌آموزی ثبت نکرده است.</p>
-            </div>
-            <div class="pill-tabs" id="admin-period-tabs">
-              <button type="button" class="pill-tab is-active" data-period="all">همه</button>
-              <button type="button" class="pill-tab" data-period="daily">روزانه</button>
-              <button type="button" class="pill-tab" data-period="weekly">هفتگی</button>
-              <button type="button" class="pill-tab" data-period="monthly">ماهانه</button>
-              <button type="button" class="pill-tab" data-period="term1">نیمسال اول</button>
-              <button type="button" class="pill-tab" data-period="term2">نیمسال دوم</button>
-            </div>
-            <div id="admin-month-picker" hidden style="margin-top:var(--space-3);max-width:200px">
-              <label for="admin-month-select">ماه</label>
-              <select id="admin-month-select" class="select-control"></select>
-            </div>
-            <button type="button" class="btn btn--secondary btn--sm" id="admin-print-report-btn" style="margin-top:var(--space-4)" hidden><svg class="icon"><use href="#i-printer"/></svg> چاپ گزارش</button>
-          </div>
-          <div id="admin-student-report"></div>
-        </div>
-      </section>
-
-      <section class="admin-view" data-admin-view="schools" hidden>
-        <div id="admin-school-picker">
-          <p class="empty-state__text" style="text-align:right;padding:0;margin-bottom:var(--space-4)">یک مدرسه را انتخاب کنید</p>
-          <div id="admin-school-list" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(140px, 1fr));gap:var(--space-3)"></div>
-          <div class="empty-state" id="admin-schools-empty" hidden>
-            <p class="empty-state__text">هنوز دسترسی به مدرسه‌ای ندارید.</p>
-          </div>
-        </div>
-        <div id="admin-school-classes-picker" hidden>
-          <button type="button" class="btn btn--ghost btn--sm" id="admin-back-to-schools" style="margin-bottom:var(--space-4)"><svg class="icon"><use href="#i-back"/></svg>بازگشت به لیست مدارس</button>
-          <p class="empty-state__text" style="text-align:right;padding:0;margin-bottom:var(--space-4)">کلاس‌های <span id="admin-selected-school-name"></span></p>
-          <div id="admin-school-teacher-list" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(120px, 1fr));gap:var(--space-3)"></div>
-        </div>
-      </section>
-
-      <section class="admin-view" data-admin-view="add-teacher" hidden>
-        <section class="panel" id="admin-add-teacher-panel">
-          <div class="panel__header"><h2>افزودن معلم</h2></div>
-          <p style="font-size:12.5px;color:var(--color-ink-soft);margin-bottom:var(--space-4)">
-            کد پرسنلی و شماره موبایل معلم را وارد کنید — فقط در صورت تطابق کامل هر دو، معلم پیدا و قابل افزودن به مدرسه‌ی شما خواهد بود.
-          </p>
-          <form id="admin-find-teacher-form" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
-            <div style="flex:1;min-width:160px">
-              <label for="find-teacher-code">کد پرسنلی</label>
-              <input type="text" id="find-teacher-code" required />
-            </div>
-            <div style="flex:1;min-width:160px">
-              <label for="find-teacher-phone">شماره موبایل</label>
-              <input type="tel" id="find-teacher-phone" required inputmode="numeric" placeholder="09xxxxxxxxx" />
-            </div>
-            <button type="submit" class="btn btn--secondary">جستجو</button>
-          </form>
-          <p id="find-teacher-error" style="color:var(--color-danger);font-size:12.5px;margin-top:8px;min-height:1em"></p>
-          <div id="find-teacher-result" style="margin-top:12px"></div>
-        </section>
-      </section>
-
-      <section class="admin-view" data-admin-view="add-leader" hidden>
-        <section class="panel" id="admin-promote-panel">
-          <div class="panel__header"><h2>افزودن راهبر یا سرگروه آموزشی</h2></div>
-          <p style="font-size:12.5px;color:var(--color-ink-soft);margin-bottom:var(--space-4)">
-            راهبر همه‌ی کلاس‌های این مدرسه را می‌بیند. سرگروه فقط کلاس‌های همان پایه‌ای که مشخص می‌کنید را می‌بیند.
-            فرد لازم نیست معلم همین مدرسه باشد — دسترسی افزوده است و نقش/مدرسه‌ی خودش را تغییر نمی‌دهد.
-          </p>
-          <form id="admin-promote-form" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
-            <div style="flex:1;min-width:150px">
-              <label for="promote-new-code">کد پرسنلی</label>
-              <input type="text" id="promote-new-code" required />
-            </div>
-            <div style="flex:1;min-width:150px">
-              <label for="promote-new-phone">شماره موبایل</label>
-              <input type="tel" id="promote-new-phone" required inputmode="numeric" placeholder="09xxxxxxxxx" />
-            </div>
-            <div style="min-width:140px">
-              <label for="promote-role-select">نوع دسترسی</label>
-              <select id="promote-role-select">
-                <option value="rahbar">راهبر (کل مدرسه)</option>
-                <option value="group_leader">سرگروه آموزشی (یک پایه)</option>
-              </select>
-            </div>
-            <div id="promote-grade-wrap" style="min-width:140px">
-              <label for="promote-grade-select">پایه</label>
-              <select id="promote-grade-select">
-                <option value="grade1">پایه اول</option><option value="grade2">پایه دوم</option>
-                <option value="grade3">پایه سوم</option><option value="grade4">پایه چهارم</option>
-                <option value="grade5">پایه پنجم</option><option value="grade6">پایه ششم</option>
-              </select>
-            </div>
-            <button type="submit" class="btn btn--primary">اعطای دسترسی</button>
-          </form>
-          <p id="promote-error" style="color:var(--color-danger);font-size:12.5px;margin-top:8px;min-height:1em"></p>
-        </section>
-      </section>
-
-      <section class="admin-view" data-admin-view="schedule" hidden>
-        <section class="panel">
-          <div class="panel__header"><h2>برنامه‌ی هفتگی مدرسه</h2></div>
-          <p style="font-size:12.5px;color:var(--color-ink-soft);margin-bottom:var(--space-4)">
-            یک کلاس را انتخاب کنید، برنامه‌اش را بسازید یا ویرایش کنید، و در پایان «تأیید و اعمال برنامه» را بزنید — بلافاصله در صفحه‌ی همان معلم قابل مشاهده خواهد بود.
-          </p>
-          <div style="margin-bottom:var(--space-4)">
-            <label for="admin-schedule-teacher-select">کلاس</label>
-            <select id="admin-schedule-teacher-select"></select>
-          </div>
-          <div class="schedule-grid" id="admin-schedule-grid"></div>
-          <button type="button" class="btn btn--primary" id="admin-schedule-apply-btn" style="margin-top:var(--space-4)">تأیید و اعمال برنامه</button>
-          <p id="admin-schedule-status" style="font-size:12.5px;color:var(--color-success);margin-top:8px;min-height:1em"></p>
-        </section>
-      </section>
-
-      <section class="admin-view" data-admin-view="all-students" hidden>
-        <div id="admin-all-students-search-wrap">
-          <div style="margin-bottom:var(--space-4)">
-            <input type="text" id="admin-all-students-search" placeholder="جستجوی نام دانش‌آموز…" />
-          </div>
-          <div id="admin-all-students-list" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(140px, 1fr));gap:var(--space-3)"></div>
-          <div class="empty-state" id="admin-all-students-empty" hidden>
-            <p class="empty-state__text">دانش‌آموزی پیدا نشد.</p>
-          </div>
-        </div>
-      </section>
-
-    </main>
-  </div>
-</div>
-
 <!-- ===== APP SHELL — Phase 3+ fill in the real dashboard/pages ===== -->
 <div id="app" hidden>
   <aside class="sidebar">
@@ -337,7 +132,6 @@
           <div class="app-header__meta" id="header-meta"></div>
         </div>
       </div>
-      <button type="button" class="btn btn--secondary btn--sm" id="header-oversight-btn" hidden>🏫 مدارس تحت نظارت</button>
       <time class="app-header__date" id="header-date"></time>
     </header>
 
@@ -788,7 +582,7 @@
     </div>
     <footer class="modal__footer">
       <button type="button" class="btn btn--ghost" data-close>انصراف</button>
-      <button type="submit" class="btn btn--primary">ذخیره</button>
+      <button type="submit" class="btn btn--primary" id="student-submit-btn">ذخیره</button>
     </footer>
   </form>
 </dialog>

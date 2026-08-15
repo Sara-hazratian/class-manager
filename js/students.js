@@ -3,7 +3,7 @@
    tab. Groups are defined independently and students are
    assigned to them any time afterward — not forced at creation.
    ============================================================ */
-import { getStudents, setStudents, getGroups, setGroups, uid } from "./store.js";
+import { getStudents, setStudents, setStudentsChecked, getGroups, setGroups, uid } from "./store.js";
 import { $, $$, toast, openModal, initials } from "./ui.js";
 import { registerTitle, onViewChange } from "./router.js";
 
@@ -162,12 +162,13 @@ export function initStudents() {
   $("#st-search")?.addEventListener("input", renderStudents);
   $("#st-group-filter")?.addEventListener("change", renderStudents);
 
-  $("#student-form")?.addEventListener("submit", e => {
+  $("#student-form")?.addEventListener("submit", async e => {
     e.preventDefault();
     const id = $("#student-id").value;
     const name = $("#student-name").value.trim();
     const nationalId = $("#student-national-id").value.trim();
     const errorEl = $("#student-error");
+    const submitBtn = $("#student-submit-btn");
 
     if (!name) { errorEl.textContent = "نام دانش‌آموز را وارد کنید."; return; }
     if (!validNationalId(nationalId)) { errorEl.textContent = "کد ملی باید دقیقاً ۱۰ رقم باشد."; return; }
@@ -180,15 +181,28 @@ export function initStudents() {
       phone: $("#student-phone").value.trim(),
       notes: $("#student-notes").value.trim(),
     };
+    const newList = [...list];
     if (id) {
-      const s = list.find(x => x.id === id);
+      const s = newList.find(x => x.id === id);
       if (s) Object.assign(s, payload);
     } else {
-      list.push({ id: uid("st"), groupId: null, ...payload });
+      newList.push({ id: uid("st"), groupId: null, ...payload });
     }
-    setStudents(list);
-    renderStudents(); notify(); toast("ذخیره شد");
-    $("#modal-student").close();
+
+    errorEl.textContent = "";
+    if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = "در حال ذخیره…"; }
+    try {
+      // این خط واقعاً منتظر تأیید دیتابیس می‌ماند — چون کد ملی باید در
+      // کل سامانه یکتا باشد (نه فقط بین دانش‌آموزهای همین معلم)، نباید
+      // قبل از تأیید واقعی «ذخیره شد» نشان داده شود.
+      await setStudentsChecked(newList);
+      renderStudents(); notify(); toast("ذخیره شد");
+      $("#modal-student").close();
+    } catch (err) {
+      errorEl.textContent = err.message || "ذخیره ناموفق بود. دوباره تلاش کنید.";
+    } finally {
+      if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = "ذخیره"; }
+    }
   });
 
   $$("#students-tabs .pill-tab").forEach(b => b.addEventListener("click", () => {

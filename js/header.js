@@ -35,19 +35,4 @@ export function updateHeaderDate() {
 
 export function initHeader() {
   renderHeader();
-  initOversightButton();
-}
-
-async function initOversightButton() {
-  const btn = $("#header-oversight-btn");
-  if (!btn) return;
-  const { loadMyOversightGrants } = await import("./store.js");
-  const grants = await loadMyOversightGrants().catch(() => []);
-  if (!grants.length) { btn.hidden = true; return; }
-  btn.hidden = false;
-  btn.textContent = `🏫 مدارس تحت نظارت (${grants.length})`;
-  btn.addEventListener("click", async () => {
-    const { showOversightView } = await import("./app.js");
-    await showOversightView();
-  });
 }

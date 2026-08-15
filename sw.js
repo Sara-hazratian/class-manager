@@ -4,12 +4,11 @@
    Bump CACHE_NAME whenever any precached file changes so
    returning users get the update instead of a stale cache.
    ============================================================ */
-const CACHE_NAME = "classpilot-v44";
+const CACHE_NAME = "classpilot-v48";
 
 const PRECACHE_URLS = [
   "./",
   "./index.html",
-  "./superadmin.html",
   "./manifest.webmanifest?v=5",
   "./css/tokens.css",
   "./css/base.css",
@@ -20,9 +19,6 @@ const PRECACHE_URLS = [
   "./js/supabase-client.js",
   "./js/auth.js",
   "./js/parent.js",
-  "./js/admin.js",
-  "./js/superadmin.js",
-  "./js/superadmin-app.js",
   "./js/jalali.js",
   "./js/theme.js",
   "./js/ui.js",
@@ -74,17 +70,14 @@ self.addEventListener("fetch", event => {
   // Navigations (opening/refreshing the app): try the network first so
   // updates are picked up when online, fall back to the cached shell offline.
   if (req.mode === "navigate") {
-    const url = new URL(req.url);
-    const isSuperAdmin = url.pathname.endsWith("/superadmin.html");
-    const shellPath = isSuperAdmin ? "./superadmin.html" : "./index.html";
     event.respondWith(
       fetch(req)
         .then(res => {
           const copy = res.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(shellPath, copy));
+          caches.open(CACHE_NAME).then(cache => cache.put("./index.html", copy));
           return res;
         })
-        .catch(() => caches.match(shellPath))
+        .catch(() => caches.match("./index.html"))
     );
     return;
   }

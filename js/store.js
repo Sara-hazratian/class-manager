@@ -80,9 +80,7 @@ function dbRowToProfile(row) {
     className: row.class_name || "", academicYear: row.academic_year || "",
     themeColor: row.theme_color || "blue", role: row.role,
     username: row.username || "", personnelCode: row.personnel_code || "",
-    position: row.position || "", verified: row.verified, documentPath: row.document_path || "",
-    assignedGrade: row.assigned_grade || "", phoneNumber: row.phone_number || "", schoolId: row.school_id || "",
-    reviewStatus: row.review_status || "approved", reviewReason: row.review_reason || "",
+    verified: row.verified,
   };
 }
 
@@ -98,9 +96,6 @@ export async function loadProfile() {
   if (error) { console.error("ClassPilot: could not load profile", error); profileCache = null; return null; }
 
   profileCache = dbRowToProfile(data);
-  // Whether the account's phone number has been confirmed via SMS OTP —
-  // read straight from Supabase Auth's own user record, not a custom column.
-  profileCache.phoneVerified = Boolean(userData.user.phone_confirmed_at);
   return profileCache;
 }
 
@@ -175,6 +170,24 @@ export async function setStudents(newList) {
   studentsCache = newList;
   try { await diffAndSync("students", oldList, newList, studentToDb); }
   catch (err) { logSyncError("students", err); }
+}
+
+/** مثل setStudents، ولی خطا را قورت نمی‌دهد — برای فرم افزودن/ویرایش
+    دانش‌آموز، جایی که باید فوراً بفهمیم ذخیره واقعاً موفق بود یا نه
+    (مثلاً کد ملی از قبل توسط معلم دیگری ثبت شده — جلوگیری از جعل
+    ارزشیابی توسط یک «معلم» ساختگی برای دانش‌آموز واقعی کس دیگری). */
+export async function setStudentsChecked(newList) {
+  const oldList = studentsCache;
+  studentsCache = newList;
+  try {
+    await diffAndSync("students", oldList, newList, studentToDb);
+  } catch (err) {
+    studentsCache = oldList; // برگردان به حالت قبل، چون واقعاً ذخیره نشد
+    if (err.code === "23505" || (err.message || "").includes("national_id")) {
+      throw new Error("این کد ملی قبلاً برای دانش‌آموز دیگری (در کلاس دیگری) ثبت شده است.");
+    }
+    throw err;
+  }
 }
 
 /* ================================================================
@@ -366,9 +379,9 @@ const PREVIEW_STUDENTS = [
   { id: "prev-s3", name: "پارسا احمدی", nationalId: "3333333333", phone: "", groupId: null, notes: "", teacherId: "prev-teacher" },
 ];
 const PREVIEW_EVALUATIONS = [
-  { id: "prev-e1", studentId: "prev-s1", subjectId: "math", period: "daily", kind: "participation", level: "excellent", date: _previewToday, pageFrom: 1, pageTo: 10 },
-  { id: "prev-e2", studentId: "prev-s2", subjectId: "persian", period: "daily", kind: "oral", level: "good", date: _previewToday, pageFrom: 5, pageTo: 12 },
-  { id: "prev-e3", studentId: "prev-s3", subjectId: "science", period: "daily", kind: "activity", level: "needs-improvement", date: _previewToday, pageFrom: 20, pageTo: 25 },
+  { id: "prev-e1", studentId: "prev-s1", subjectId: "math", period: "daily", kind: "participation", level: "excellent", date: _previewToday, topic: "کسرها", pageFrom: 1, pageTo: 10 },
+  { id: "prev-e2", studentId: "prev-s2", subjectId: "persian", period: "daily", kind: "oral", level: "good", date: _previewToday, topic: "شعرخوانی", pageFrom: 5, pageTo: 12 },
+  { id: "prev-e3", studentId: "prev-s3", subjectId: "science", period: "daily", kind: "activity", level: "needs-improvement", date: _previewToday, topic: "آزمایش آب", pageFrom: 20, pageTo: 25 },
 ];
 const PREVIEW_ATTENDANCE = [
   { id: "prev-a1", studentId: "prev-s1", date: _previewToday, status: "present" },
@@ -398,14 +411,8 @@ export function enablePreviewMode(role) {
   previewModeActive = true;
   currentUserId = "prev-teacher";
 
-  const base = { username: "PREVIEW", verified: true, phoneVerified: true, themeColor: "blue" };
-  if (role === "teacher") {
-    profileCache = { ...base, role: "teacher", fullName: "خانم رضایی (نمونه)", schoolName: "دبستان نمونه", grade: "grade3", className: "الف", academicYear: "1405-1406" };
-  } else if (role === "admin" || role === "vice_principal") {
-    profileCache = { ...base, role, fullName: "مدیر نمونه", schoolName: "دبستان نمونه", position: role === "admin" ? "مدیر" : "معاون" };
-  } else if (role === "rahbar" || role === "group_leader") {
-    profileCache = { ...base, role, fullName: "راهبر نمونه", schoolName: "دبستان نمونه", assignedGrade: "grade3" };
-  } else if (role === "parent") {
+  const base = { username: "PREVIEW", verified: true, themeColor: "blue" };
+  if (role === "parent") {
     profileCache = { ...base, role: "parent", fullName: "ولی نمونه" };
     // یک ولی فقط باید فرزند خودش را ببیند — نه هر سه دانش‌آموز نمونه.
     applyPreviewCollections();
@@ -416,6 +423,8 @@ export function enablePreviewMode(role) {
     disciplineCache = disciplineCache.filter(d => d.studentId === onlyChildId);
     return;
   }
+  // teacher (the only other role)
+  profileCache = { ...base, role: "teacher", fullName: "خانم رضایی (نمونه)", schoolName: "دبستان نمونه", grade: "grade3", className: "الف", academicYear: "1405-1406" };
   applyPreviewCollections();
 }
 
@@ -492,263 +501,6 @@ export async function addChildByNationalId(nationalId) {
   if (error) throw error;
   if (!data.success) throw new Error(data.error || "دانش‌آموزی با این کد ملی پیدا نشد.");
   return data;
-}
-
-/** Admin/vice_principal: look up a teacher by EXACT personnel code + phone
-    match (both required) before adding them — never a free browse/search
-    of the teacher list. See migration-add-teacher.sql's find_teacher_for_school. */
-export async function findTeacherForSchool(personnelCode, phone) {
-  const { sb } = await import("./supabase-client.js");
-  const { data, error } = await sb.rpc("find_teacher_for_school", { p_personnel_code: personnelCode, p_phone: phone });
-  if (error) throw error;
-  if (!data.success) throw new Error(data.error || "معلمی با این مشخصات پیدا نشد.");
-  return data;
-}
-
-/** Finds ANY account (any school, any role — not restricted to this
-    admin's own school) by exact personnel code + phone match, for
-    granting راهبر/سرگروه access. Unlike findTeacherForSchool, this is
-    NOT restricted to teachers already at your school — a district group
-    leader teaching elsewhere, or someone with no teaching role at all,
-    can both be found here. */
-export async function findPersonForAccessGrant(personnelCode, phone) {
-  const { sb } = await import("./supabase-client.js");
-  const { data, error } = await sb.rpc("find_person_for_access_grant", { p_personnel_code: personnelCode, p_phone: phone });
-  if (error) throw error;
-  if (!data.success) throw new Error(data.error || "شخصی با این مشخصات پیدا نشد.");
-  return data;
-}
-
-/** Grants that person رahbar (grade=null → whole school) or سرگروه
-    (grade set → just that grade) access to YOUR school — repeatable, so
-    one person can be granted access to several schools by their
-    respective admins, independent of where they actually teach. This is
-    ADDITIVE — it never changes the person's own role or school. */
-export async function grantSchoolAccess(personnelCode, phone, grade) {
-  const { sb } = await import("./supabase-client.js");
-  const { data, error } = await sb.rpc("grant_oversight_access", { p_personnel_code: personnelCode, p_phone: phone, p_grade: grade });
-  if (error) throw error;
-  if (!data.success) throw new Error(data.error || "اعطای دسترسی ناموفق بود.");
-  return data;
-}
-
-/** Every school (+ optional grade) the CURRENTLY signed-in person has been
-    granted oversight access to — used to show/hide the "مدارس تحت نظارت"
-    entry point and to list which schools to browse. */
-export async function loadMyOversightGrants() {
-  const { sb } = await import("./supabase-client.js");
-  const { data, error } = await sb.from("oversight_grants").select("*, schools(name)").eq("person_id", await requireUserId());
-  if (error) { console.error("ClassPilot: could not load oversight grants", error); return []; }
-  return data.map(row => ({ id: row.id, schoolId: row.school_id, schoolName: row.schools?.name || "", grade: row.grade }));
-}
-
-/** Loads whatever RLS's has_oversight_access() policies allow the current
-    user to see. Per spec, راهبر/سرگروه get READ-ONLY access to evaluations
-    and student rosters ONLY — never attendance, discipline, homework, or a
-    teacher's personal notes. */
-/** Admin/vice_principal: read a specific teacher's current weekly schedule
-    (to pre-fill the editor before they change anything). */
-export async function loadTeacherSchedule(teacherId) {
-  if (previewModeActive) return defaultSchedule();
-  const { sb } = await import("./supabase-client.js");
-  const { data, error } = await sb.from("teacher_settings").select("schedule").eq("teacher_id", teacherId).maybeSingle();
-  if (error) { console.error("ClassPilot: could not load teacher's schedule", error); return defaultSchedule(); }
-  return (data?.schedule && Object.keys(data.schedule).length) ? data.schedule : defaultSchedule();
-}
-
-/** Admin/vice_principal: "تأیید و اعمال برنامه" — writes the built schedule
-    straight to that teacher's own classroom page (same storage the teacher's
-    own Settings page reads from), for a teacher at THEIR school only —
-    enforced by teacher_settings_admin_update/_insert (same_school_teacher_ids()). */
-export async function applyTeacherSchedule(teacherId, schedule) {
-  if (previewModeActive) return; // no-op in preview — nothing real to save
-  const { sb } = await import("./supabase-client.js");
-  const { error } = await sb.from("teacher_settings").upsert({ teacher_id: teacherId, schedule }, { onConflict: "teacher_id" });
-  if (error) throw error;
-}
-
-export async function loadOversightData() {
-  if (previewModeActive) {
-    applyPreviewCollections();
-    return [
-      { id: "prev-teacher", role: "teacher", fullName: "خانم رضایی (نمونه)", username: "PREVIEW", schoolName: "دبستان نمونه ۱", schoolId: "prev-school-A", grade: "grade3", className: "الف", verified: true },
-      { id: "prev-teacher-2", role: "teacher", fullName: "آقای احمدی (نمونه)", username: "PREVIEW2", schoolName: "دبستان نمونه ۲", schoolId: "prev-school-B", grade: "grade5", className: "ب", verified: true },
-    ];
-  }
-  const { sb } = await import("./supabase-client.js");
-  const [students, evaluations, profilesRes] = await Promise.all([
-    sb.from("students").select("*"),
-    sb.from("evaluations").select("*"),
-    sb.from("profiles").select("*"),
-  ]);
-  const check = (res, label) => { if (res.error) console.error(`ClassPilot: failed to load "${label}" for oversight`, res.error); return res.data || []; };
-
-  studentsCache = check(students, "students").map(dbToStudent);
-  evaluationsCache = check(evaluations, "evaluations").map(dbToEvaluation);
-  // Never populated in oversight mode — RLS wouldn't return anything for
-  // these anyway, but not even attempting the query keeps the report
-  // renderer's "no access" state unambiguous rather than "empty".
-  attendanceCache = [];
-  homeworkCache = [];
-  disciplineCache = [];
-
-  const teacherIdsWithStudents = new Set(studentsCache.map(s => s.teacherId));
-  return check(profilesRes, "profiles")
-    .filter(p => teacherIdsWithStudents.has(p.id))
-    .map(row => ({ id: row.id, ...dbRowToProfile(row) }));
-}
-
-/** Admin/vice_principal: add that same matched teacher to their own school.
-    Re-verifies the exact match server-side — never trusts a previously
-    fetched ID alone, and can never link a teacher already at another school. */
-export async function addTeacherToMySchool(personnelCode, phone) {
-  const { sb } = await import("./supabase-client.js");
-  const { data, error } = await sb.rpc("add_teacher_to_my_school", { p_personnel_code: personnelCode, p_phone: phone });
-  if (error) throw error;
-  if (!data.success) throw new Error(data.error || "افزودن معلم ناموفق بود.");
-  return data;
-}
-
-/* ================================================================
-   ADMIN — the approval queue (pending admin/vice_principal accounts)
-   and approve/reject actions. Only works for a caller who is already
-   a verified admin (enforced by RLS + the trigger, not just this code).
-   ================================================================ */
-/** Loads every teacher's data an admin/vice_principal is allowed to see
-    (enforced by the *_admin_select RLS policies in schema-v2.sql — this
-    function itself applies no filtering, same principle as loadParentData).
-    Returns the list of teachers for the admin's "Classes" browser. */
-export async function loadAdminData() {
-  if (previewModeActive) {
-    applyPreviewCollections();
-    return [{ id: "prev-teacher", role: "teacher", fullName: "خانم رضایی (نمونه)", username: "PREVIEW", schoolName: "دبستان نمونه", grade: "grade3", className: "الف", verified: true }];
-  }
-  const { sb } = await import("./supabase-client.js");
-  const [students, attendance, evaluations, homework, discipline, groups, teachers] = await Promise.all([
-    sb.from("students").select("*"),
-    sb.from("attendance").select("*"),
-    sb.from("evaluations").select("*"),
-    sb.from("homework").select("*"),
-    sb.from("discipline").select("*"),
-    sb.from("groups").select("*"),
-    sb.from("profiles").select("*").eq("role", "teacher"),
-  ]);
-  const check = (res, label) => { if (res.error) console.error(`ClassPilot: failed to load "${label}" for admin`, res.error); return res.data || []; };
-
-  studentsCache = check(students, "students").map(dbToStudent);
-  attendanceCache = check(attendance, "attendance").map(dbToAttendance);
-  evaluationsCache = check(evaluations, "evaluations").map(dbToEvaluation);
-  homeworkCache = check(homework, "homework").map(dbToHomework);
-  disciplineCache = check(discipline, "discipline").map(dbToDiscipline);
-  groupsCache = check(groups, "groups").map(dbToGroup);
-
-  const teacherRows = check(teachers, "teachers");
-  return teacherRows.map(row => ({ id: row.id, ...dbRowToProfile(row) }));
-}
-
-export async function loadPendingApprovals() {
-  const { sb } = await import("./supabase-client.js");
-  const { data, error } = await sb.from("profiles").select("*")
-    .in("role", ["admin", "vice_principal"]).eq("review_status", "pending");
-  if (error) { console.error("ClassPilot: could not load pending approvals", error); return []; }
-  return data.map(row => ({ id: row.id, ...dbRowToProfile(row), reviewStatus: row.review_status, reviewReason: row.review_reason }));
-}
-
-/** یکپارچه: تأیید/رد/نیازمند اصلاح — همه از همین یک تابع. دلیل برای رد و
-    نیازمند اصلاح، هم تو دیتابیس هم اینجا اجباری است (دفاع دوگانه). هرگز
-    ردیف پروفایل حذف نمی‌شود — تاریخچه‌ی کامل در request_reviews می‌ماند. */
-export async function reviewRegistrationRequest(profileId, action, reason = null) {
-  if (["rejected", "needs_correction"].includes(action) && !(reason || "").trim()) {
-    throw new Error("وارد کردن دلیل الزامی است.");
-  }
-  const { sb } = await import("./supabase-client.js");
-  const { data, error } = await sb.rpc("review_registration_request", { p_profile_id: profileId, p_action: action, p_reason: reason });
-  if (error) throw error;
-  if (!data.success) throw new Error(data.error || "عملیات ناموفق بود.");
-  return data;
-}
-
-/** برای سازگاری با کد قبلی — معادل تأیید ساده. */
-export async function approveAccount(userId) {
-  return reviewRegistrationRequest(userId, "approved");
-}
-
-/** اگر متقاضی الان در وضعیت «نیازمند اصلاح» است، دوباره درخواست بده تا
-    برگردد به «در انتظار بررسی». */
-export async function resubmitRegistrationRequest() {
-  const { sb } = await import("./supabase-client.js");
-  const { data, error } = await sb.rpc("resubmit_registration_request");
-  if (error) throw error;
-  if (!data.success) throw new Error(data.error || "درخواست دوباره ناموفق بود.");
-  return data;
-}
-
-/** آمار سطح پلتفرم برای داشبورد سوپر ادمین. */
-export async function loadPlatformStats() {
-  const { sb } = await import("./supabase-client.js");
-  const [schools, profilesRes] = await Promise.all([
-    sb.from("schools").select("id"),
-    sb.from("profiles").select("role, review_status"),
-  ]);
-  const schoolCount = schools.data?.length || 0;
-  const rows = profilesRes.data || [];
-  const count = role => rows.filter(r => r.role === role).length;
-  return {
-    totalSchools: schoolCount,
-    totalTeachers: count("teacher"),
-    totalManagers: count("admin"),
-    totalAssistants: count("vice_principal"),
-    totalParents: count("parent"),
-    pendingManagers: rows.filter(r => r.role === "admin" && r.review_status === "pending").length,
-    pendingAssistants: rows.filter(r => r.role === "vice_principal" && r.review_status === "pending").length,
-  };
-}
-
-/* ================================================================
-   SUPER ADMIN — every function here relies entirely on the database's
-   own rules (is_super_admin() / protect_role_and_verified trigger in
-   schema-v3.sql) to actually work; a non-super-admin calling these
-   gets a silently-reverted no-op or an RLS-denied error, not a real
-   change — this file doesn't (and can't) grant privilege on its own.
-   ================================================================ */
-export async function loadAllUsers() {
-  const { sb } = await import("./supabase-client.js");
-  const { data, error } = await sb.from("profiles").select("*");
-  if (error) { console.error("ClassPilot: could not load all users", error); return []; }
-  return data.map(row => ({ id: row.id, ...dbRowToProfile(row) }));
-}
-
-export async function changeUserRole(userId, newRole) {
-  const { sb } = await import("./supabase-client.js");
-  const { error } = await sb.from("profiles").update({ role: newRole }).eq("id", userId);
-  if (error) throw error;
-}
-
-/** Admin/vice_principal/rahbar-scoped action: promote a teacher to رahbar
-    (whole-school view) or سرگروه آموزشی (grade-scoped view), or demote back
-    to teacher. Only 'teacher' <-> 'rahbar'/'group_leader' is actually
-    permitted by the database trigger — anything else silently reverts. */
-export async function setTeacherLeaderRole(teacherId, role, assignedGrade = null) {
-  const { sb } = await import("./supabase-client.js");
-  const patch = { role };
-  if (role === "group_leader") patch.assigned_grade = assignedGrade;
-  if (role === "teacher") patch.assigned_grade = null;
-  const { error } = await sb.from("profiles").update(patch).eq("id", teacherId);
-  if (error) throw error;
-}
-
-export async function setUserActive(userId, active) {
-  const { sb } = await import("./supabase-client.js");
-  const { error } = await sb.from("profiles").update({ verified: active }).eq("id", userId);
-  if (error) throw error;
-}
-
-export async function deleteUser(userId) {
-  const { sb } = await import("./supabase-client.js");
-  // Same limitation as rejectAccount(): removes the profile row (blocking
-  // all app access), not the underlying auth.users row (needs service_role).
-  const { error } = await sb.from("profiles").delete().eq("id", userId);
-  if (error) throw error;
 }
 
 /* ================================================================

@@ -1,17 +1,18 @@
 /* ============================================================
-   APP ENTRY POINT
+   APP ENTRY POINT (v2 — نسخه‌ی نهایی، فقط دو نقش)
    ------------------------------------------------------------
    Boot sequence: Sign in/Sign up (Auth) → route by role:
      - teacher: Setup (if profile incomplete) → main app shell
-     - admin / vice_principal, NOT verified: pending-approval screen
-     - admin / vice_principal, verified: admin panel
      - parent: read-only parent panel
+   هیچ نقش دیگری (مدیر/معاون/راهبر/سرگروه/سوپر ادمین) در این
+   برنامه وجود ندارد — طبق تصمیم نهایی محصول. معلم و ولی هیچ‌کدام
+   نیازی به تأیید مدیریتی ندارند، بلافاصله بعد از ثبت‌نام فعال‌اند.
    ============================================================ */
 import { isSetupComplete, loadProfile, loadAllCollections, loadParentData, enablePreviewMode } from "./store.js";
 import { initTheme } from "./theme.js";
-import { initModals, $ } from "./ui.js";
+import { initModals } from "./ui.js";
 import { initRouter, switchView } from "./router.js";
-import { initAuth, getSession, signOut, PHONE_VERIFICATION_ENABLED } from "./auth.js";
+import { initAuth, getSession, signOut } from "./auth.js";
 import { initSetup } from "./setup.js";
 import { initHeader } from "./header.js";
 import { initDashboard } from "./dashboard.js";
@@ -28,9 +29,8 @@ import { initPlanning } from "./planning.js";
 import { initReports } from "./reports.js";
 import { initSettings } from "./settings.js";
 import { initParent } from "./parent.js";
-import { initAdmin } from "./admin.js";
 
-const SCREENS = ["auth-screen", "setup-screen", "pending-screen", "superadmin-redirect-screen", "parent-screen", "admin-screen", "app"];
+const SCREENS = ["auth-screen", "setup-screen", "parent-screen", "app"];
 
 function registerServiceWorker() {
   if (!("serviceWorker" in navigator)) return;
@@ -58,89 +58,11 @@ async function boot() {
 }
 
 /** Runs right after a successful sign-in/sign-up, and on every fresh page
-    load where a session already exists. Routes by role. */
+    load where a session already exists. Only two possible destinations:
+    the teacher's own class, or a parent's read-only view of their child. */
 async function afterAuthSuccess() {
   const profile = await loadProfile();
   if (!profile) { showScreen("auth-screen"); initAuth(afterAuthSuccess); return; }
-
-  // Every role except super_admin must confirm their phone via SMS OTP
-  // before the account is usable at all — checked here so it applies on
-  // every page load with an existing session, not just right after signup.
-  if (PHONE_VERIFICATION_ENABLED && profile.role !== "super_admin" && !profile.phoneVerified) {
-    const { sb } = await import("./supabase-client.js");
-    const { data: userData } = await sb.auth.getUser();
-    const phone = userData?.user?.phone;
-    if (phone) {
-      showScreen("auth-screen");
-      const { initPhoneVerify } = await import("./auth.js");
-      initPhoneVerify(phone, afterAuthSuccess);
-      return;
-    }
-  }
-
-  // verified now gates EVERY role — a super_admin can deactivate any account,
-  // not just reject a pending admin/VP signup.
-  if (!profile.verified) {
-    showScreen("pending-screen");
-    const isAdminRole = profile.role === "admin" || profile.role === "vice_principal";
-    const heading = document.querySelector("#pending-screen h1");
-    const body = document.querySelector("#pending-screen p");
-    const reasonBox = $("#pending-reason-box");
-    const reasonLabel = $("#pending-reason-label");
-    const reasonText = $("#pending-reason-text");
-    const resubmitBtn = $("#pending-resubmit");
-    reasonBox.hidden = true;
-    resubmitBtn.hidden = true;
-
-    if (isAdminRole && profile.reviewStatus === "rejected") {
-      heading.textContent = "درخواست شما رد شد";
-      body.textContent = "متأسفانه درخواست ثبت‌نام شما به‌عنوان مدیر/معاون رد شد. برای اطلاعات بیشتر با مدیریت سامانه تماس بگیرید.";
-      if (profile.reviewReason) { reasonLabel.textContent = "علت رد:"; reasonText.textContent = profile.reviewReason; reasonBox.hidden = false; }
-    } else if (isAdminRole && profile.reviewStatus === "needs_correction") {
-      heading.textContent = "درخواست شما نیازمند اصلاح است";
-      body.textContent = "لطفاً موارد زیر را اصلاح کنید و دوباره درخواست بدهید.";
-      if (profile.reviewReason) { reasonLabel.textContent = "موارد نیازمند اصلاح:"; reasonText.textContent = profile.reviewReason; reasonBox.hidden = false; }
-      resubmitBtn.hidden = false;
-      resubmitBtn.onclick = async () => {
-        resubmitBtn.disabled = true;
-        resubmitBtn.textContent = "در حال ارسال…";
-        try {
-          const { resubmitRegistrationRequest } = await import("./store.js");
-          await resubmitRegistrationRequest();
-          window.location.reload();
-        } catch (err) {
-          resubmitBtn.disabled = false;
-          resubmitBtn.textContent = "ثبت مجدد درخواست";
-          alert("ثبت مجدد ناموفق بود، دوباره تلاش کنید.");
-        }
-      };
-    } else if (isAdminRole) {
-      heading.textContent = "حساب شما در انتظار تأیید است";
-      body.textContent = "درخواست ثبت‌نام شما به‌عنوان مدیر/معاون ثبت شد و برای بررسی مدرک ابلاغ/حکم کارگزینی نزد مدیریت سامانه ارسال شد. پس از تأیید، با همین کد و رمز عبور می‌توانید وارد شوید.";
-    } else {
-      heading.textContent = "حساب شما غیرفعال شده است";
-      body.textContent = "دسترسی شما توسط مدیریت سامانه غیرفعال شده است. برای اطلاعات بیشتر با مدیریت سامانه تماس بگیرید.";
-    }
-    $bindSignOut("pending-sign-out");
-    return;
-  }
-
-  // Super Admin has NO screen or option anywhere in the main school app —
-  // by design, it's a fully separate panel (superadmin.html), even though
-  // both connect to the same Supabase project. If a super_admin account
-  // somehow signs into THIS app, they're told where to go instead of
-  // ever seeing any admin UI here.
-  if (profile.role === "super_admin") {
-    showScreen("superadmin-redirect-screen");
-    $bindSignOut("superadmin-redirect-sign-out");
-    return;
-  }
-
-  if (["admin", "vice_principal", "rahbar", "group_leader"].includes(profile.role)) {
-    showScreen("admin-screen");
-    initAdmin(profile.role === "rahbar" || profile.role === "group_leader");
-    return;
-  }
 
   if (profile.role === "parent") {
     await loadParentData();
@@ -149,20 +71,13 @@ async function afterAuthSuccess() {
     return;
   }
 
-  // Default / "teacher"
+  // Everyone else (teacher — the only other role that exists) lands here.
   if (!isSetupComplete()) {
     showScreen("setup-screen");
     initSetup(showApp);
     return;
   }
   await showApp();
-}
-
-function $bindSignOut(buttonId) {
-  document.getElementById(buttonId)?.addEventListener("click", async () => {
-    await signOut();
-    window.location.reload();
-  });
 }
 
 export async function showApp() {
@@ -187,31 +102,15 @@ export async function showApp() {
 }
 
 /** بدون هیچ ورود واقعی — مستقیم صفحه‌ی واقعی همون نقش رو با داده‌ی
-    نمونه نشون می‌ده. فقط برای بررسی سریع ظاهر صفحات، قبل از اینکه
-    سیستم ورود واقعی (SMS) را نهایی کنیم. */
+    نمونه نشون می‌ده. فقط برای بررسی سریع ظاهر صفحات. */
 export async function showPreview(role) {
   enablePreviewMode(role);
-
-  if (["admin", "vice_principal", "rahbar", "group_leader"].includes(role)) {
-    showScreen("admin-screen");
-    initAdmin(role === "rahbar" || role === "group_leader");
-    return;
-  }
   if (role === "parent") {
     showScreen("parent-screen");
     initParent();
     return;
   }
-  // teacher
   await showApp();
-}
-
-/** خودِ معلم/ولی (یا هر نقشی) که دسترسی نظارتی راهبر/سرگروه به یک یا
-    چند مدرسه‌ی دیگر دارد، با این دکمه وارد همان صفحه‌ی مرور کلاس‌ها
-    می‌شود — بدون این‌که نقش یا داشبورد خودش عوض شود. */
-export async function showOversightView() {
-  showScreen("admin-screen");
-  initAdmin(true);
 }
 
 if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
