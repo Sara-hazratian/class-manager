@@ -86,3 +86,16 @@ export function termOf(date) {
 /** Academic month key for a date, e.g. "mehr" */
 export const ACADEMIC_MONTHS = { 7:"مهر", 8:"آبان", 9:"آذر", 10:"دی", 11:"بهمن", 12:"اسفند", 1:"فروردین", 2:"اردیبهشت", 3:"خرداد" };
 export function academicMonthName(date) { return ACADEMIC_MONTHS[toJalali(date).jm] || JMONTHS[toJalali(date).jm - 1]; }
+
+/** بازه‌ی سال تحصیلی جاری (مهر تا خرداد) — برای نمایش پیش‌فرض صفحه‌ی
+    اولیا: از اول مهر، تا وقتی معلم جدید چیزی ثبت نکرده، صفحه طبیعتاً
+    خالی می‌ماند (چون هیچ داده‌ای در این بازه هنوز وجود ندارد) — بدون
+    نیاز به هیچ عملیات «پاک‌سازی» دستی یا خودکار جداگانه. */
+export function currentAcademicYearRange() {
+  const { jy, jm } = toJalali(new Date());
+  const startJy = jm >= 7 ? jy : jy - 1; // اگر الان تیر/مرداد/شهریور یا فروردین..خرداد باشد، سال تحصیلی از پارسال مهر شروع شده
+  const start = fromJalali(startJy, 7, 1);
+  const end = fromJalali(startJy + 1, 3, 31);
+  const iso = d => { const p = n => String(n).padStart(2, "0"); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`; };
+  return { start: iso(start), end: iso(end) };
+}

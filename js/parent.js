@@ -15,7 +15,7 @@ import { fa } from "./jalali.js";
 import { signOut } from "./auth.js";
 
 let selectedChildId = null;
-let selectedPeriod = "all";
+let selectedPeriod = "current-year";
 
 function renderChildTabs() {
   const wrap = $("#parent-child-tabs");

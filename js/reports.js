@@ -10,7 +10,7 @@
    ============================================================ */
 import { getStudents, getEvaluations, getAttendance, getDiscipline, getProfile, SUBJECTS } from "./store.js";
 import { $, $$, toast } from "./ui.js";
-import { fa, termOf, toJalali, isoToDate, formatJalaliLong, formatJalali, todayISO, JMONTHS } from "./jalali.js";
+import { fa, termOf, toJalali, isoToDate, formatJalaliLong, formatJalali, todayISO, JMONTHS, currentAcademicYearRange } from "./jalali.js";
 import { registerTitle, onViewChange } from "./router.js";
 
 registerTitle("reports", "گزارش‌ها");
@@ -32,6 +32,7 @@ function inMonth(iso, monthKey) { return MONTH_KEY_BY_JM[toJalali(isoToDate(iso)
 
 function matchesPeriod(iso, period, monthKey) {
   if (period === null || period === undefined || period === "all") return true; // همه — بدون فیلتر تاریخ
+  if (period === "current-year") { const r = currentAcademicYearRange(); return iso >= r.start && iso <= r.end; }
   if (period === "daily") return iso === todayISO();
   if (period === "weekly") return inWeek(iso);
   if (period === "monthly") return inMonth(iso, monthKey);

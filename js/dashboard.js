@@ -5,7 +5,7 @@
    change when Students/Attendance/Lessons ship.
    ============================================================ */
 import {
-  getStudents, getSchedule, getTasks, setTasks, uid, subjectById,
+  getStudents, getActiveStudents, getSchedule, getTasks, setTasks, uid, subjectById,
   todayDayIndex, DAYS, getGeneralNotes, setGeneralNotes,
 } from "./store.js";
 import { $, $$, toast, debounce } from "./ui.js";
@@ -22,7 +22,7 @@ function renderStats() {
   const lessons = dayIdx >= 0 ? (getSchedule()[dayIdx] || []).filter(Boolean) : [];
   const pending = getTasks().filter(t => !t.done).length;
 
-  $("#stat-students").textContent = fa(getStudents().length);
+  $("#stat-students").textContent = fa(getActiveStudents().length);
   $("#stat-lessons").textContent = fa(lessons.length);
   $("#stat-pending-tasks").textContent = fa(pending);
   const rate = todayAttendanceRate();

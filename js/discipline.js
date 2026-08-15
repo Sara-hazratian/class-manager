@@ -4,7 +4,7 @@
    entry with a reason, and sees that student's full history as
    a timeline.
    ============================================================ */
-import { getStudents, getDiscipline, setDiscipline, uid, SUBJECTS } from "./store.js";
+import { getActiveStudents, getDiscipline, setDiscipline, uid, SUBJECTS } from "./store.js";
 import { $, $$, toast } from "./ui.js";
 import { todayISO, formatJalaliLong, isoToDate } from "./jalali.js";
 import { registerTitle, onViewChange } from "./router.js";
@@ -16,7 +16,7 @@ let selectedStudentId = null;
 
 function refreshStudentSelect() {
   const sel = $("#dp-student");
-  const students = getStudents();
+  const students = getActiveStudents();
   const keep = sel.value || selectedStudentId;
   sel.innerHTML = students.map(s => `<option value="${s.id}">${s.name}</option>`).join("");
   sel.value = students.some(s => s.id === keep) ? keep : (students[0]?.id || "");

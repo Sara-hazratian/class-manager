@@ -156,13 +156,21 @@ export const PERIODS = 5;
    STUDENTS
    ================================================================ */
 let studentsCache = [];
+// این تابع همیشه لیست کامل (شامل بایگانی‌شده‌ها) را برمی‌گرداند — چون
+// setStudents/setStudentsChecked برای تشخیص «چه چیزی حذف شده»، آن را
+// با قبل مقایسه می‌کنند؛ اگر اینجا فیلتر می‌شد، هر بار ذخیره، بایگانی‌شده‌ها
+// را به‌اشتباه «حذف‌شده» تشخیص می‌داد. برای صفحات روزمره (حضور و غیاب،
+// ارزشیابی، و...) به‌جایش از getActiveStudents() استفاده کنید.
 export const getStudents = () => studentsCache;
+// برای صفحات روزمره — دانش‌آموز بایگانی‌شده دیگر اینجا ظاهر نمی‌شود.
+export const getActiveStudents = () => studentsCache.filter(s => !s.archived);
+export const getArchivedStudents = () => studentsCache.filter(s => s.archived);
 
 function studentToDb(s, teacherId) {
   return { id: s.id, teacher_id: teacherId, name: s.name, national_id: s.nationalId, phone: s.phone || null, group_id: s.groupId || null, notes: s.notes || null };
 }
 function dbToStudent(r) {
-  return { id: r.id, name: r.name, nationalId: r.national_id, phone: r.phone || "", groupId: r.group_id, notes: r.notes || "", teacherId: r.teacher_id };
+  return { id: r.id, name: r.name, nationalId: r.national_id, phone: r.phone || "", groupId: r.group_id, notes: r.notes || "", teacherId: r.teacher_id, archived: r.archived || false };
 }
 
 export async function setStudents(newList) {
@@ -188,6 +196,18 @@ export async function setStudentsChecked(newList) {
     }
     throw err;
   }
+}
+
+/** پایان سال تحصیلی — دانش‌آموز را بایگانی کن. سوابقش (ارزشیابی، حضور،
+    گزارش‌ها) دست‌نخورده می‌ماند و خودش/والدینش هنوز می‌توانند ببینندش،
+    ولی کد ملی‌اش آزاد می‌شود تا معلم سال بعد بتواند دوباره اضافه‌اش
+    کند — بدون این کار، آن کد ملی برای همیشه قفل می‌ماند. */
+export async function archiveStudent(studentId) {
+  const { sb } = await import("./supabase-client.js");
+  const { error } = await sb.from("students").update({ archived: true }).eq("id", studentId);
+  if (error) throw error;
+  const s = studentsCache.find(x => x.id === studentId);
+  if (s) s.archived = true;
 }
 
 /* ================================================================
@@ -413,8 +433,8 @@ export function enablePreviewMode(role) {
 
   const base = { username: "PREVIEW", verified: true, themeColor: "blue" };
   if (role === "parent") {
-    profileCache = { ...base, role: "parent", fullName: "ولی نمونه" };
-    // یک ولی فقط باید فرزند خودش را ببیند — نه هر سه دانش‌آموز نمونه.
+    profileCache = { ...base, role: "parent", fullName: "اولیا نمونه" };
+    // یک اولیا فقط باید فرزند خودش را ببیند — نه هر سه دانش‌آموز نمونه.
     applyPreviewCollections();
     studentsCache = PREVIEW_STUDENTS.slice(0, 1);
     const onlyChildId = studentsCache[0].id;

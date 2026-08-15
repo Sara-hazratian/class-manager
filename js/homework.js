@@ -3,7 +3,7 @@
    One-click apply to the whole class; teacher only edits the
    exceptions afterward.
    ============================================================ */
-import { getStudents, getHomework, setHomework, uid, SUBJECTS } from "./store.js";
+import { getActiveStudents, getHomework, setHomework, uid, SUBJECTS } from "./store.js";
 import { $, $$, toast, initials } from "./ui.js";
 import { todayISO, formatJalaliLong } from "./jalali.js";
 import { registerTitle, onViewChange } from "./router.js";
@@ -36,7 +36,7 @@ export function renderHomework() {
   if (!tbody) return;
   $("#hw-date").textContent = formatJalaliLong(new Date());
 
-  const students = getStudents();
+  const students = getActiveStudents();
   empty.hidden = students.length > 0;
   $$("[data-hw-all]").forEach(b => { b.disabled = students.length === 0; });
   if (!students.length) { tbody.innerHTML = ""; return; }
@@ -55,7 +55,7 @@ export function renderHomework() {
 }
 
 function markAll(status) {
-  const students = getStudents();
+  const students = getActiveStudents();
   if (!students.length) return;
   const label = STATES.find(s => s.id === status).label;
   if (!confirm(`تکلیف «${label}» برای همه دانش‌آموزان این درس ثبت شود؟`)) return;
@@ -73,7 +73,7 @@ function markAll(status) {
 
 /** How many students still have no homework record for today's selected subject. */
 export function pendingHomeworkCount() {
-  const students = getStudents();
+  const students = getActiveStudents();
   const recs = getHomework().filter(h => h.date === todayISO() && h.subjectId === subjectId);
   return Math.max(0, students.length - recs.length);
 }

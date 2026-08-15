@@ -5,7 +5,7 @@
      - teacher: Setup (if profile incomplete) → main app shell
      - parent: read-only parent panel
    هیچ نقش دیگری (مدیر/معاون/راهبر/سرگروه/سوپر ادمین) در این
-   برنامه وجود ندارد — طبق تصمیم نهایی محصول. معلم و ولی هیچ‌کدام
+   برنامه وجود ندارد — طبق تصمیم نهایی محصول. معلم و اولیا هیچ‌کدام
    نیازی به تأیید مدیریتی ندارند، بلافاصله بعد از ثبت‌نام فعال‌اند.
    ============================================================ */
 import { isSetupComplete, loadProfile, loadAllCollections, loadParentData, enablePreviewMode } from "./store.js";

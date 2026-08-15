@@ -10,7 +10,7 @@
    Mehr's material in Aban; inferring it from the month was a
    real bug. Reports then group by the ACTUAL range evaluated.
    ============================================================ */
-import { getStudents, getEvaluations, setEvaluations, uid, subjectById, getProfile, SUBJECT_PAGE_COUNTS } from "./store.js";
+import { getActiveStudents, getEvaluations, setEvaluations, uid, subjectById, getProfile, SUBJECT_PAGE_COUNTS } from "./store.js";
 import { $, $$, toast, initials } from "./ui.js";
 import { todayISO, formatJalaliLong, fa } from "./jalali.js";
 import { switchView, registerTitle } from "./router.js";
@@ -113,7 +113,7 @@ function findRecord(list, studentId, date) {
 
 export function renderEvalTable() {
   const tbody = $("#eval-tbody"), empty = $("#eval-empty");
-  const students = getStudents();
+  const students = getActiveStudents();
   empty.hidden = students.length > 0;
   renderMarkAll();
   if (!students.length) { tbody.innerHTML = ""; return; }
@@ -167,7 +167,7 @@ function setLevel(studentId, level) {
 }
 
 function setAllLevel(level) {
-  const students = getStudents();
+  const students = getActiveStudents();
   if (!students.length) return;
   const topic = currentTopic();
   if (!topic) {

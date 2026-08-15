@@ -3,7 +3,7 @@
    tab. Groups are defined independently and students are
    assigned to them any time afterward — not forced at creation.
    ============================================================ */
-import { getStudents, setStudents, setStudentsChecked, getGroups, setGroups, uid } from "./store.js";
+import { getStudents, getActiveStudents, setStudents, setStudentsChecked, archiveStudent, getGroups, setGroups, uid } from "./store.js";
 import { $, $$, toast, openModal, initials } from "./ui.js";
 import { registerTitle, onViewChange } from "./router.js";
 
@@ -23,7 +23,7 @@ function groupName(groupId) {
 function filtered() {
   const q = ($("#st-search")?.value || "").trim();
   const g = $("#st-group-filter")?.value || "";
-  return getStudents()
+  return getActiveStudents()
     .filter(s => !q || s.name.includes(q) || (s.nationalId || "").includes(q))
     .filter(s => !g || s.groupId === g);
 }
@@ -70,6 +70,7 @@ function openStudentModal(id) {
   $("#student-error").textContent = "";
   $("#student-id").value = id || "";
   $("#student-modal-title").textContent = id ? "ویرایش دانش‌آموز" : "افزودن دانش‌آموز";
+  $("#student-archive-btn").hidden = !id;
   if (id) {
     const s = getStudents().find(x => x.id === id);
     if (s) {
@@ -161,6 +162,46 @@ export function initStudents() {
   $("#btn-add-student")?.addEventListener("click", () => openStudentModal(null));
   $("#st-search")?.addEventListener("input", renderStudents);
   $("#st-group-filter")?.addEventListener("change", renderStudents);
+
+  $("#btn-new-year")?.addEventListener("click", async () => {
+    const active = getActiveStudents();
+    if (!active.length) { toast("کلاس شما در حال حاضر خالی است."); return; }
+    const sure = confirm(
+      `شروع سال تحصیلی جدید؟\n\n` +
+      `این کار همه‌ی ${active.length} دانش‌آموز فعلی کلاس شما را یک‌جا بایگانی می‌کند — سوابقشان (ارزشیابی، حضور، گزارش‌ها) حذف نمی‌شود و برای خودتان و والدینشان قابل مشاهده می‌ماند، ولی کد ملی‌شان آزاد می‌شود تا در صورت نیاز، معلم بعدی بتواند دوباره ثبتشان کند.\n\n` +
+      `بعد از این کار، کلاس شما خالی می‌شود تا دانش‌آموزهای سال جدید را اضافه کنید. این کار قابل بازگشت نیست.`
+    );
+    if (!sure) return;
+    const btn = $("#btn-new-year");
+    btn.disabled = true;
+    btn.textContent = "در حال بایگانی…";
+    try {
+      for (const s of active) await archiveStudent(s.id);
+      toast(`${active.length} دانش‌آموز بایگانی شد — کلاس شما آماده‌ی سال جدید است`);
+      renderStudents(); notify();
+    } catch (err) {
+      toast(err.message || "بایگانی کردن ناموفق بود.", "error");
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "📦 شروع سال تحصیلی جدید";
+    }
+  });
+
+  $("#student-archive-btn")?.addEventListener("click", async () => {
+    const id = $("#student-id").value;
+    if (!id) return;
+    const s = getStudents().find(x => x.id === id);
+    if (!s) return;
+    if (!confirm(`«${s.name}» بایگانی شود؟\n\nسوابق ثبت‌شده (ارزشیابی، حضور و غیاب، گزارش‌ها) حذف نمی‌شود و برای خودتان و والدینش قابل مشاهده می‌ماند. کد ملی‌اش هم آزاد می‌شود تا در صورت نیاز، معلم سال بعد بتواند دوباره ثبتش کند.`)) return;
+    try {
+      await archiveStudent(id);
+      toast(`«${s.name}» بایگانی شد`);
+      renderStudents(); notify();
+      $("#modal-student").close();
+    } catch (err) {
+      $("#student-error").textContent = err.message || "بایگانی کردن ناموفق بود.";
+    }
+  });
 
   $("#student-form")?.addEventListener("submit", async e => {
     e.preventDefault();

@@ -57,7 +57,7 @@ let pendingMeta = {};
 
 const ROLE_TABS = [
   { id: "teacher", label: "معلم" },
-  { id: "parent", label: "ولی" },
+  { id: "parent", label: "اولیا" },
 ];
 
 function signinFieldsHTML() {

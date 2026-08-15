@@ -8,7 +8,7 @@
    بوده ولی زنگ سوم زودتر رفته، یک رکورد «حاضر + خروج زودهنگام»
    می‌شود — نه یک رکورد غیبت جدا.
    ============================================================ */
-import { getStudents, getAttendance, setAttendance, uid } from "./store.js";
+import { getActiveStudents, getAttendance, setAttendance, uid } from "./store.js";
 import { $, $$, initials } from "./ui.js";
 import { todayISO, formatJalaliLong, weekdayName, fa } from "./jalali.js";
 import { registerTitle, onViewChange } from "./router.js";
@@ -41,7 +41,7 @@ export function renderAttendance() {
   $("#att-date").textContent = formatJalaliLong(now);
   $("#att-weekday").textContent = weekdayName(now);
 
-  const students = getStudents();
+  const students = getActiveStudents();
   empty.hidden = students.length > 0;
   $("#btn-all-present").disabled = students.length === 0;
   if (!students.length) { tbody.innerHTML = ""; updateCounts(); return; }
@@ -105,7 +105,7 @@ function updateCounts() {
 }
 
 export function todayAttendanceRate() {
-  const students = getStudents();
+  const students = getActiveStudents();
   const recs = getAttendance().filter(a => a.date === todayISO());
   if (!students.length || !recs.length) return null;
   const present = recs.filter(r => r.status === "present").length;
@@ -114,7 +114,7 @@ export function todayAttendanceRate() {
 
 function markAllPresent() {
   const list = getAttendance();
-  getStudents().forEach(s => {
+  getActiveStudents().forEach(s => {
     const i = list.findIndex(a => a.studentId === s.id && a.date === date);
     if (i >= 0) list[i] = { ...list[i], status: "present" };
     else list.push({ id: uid("at"), studentId: s.id, date, status: "present", lateMinutes: null, earlyExit: false, exit: "" });
@@ -126,7 +126,7 @@ function markAllPresent() {
 
 export function initAttendance() {
   $("#btn-all-present")?.addEventListener("click", () => {
-    if (!getStudents().length) return;
+    if (!getActiveStudents().length) return;
     if (confirm("وضعیت همه دانش‌آموزان برای امروز «حاضر» ثبت شود؟ می‌توانید بعداً موارد استثنا را تغییر دهید.")) markAllPresent();
   });
   onViewChange(name => { if (name === "attendance") renderAttendance(); });

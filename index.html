@@ -63,7 +63,7 @@
     <div style="display:flex;align-items:center;gap:12px">
       <img src="icons/logo-horizontal.png" alt="ClassPilot" style="height:34px;width:auto" />
       <div style="width:1px;height:28px;background:var(--color-border)"></div>
-      <h1 class="app-header__teacher" style="margin:0">پنل ولی</h1>
+      <h1 class="app-header__teacher" style="margin:0">پنل اولیا</h1>
     </div>
     <button type="button" class="btn btn--secondary btn--sm" id="parent-sign-out">خروج</button>
   </header>
@@ -87,10 +87,11 @@
     <div id="parent-content" hidden>
       <div class="pill-tabs" id="parent-child-tabs" style="margin-bottom:var(--space-4)"></div>
       <div class="pill-tabs" id="parent-period-tabs" style="margin-bottom:var(--space-5)">
-        <button type="button" class="pill-tab is-active" data-period="all">همه</button>
+        <button type="button" class="pill-tab is-active" data-period="current-year">سال تحصیلی جاری</button>
         <button type="button" class="pill-tab" data-period="weekly">هفتگی</button>
         <button type="button" class="pill-tab" data-period="term1">نیمسال اول</button>
         <button type="button" class="pill-tab" data-period="term2">نیمسال دوم</button>
+        <button type="button" class="pill-tab" data-period="all">همه‌ی سال‌ها</button>
       </div>
       <div id="parent-report"></div>
     </div>
@@ -219,7 +220,10 @@
               <div style="min-width:160px"><label for="st-group-filter">گروه</label><select id="st-group-filter" class="select-control"><option value="">همه گروه‌ها</option></select></div>
               <div style="min-width:200px"><label for="st-search">جستجو</label><input type="search" id="st-search" placeholder="نام یا کد ملی…" /></div>
             </div>
-            <button type="button" class="btn btn--primary" id="btn-add-student"><svg class="icon"><use href="#i-plus"/></svg>افزودن دانش‌آموز</button>
+            <div style="display:flex;gap:var(--space-3);flex-wrap:wrap">
+              <button type="button" class="btn btn--secondary btn--sm" id="btn-new-year">📦 شروع سال تحصیلی جدید</button>
+              <button type="button" class="btn btn--primary" id="btn-add-student"><svg class="icon"><use href="#i-plus"/></svg>افزودن دانش‌آموز</button>
+            </div>
           </div>
           <div class="student-grid" id="student-grid"></div>
           <div class="empty-state" id="st-empty" hidden>
@@ -579,6 +583,7 @@
       <label for="student-notes">یادداشت</label>
       <textarea id="student-notes" placeholder="اختیاری…"></textarea>
       <p class="empty-state__text" id="student-error" style="color:var(--color-danger);text-align:right;padding:0;margin-top:6px"></p>
+      <button type="button" class="btn btn--secondary" id="student-archive-btn" hidden style="width:100%;margin-top:var(--space-3)">📦 پایان سال تحصیلی — بایگانی کردن این دانش‌آموز</button>
     </div>
     <footer class="modal__footer">
       <button type="button" class="btn btn--ghost" data-close>انصراف</button>
