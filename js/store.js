@@ -523,6 +523,17 @@ export async function addChildByNationalId(nationalId) {
   return data;
 }
 
+/** اگه اولیا اشتباهی به یه دانش‌آموز وصل شدن (مثلاً معلم کد ملی رو
+    اشتباه یا زیر کلاس اشتباه ثبت کرده بود)، خودشون می‌تونن این ارتباط
+    رو قطع کنن — بدون نیاز به دخالت هیچ معلمی. */
+export async function unlinkChild(studentId) {
+  const { sb } = await import("./supabase-client.js");
+  const { data, error } = await sb.rpc("unlink_child_from_parent", { p_student_id: studentId });
+  if (error) throw error;
+  if (!data.success) throw new Error(data.error || "قطع ارتباط ناموفق بود.");
+  return data;
+}
+
 /* ================================================================
    RESET (Settings → "start over") — deletes every row this teacher
    owns across every table, then clears all local caches.

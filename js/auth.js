@@ -198,9 +198,20 @@ function renderAuthForm() {
       <button type="button" id="auth-toggle-mode" class="btn btn--ghost btn--block" style="margin-top:var(--space-2);font-size:12.5px">
         ${isSignup ? "قبلاً ثبت‌نام کرده‌اید؟ وارد شوید" : "ثبت‌نام نکرده‌اید؟ همین‌جا ثبت‌نام کنید"}
       </button>
+
+      ${!isSignup ? `
+      <div style="margin-top:var(--space-5);padding-top:var(--space-4);border-top:1px dashed var(--color-border)">
+        <p style="text-align:center;font-size:11px;color:var(--color-warning);font-weight:700;margin-bottom:8px">⚠️ موقتی — فقط برای تست، تا وقتی پیامک واقعی فعال بشه</p>
+        <div style="display:flex;gap:8px">
+          <button type="button" class="btn btn--secondary btn--sm" id="preview-teacher-btn" style="flex:1">پیش‌نمایش معلم</button>
+          <button type="button" class="btn btn--secondary btn--sm" id="preview-parent-btn" style="flex:1">پیش‌نمایش اولیا</button>
+        </div>
+      </div>` : ""}
     </div>`;
 
   $("#auth-toggle-mode").addEventListener("click", () => { mode = isSignup ? "signin" : "signup"; renderAuthForm(); });
+  $("#preview-teacher-btn")?.addEventListener("click", async () => { const { showPreview } = await import("./app.js"); await showPreview("teacher"); });
+  $("#preview-parent-btn")?.addEventListener("click", async () => { const { showPreview } = await import("./app.js"); await showPreview("parent"); });
   $$("#signup-role-tabs .pill-tab", root).forEach(b => b.addEventListener("click", () => {
     signupRole = b.dataset.role; renderAuthForm();
   }));

@@ -8,7 +8,7 @@
    - see a simple per-subject progress view
    No edit controls anywhere on this screen, by design.
    ============================================================ */
-import { getStudents, addChildByNationalId, getProfile } from "./store.js";
+import { getStudents, addChildByNationalId, unlinkChild, getProfile } from "./store.js";
 import { buildStudentReport, renderStudentReportHTML } from "./reports.js";
 import { $, $$, toast, translateError } from "./ui.js";
 import { fa } from "./jalali.js";
@@ -31,7 +31,11 @@ function renderChildTabs() {
   if (!selectedChildId || !students.some(s => s.id === selectedChildId)) selectedChildId = students[0].id;
 
   wrap.innerHTML = students.map(s => `<button type="button" class="pill-tab ${s.id === selectedChildId ? "is-active" : ""}" data-child="${s.id}">${s.name}</button>`).join("");
-  $$("[data-child]", wrap).forEach(b => b.addEventListener("click", () => { selectedChildId = b.dataset.child; renderChildContent(); }));
+  $$("[data-child]", wrap).forEach(b => b.addEventListener("click", () => { selectedChildId = b.dataset.child; renderChildTabs(); renderChildContent(); }));
+
+  const selected = students.find(s => s.id === selectedChildId);
+  const unlinkBtn = $("#parent-unlink-btn");
+  if (unlinkBtn && selected) unlinkBtn.textContent = `«${selected.name}» اشتباه است؟ قطع ارتباط`;
 }
 
 function renderChildContent() {
@@ -77,6 +81,23 @@ export function initParent() {
     $$("#parent-period-tabs .pill-tab").forEach(x => x.classList.toggle("is-active", x === b));
     renderChildContent();
   }));
+
+  $("#parent-unlink-btn")?.addEventListener("click", async () => {
+    if (!selectedChildId) return;
+    const s = getStudents().find(x => x.id === selectedChildId);
+    if (!s) return;
+    if (!confirm(`ارتباط با «${s.name}» قطع شود؟\n\nاگه اشتباهی این کد ملی وصل شده (مثلاً معلم زیر کلاس اشتباه ثبتش کرده)، با این کار ارتباط قطع می‌شه — می‌تونید بعداً با «افزودن فرزند» دوباره با کد ملی درست وصل بشید.`)) return;
+    try {
+      await unlinkChild(selectedChildId);
+      selectedChildId = null;
+      const { loadParentData } = await import("./store.js");
+      await loadParentData();
+      renderParentView();
+      toast("ارتباط قطع شد");
+    } catch (err) {
+      toast(translateError(err), "error");
+    }
+  });
 
   $("#parent-sign-out")?.addEventListener("click", async () => {
     await signOut();
