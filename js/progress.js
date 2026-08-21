@@ -16,7 +16,7 @@ const SCORE = { excellent: 4, good: 3, acceptable: 2, "needs-improvement": 1 };
 let mode = "subjects"; // "subjects" | "trend"
 let trendSubjectId = SUBJECTS[0].id;
 
-function avgScore(evs) {
+export function avgScore(evs) {
   if (!evs.length) return null;
   const avg = evs.reduce((s, e) => s + (SCORE[e.level] || 0), 0) / evs.length;
   return Math.round((avg / 4) * 100);
@@ -67,7 +67,7 @@ function renderSubjectBars(studentId) {
     </div>`).join("");
 }
 
-function lastNMonthlyBuckets(n = 8) {
+export function lastNMonthlyBuckets(n = 8) {
   const { jy, jm } = toJalali(new Date());
   let y = jy, m = jm;
   const out = [];
@@ -81,7 +81,7 @@ function lastNMonthlyBuckets(n = 8) {
 /** A small, dependency-free SVG line chart: smoothed curve + gradient
     fill + dots + value labels — built to read as a genuine trend chart,
     not a bare polyline. */
-function renderLineChart(buckets, scores, color, gradientId) {
+export function renderLineChart(buckets, scores, color, gradientId) {
   const W = 560, H = 180, PAD = 28;
   const stepX = (W - PAD * 2) / (buckets.length - 1);
   const known = scores.map((s, i) => (s === null ? null : { x: PAD + i * stepX, y: PAD + (100 - s) * ((H - PAD * 2 - 20) / 100), s }));
@@ -132,7 +132,7 @@ function renderLineChart(buckets, scores, color, gradientId) {
 /** «↑ ۱۵٪ بهبود» / «↓ ۸٪ افت» — مقایسه‌ی اولین و آخرین امتیاز شناخته‌شده،
     دقیقاً همان چیزی که سند خواسته: نمودار باید «بهبود یا افت را واضح
     نشان دهد»، نه فقط چندتا نقطه‌ی بی‌روایت. */
-function renderTrendBadge(scores) {
+export function renderTrendBadge(scores) {
   const known = scores.filter(s => s !== null);
   if (known.length < 2) return "";
   const first = known[0], last = known[known.length - 1];

@@ -76,6 +76,11 @@ export function todayISO() {
   const d = new Date(), p = n => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 }
+export function tomorrowISO() {
+  const d = new Date(); d.setDate(d.getDate() + 1);
+  const p = n => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
 export function isoToDate(iso) { return new Date(iso + "T00:00:00"); }
 
 /** Academic term: 1 = Mehr..Dey (jm 7-10), 2 = Bahman..Khordad (jm 11,12,1,2,3) */

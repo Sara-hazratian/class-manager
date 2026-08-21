@@ -534,6 +534,42 @@ export async function unlinkChild(studentId) {
   return data;
 }
 
+/** برنامه‌ی فردا — معلم می‌نویسه (مثلاً «امتحان املا»)، والدینِ همون
+    کلاس هم می‌تونن ببیننش. برخلاف «کارهای امروز» که کاملاً خصوصیه. */
+export async function getTomorrowPlan() {
+  const { tomorrowISO } = await import("./jalali.js");
+  const teacherId = await requireUserId();
+  const { sb } = await import("./supabase-client.js");
+  const { data, error } = await sb.from("daily_plans").select("text").eq("teacher_id", teacherId).eq("plan_date", tomorrowISO()).maybeSingle();
+  if (error) { console.error("ClassPilot: could not load tomorrow's plan", error); return ""; }
+  return data?.text || "";
+}
+
+export async function setTomorrowPlan(text) {
+  const { tomorrowISO } = await import("./jalali.js");
+  const teacherId = await requireUserId();
+  const { sb } = await import("./supabase-client.js");
+  const trimmed = text.trim();
+  if (!trimmed) {
+    const { error } = await sb.from("daily_plans").delete().eq("teacher_id", teacherId).eq("plan_date", tomorrowISO());
+    if (error) throw error;
+    return;
+  }
+  const { error } = await sb.from("daily_plans").upsert({ teacher_id: teacherId, plan_date: tomorrowISO(), text: trimmed }, { onConflict: "teacher_id,plan_date" });
+  if (error) throw error;
+}
+
+/** برای اولیا — برنامه‌ی فردای معلمِ فرزندشون رو می‌بینن (اگه معلم
+    چیزی نوشته باشه). RLS خودش تضمین می‌کنه فقط برنامه‌ی معلمِ خودِ
+    فرزندشون قابل‌دیدن باشه، نه هر معلم دیگری. */
+export async function loadChildTomorrowPlan(teacherId) {
+  const { tomorrowISO } = await import("./jalali.js");
+  const { sb } = await import("./supabase-client.js");
+  const { data, error } = await sb.from("daily_plans").select("text").eq("teacher_id", teacherId).eq("plan_date", tomorrowISO()).maybeSingle();
+  if (error) { console.error("ClassPilot: could not load child's tomorrow plan", error); return ""; }
+  return data?.text || "";
+}
+
 /* ================================================================
    RESET (Settings → "start over") — deletes every row this teacher
    owns across every table, then clears all local caches.
