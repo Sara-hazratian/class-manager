@@ -8,7 +8,7 @@
        just gives it a proper full-size writing space.
    ============================================================ */
 import { getStudents, setStudents, getGeneralNotes, setGeneralNotes } from "./store.js";
-import { $, $$, toast, debounce } from "./ui.js";
+import { $, $$, toast, debounce , esc } from "./ui.js";
 import { registerTitle, onViewChange } from "./router.js";
 
 registerTitle("notes", "یادداشت‌ها");
@@ -19,7 +19,7 @@ function refreshStudentSelect() {
   const sel = $("#note-student");
   const students = getStudents();
   const keep = sel.value;
-  sel.innerHTML = students.map(s => `<option value="${s.id}">${s.name}</option>`).join("");
+  sel.innerHTML = students.map(s => `<option value="${s.id}">${esc(s.name)}</option>`).join("");
   sel.value = students.some(s => s.id === keep) ? keep : (students[0]?.id || "");
   loadStudentNote();
 }

@@ -13,7 +13,7 @@
 import { getStudents, addChildByNationalId, unlinkChild, getProfile, getEvaluations, SUBJECTS, loadChildTomorrowPlan } from "./store.js";
 import { buildStudentReport, renderStudentReportHTML, ACADEMIC_MONTHS } from "./reports.js";
 import { avgScore, lastNMonthlyBuckets, renderLineChart, renderTrendBadge } from "./progress.js";
-import { $, $$, toast, translateError } from "./ui.js";
+import { $, $$, toast, translateError , esc } from "./ui.js";
 import { fa, formatJalaliLong } from "./jalali.js";
 import { signOut } from "./auth.js";
 
@@ -34,7 +34,7 @@ function renderChildTabs() {
   $("#parent-content").hidden = false;
   if (!selectedChildId || !students.some(s => s.id === selectedChildId)) selectedChildId = students[0].id;
 
-  wrap.innerHTML = students.map(s => `<button type="button" class="pill-tab ${s.id === selectedChildId ? "is-active" : ""}" data-child="${s.id}">${s.name}</button>`).join("");
+  wrap.innerHTML = students.map(s => `<button type="button" class="pill-tab ${s.id === selectedChildId ? "is-active" : ""}" data-child="${s.id}">${esc(s.name)}</button>`).join("");
   $$("[data-child]", wrap).forEach(b => b.addEventListener("click", () => { selectedChildId = b.dataset.child; renderChildTabs(); renderChildContent(); }));
 
   const selected = students.find(s => s.id === selectedChildId);

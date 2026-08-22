@@ -9,7 +9,7 @@
    می‌شود — نه یک رکورد غیبت جدا.
    ============================================================ */
 import { getActiveStudents, getAttendance, setAttendance, uid } from "./store.js";
-import { $, $$, initials } from "./ui.js";
+import { $, $$, initials , esc } from "./ui.js";
 import { todayISO, formatJalaliLong, weekdayName, fa } from "./jalali.js";
 import { registerTitle, onViewChange } from "./router.js";
 
@@ -61,7 +61,7 @@ export function renderAttendance() {
       </div>` : `<span style="color:var(--color-ink-faint);font-size:12px">—</span>`;
 
     return `<tr>
-      <td class="eval-table__student"><span class="student-card__avatar" style="width:30px;height:30px;font-size:12px">${initials(s.name)}</span>${s.name}</td>
+      <td class="eval-table__student"><span class="student-card__avatar" style="width:30px;height:30px;font-size:12px">${initials(s.name)}</span>${esc(s.name)}</td>
       <td><div class="attendance-select">
         ${BASE_STATUSES.map(st => `<button type="button" class="chip-btn ${r?.status === st.id ? "is-active" : ""}" data-att="${st.id}" data-student="${s.id}">${st.label}</button>`).join("")}
       </div></td>

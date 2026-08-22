@@ -4,7 +4,7 @@
    exceptions afterward.
    ============================================================ */
 import { getActiveStudents, getHomework, setHomework, uid, SUBJECTS } from "./store.js";
-import { $, $$, toast, initials } from "./ui.js";
+import { $, $$, toast, initials , esc } from "./ui.js";
 import { todayISO, formatJalaliLong } from "./jalali.js";
 import { registerTitle, onViewChange } from "./router.js";
 
@@ -44,7 +44,7 @@ export function renderHomework() {
   tbody.innerHTML = students.map(s => {
     const r = recordFor(s.id);
     return `<tr>
-      <td class="eval-table__student"><span class="student-card__avatar" style="width:30px;height:30px;font-size:12px">${initials(s.name)}</span>${s.name}</td>
+      <td class="eval-table__student"><span class="student-card__avatar" style="width:30px;height:30px;font-size:12px">${initials(s.name)}</span>${esc(s.name)}</td>
       <td><div class="attendance-select">
         ${STATES.map(st => `<button type="button" class="chip-btn ${r?.status === st.id ? "is-active" : ""}" data-hw="${st.id}" data-student="${s.id}">${st.label}</button>`).join("")}
       </div></td>

@@ -4,7 +4,7 @@
    assigned to them any time afterward — not forced at creation.
    ============================================================ */
 import { getStudents, getActiveStudents, setStudents, setStudentsChecked, archiveStudent, getGroups, setGroups, uid } from "./store.js";
-import { $, $$, toast, openModal, initials } from "./ui.js";
+import { $, $$, toast, openModal, initials, esc } from "./ui.js";
 import { registerTitle, onViewChange } from "./router.js";
 
 registerTitle("students", "دانش‌آموزان");
@@ -37,7 +37,7 @@ export function renderStudents() {
   if (sel) {
     const keep = sel.value;
     const groups = getGroups();
-    sel.innerHTML = `<option value="">همه گروه‌ها</option>` + groups.map(g => `<option value="${g.id}">${g.name}</option>`).join("");
+    sel.innerHTML = `<option value="">همه گروه‌ها</option>` + groups.map(g => `<option value="${g.id}">${esc(g.name)}</option>`).join("");
     sel.value = groups.some(g => g.id === keep) ? keep : "";
   }
 
@@ -48,8 +48,8 @@ export function renderStudents() {
       <div class="student-card__top">
         <span class="student-card__avatar">${initials(s.name)}</span>
         <div>
-          <p class="student-card__name">${s.name}</p>
-          <p class="student-card__group">${groupName(s.groupId) || "بدون گروه"}</p>
+          <p class="student-card__name">${esc(s.name)}</p>
+          <p class="student-card__group">${esc(groupName(s.groupId)) || "بدون گروه"}</p>
         </div>
       </div>
       <div class="student-card__id">کد ملی: ${s.nationalId ? fa2(s.nationalId) : "—"}</div>
@@ -105,7 +105,7 @@ export function renderGroups() {
     <div class="plan-row" style="grid-template-columns:1fr auto">
       <div>
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
-          <input type="text" class="inline-input" style="width:auto;text-align:right" data-rename="${g.id}" value="${g.name}" />
+          <input type="text" class="inline-input" style="width:auto;text-align:right" data-rename="${g.id}" value="${esc(g.name)}" />
           <span class="chip chip--good">${fa2(members.length)} دانش‌آموز</span>
         </div>
         ${members.length
@@ -144,10 +144,10 @@ function renderAssignList() {
 
   wrap.innerHTML = students.map(s => `
     <div class="plan-row" style="grid-template-columns:1fr 180px;align-items:center">
-      <div style="display:flex;align-items:center;gap:8px"><span class="student-card__avatar" style="width:30px;height:30px;font-size:12px">${initials(s.name)}</span>${s.name}</div>
+      <div style="display:flex;align-items:center;gap:8px"><span class="student-card__avatar" style="width:30px;height:30px;font-size:12px">${initials(s.name)}</span>${esc(s.name)}</div>
       <select class="select-control" data-assign="${s.id}">
         <option value="">بدون گروه</option>
-        ${groups.map(g => `<option value="${g.id}" ${s.groupId === g.id ? "selected" : ""}>${g.name}</option>`).join("")}
+        ${groups.map(g => `<option value="${g.id}" ${s.groupId === g.id ? "selected" : ""}>${esc(g.name)}</option>`).join("")}
       </select>
     </div>`).join("");
 

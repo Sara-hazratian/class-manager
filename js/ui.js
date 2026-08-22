@@ -5,6 +5,21 @@
 export const $  = (sel, root = document) => root.querySelector(sel);
 export const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 
+/** جلوگیری از XSS — هر متنی که از کاربر می‌آید (اسم، یادداشت، توضیح
+    و...) و قرار است داخل innerHTML گذاشته شود، باید از این عبور کند.
+    بدون این، کسی می‌توانست مثلاً در اسم دانش‌آموز یک تگ <script> یا
+    onerror= بگذارد که برای هرکسی که آن را ببیند (خود معلم یا حتی
+    والدینِ آن دانش‌آموز) اجرا شود. */
+export function esc(str) {
+  if (str === null || str === undefined) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 export function toast(message, type = "success") {
   const c = $("#toast-container"); if (!c) return;
   const el = document.createElement("div");

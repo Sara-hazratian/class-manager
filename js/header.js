@@ -4,7 +4,7 @@
    Jalali date.
    ============================================================ */
 import { getProfile } from "./store.js";
-import { $ } from "./ui.js";
+import { $ , esc } from "./ui.js";
 import { formatJalaliLong, weekdayName } from "./jalali.js";
 
 const GRADE_LABELS = {
@@ -20,7 +20,7 @@ export function renderHeader() {
   $("#header-teacher").textContent = profile.fullName;
   $("#header-meta").innerHTML = `
     <span class="chip chip--good">${GRADE_LABELS[profile.grade] || profile.grade}</span>
-    <span class="chip chip--good">کلاس ${profile.className}</span>
+    <span class="chip chip--good">کلاس ${esc(profile.className)}</span>
     <span class="chip chip--excellent">سال تحصیلی ${profile.academicYear}</span>`;
 
   updateHeaderDate();

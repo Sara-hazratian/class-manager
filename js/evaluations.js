@@ -11,7 +11,7 @@
    real bug. Reports then group by the ACTUAL range evaluated.
    ============================================================ */
 import { getActiveStudents, getEvaluations, setEvaluations, uid, subjectById, getProfile, SUBJECT_PAGE_COUNTS } from "./store.js";
-import { $, $$, toast, initials } from "./ui.js";
+import { $, $$, toast, initials , esc } from "./ui.js";
 import { todayISO, formatJalaliLong, fa } from "./jalali.js";
 import { switchView, registerTitle } from "./router.js";
 
@@ -123,7 +123,7 @@ export function renderEvalTable() {
   tbody.innerHTML = students.map(s => {
     const rec = findRecord(list, s.id, date);
     return `<tr>
-      <td class="eval-table__student"><span class="student-card__avatar" style="width:30px;height:30px;font-size:12px">${initials(s.name)}</span>${s.name}</td>
+      <td class="eval-table__student"><span class="student-card__avatar" style="width:30px;height:30px;font-size:12px">${initials(s.name)}</span>${esc(s.name)}</td>
       ${LEVELS.map(l => `<td><button type="button" class="level-btn ${rec?.level === l.id ? "is-active" : ""}"
           data-level="${l.id}" data-student="${s.id}" title="${l.label}">${l.label[0]}</button></td>`).join("")}
     </tr>`;

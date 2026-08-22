@@ -9,7 +9,7 @@
    well, but needs practice on pages 4–6" within the same subject.
    ============================================================ */
 import { getStudents, getEvaluations, getAttendance, getDiscipline, getProfile, SUBJECTS } from "./store.js";
-import { $, $$, toast } from "./ui.js";
+import { $, $$, toast, esc } from "./ui.js";
 import { fa, termOf, toJalali, isoToDate, formatJalaliLong, formatJalali, todayISO, JMONTHS, currentAcademicYearRange } from "./jalali.js";
 import { registerTitle, onViewChange } from "./router.js";
 
@@ -131,7 +131,7 @@ export function buildStudentReport(studentId, period, monthKey) {
 /* ---------- rendering ---------- */
 export function renderStudentReportHTML(data) {
   if (!data.subjectRows.length && !data.attendanceByMonth.length && !data.disciplineRecords.length) {
-    return `<h3>${data.student.name}</h3><p style="font-size:13.5px;color:var(--color-ink-soft);margin-top:8px">برای این بازه هنوز اطلاعاتی ثبت نشده است.</p>`;
+    return `<h3>${esc(data.student.name)}</h3><p style="font-size:13.5px;color:var(--color-ink-soft);margin-top:8px">برای این بازه هنوز اطلاعاتی ثبت نشده است.</p>`;
   }
 
   const strengths = data.subjectRows.filter(r => r.avg >= 3.5).map(r => r.subject.name);
@@ -151,11 +151,11 @@ export function renderStudentReportHTML(data) {
     <ul style="padding-inline-start:18px;list-style:disc">
       ${data.disciplineRecords.map(d => `<li style="margin-bottom:4px;font-size:13px">
         <span class="chip ${d.type === "positive" ? "chip--excellent" : "chip--danger"}">${d.type === "positive" ? "مثبت" : "تذکر"}</span>
-        ${formatJalali(isoToDate(d.date))} — ${d.description}</li>`).join("")}
+        ${formatJalali(isoToDate(d.date))} — ${esc(d.description)}</li>`).join("")}
     </ul>` : `<p style="font-size:13px;color:var(--color-ink-faint)">موردی ثبت نشده است.</p>`;
 
   return `
-    <h3>${data.student.name}</h3>
+    <h3>${esc(data.student.name)}</h3>
     ${data.overall !== null ? `<p style="margin:8px 0 14px"><strong>ارزیابی کلی:</strong> ${LABEL[clampLevel(data.overall)]}</p>` : ""}
 
     ${data.subjectRows.length ? `
@@ -169,7 +169,7 @@ export function renderStudentReportHTML(data) {
       ${needsWork.length ? `<p style="margin-bottom:6px"><strong>نیازمند تلاش بیشتر:</strong> ${needsWork.join("، ")}</p>` : ""}
       <p style="margin:12px 0 6px"><strong>توصیف عملکرد به تفکیک مبحث ارزشیابی‌شده:</strong></p>
       <ul style="padding-inline-start:18px;list-style:disc;margin-bottom:16px">
-        ${allDescriptions.map(r => `<li style="margin-bottom:5px;font-size:13.5px;color:var(--color-ink-soft)">${r.text}</li>`).join("")}
+        ${allDescriptions.map(r => `<li style="margin-bottom:5px;font-size:13.5px;color:var(--color-ink-soft)">${esc(r.text)}</li>`).join("")}
       </ul>` : ""}
 
     <p style="margin-bottom:6px"><strong>حضور و غیاب:</strong></p>
@@ -187,8 +187,8 @@ export function buildLetterhead(profile, studentName) {
   return `
     <div class="report-letterhead">
       <div>
-        <p class="report-letterhead__school">${profile.schoolName || ""}</p>
-        <p class="report-letterhead__meta">${studentName ? `دانش‌آموز: ${studentName} · ` : ""}${profile.fullName || ""} · ${GRADE_LABELS[profile.grade] || ""} ${profile.className ? "· کلاس " + profile.className : ""} ${profile.academicYear ? "· سال تحصیلی " + profile.academicYear : ""}</p>
+        <p class="report-letterhead__school">${esc(profile.schoolName) || ""}</p>
+        <p class="report-letterhead__meta">${studentName ? `دانش‌آموز: ${esc(studentName)} · ` : ""}${esc(profile.fullName) || ""} · ${GRADE_LABELS[profile.grade] || ""} ${profile.className ? "· کلاس " + esc(profile.className) : ""} ${profile.academicYear ? "· سال تحصیلی " + esc(profile.academicYear) : ""}</p>
       </div>
       <img src="icons/logo-horizontal.png" alt="ClassPilot" style="height:38px;width:auto" />
     </div>`;
@@ -281,7 +281,7 @@ export function refreshReportSelectors() {
   const studentSel = $("#rp-student");
   const students = getStudents();
   const keep = studentSel.value;
-  studentSel.innerHTML = students.map(s => `<option value="${s.id}">${s.name}</option>`).join("");
+  studentSel.innerHTML = students.map(s => `<option value="${s.id}">${esc(s.name)}</option>`).join("");
   studentSel.value = students.some(s => s.id === keep) ? keep : (students[0]?.id || "");
 
   const monthSel = $("#rp-month");

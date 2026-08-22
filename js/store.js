@@ -313,10 +313,10 @@ let labsCache = [];
 export const getLabs = () => labsCache;
 
 function labToDb(l, teacherId) {
-  return { id: l.id, teacher_id: teacherId, title: l.title, description: l.desc || null, notes: l.notes || null, images: l.images || [], date: l.date };
+  return { id: l.id, teacher_id: teacherId, title: l.title, description: l.desc || null, notes: l.notes || null, date: l.date };
 }
 function dbToLab(r) {
-  return { id: r.id, title: r.title, desc: r.description || "", notes: r.notes || "", images: r.images || [], date: r.date };
+  return { id: r.id, title: r.title, desc: r.description || "", notes: r.notes || "", date: r.date };
 }
 
 export async function setLabs(newList) {

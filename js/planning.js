@@ -10,7 +10,7 @@
        edit — their edits always win over the seed.
    ============================================================ */
 import { SUBJECTS, DAYS, PERIODS, getSchedule, setSchedule, getAnnualPlan, setAnnualPlan, getProfile, SUBJECT_PAGE_COUNTS, subjectById, getStudents, getEvaluations } from "./store.js";
-import { $, $$, toast, debounce } from "./ui.js";
+import { $, $$, toast, debounce, esc } from "./ui.js";
 import { fa } from "./jalali.js";
 import { registerTitle, onViewChange } from "./router.js";
 
@@ -255,7 +255,7 @@ function renderClassPerformance() {
   insightsBox.innerHTML = data.insights.length ? `
     <section class="panel">
       <div class="panel__header"><h2>یافته‌های خودکار</h2></div>
-      ${data.insights.map(i => `<p style="font-size:13.5px;margin-bottom:6px">💡 ${i}</p>`).join("")}
+      ${data.insights.map(i => `<p style="font-size:13.5px;margin-bottom:6px">💡 ${esc(i)}</p>`).join("")}
     </section>` : "";
 
   const subjectsBox = $("#performance-subjects");
@@ -271,7 +271,7 @@ function renderClassPerformance() {
             <thead><tr><th>موضوع</th><th>میانگین</th><th>وضعیت</th><th>نیاز به تمرین بیشتر</th></tr></thead>
             <tbody>${s.topics.map(t => `
               <tr>
-                <td>${t.topic}</td>
+                <td>${esc(t.topic)}</td>
                 <td>${fa(t.avg)}٪</td>
                 <td><span class="chip ${t.cls}">${t.label}</span></td>
                 <td>${t.needingPct > 0 ? `${fa(t.needingPct)}٪ از ${fa(t.studentCount)} دانش‌آموز` : "—"}</td>

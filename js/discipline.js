@@ -5,7 +5,7 @@
    a timeline.
    ============================================================ */
 import { getActiveStudents, getDiscipline, setDiscipline, uid, SUBJECTS } from "./store.js";
-import { $, $$, toast } from "./ui.js";
+import { $, $$, toast, esc } from "./ui.js";
 import { todayISO, formatJalaliLong, isoToDate } from "./jalali.js";
 import { registerTitle, onViewChange } from "./router.js";
 
@@ -18,7 +18,7 @@ function refreshStudentSelect() {
   const sel = $("#dp-student");
   const students = getActiveStudents();
   const keep = sel.value || selectedStudentId;
-  sel.innerHTML = students.map(s => `<option value="${s.id}">${s.name}</option>`).join("");
+  sel.innerHTML = students.map(s => `<option value="${s.id}">${esc(s.name)}</option>`).join("");
   sel.value = students.some(s => s.id === keep) ? keep : (students[0]?.id || "");
   selectedStudentId = sel.value || null;
 }
@@ -59,8 +59,8 @@ export function renderHistory() {
           <button type="button" class="btn btn--ghost btn--sm" data-del-dp="${r.id}"><svg class="icon"><use href="#i-trash"/></svg></button>
         </div>
       </div>
-      <p class="lab-card__desc" style="margin-top:8px">${r.description}</p>
-      ${r.notes ? `<p class="lab-card__desc" style="border-top:1px dashed var(--color-border);margin-top:8px;padding-top:6px"><strong>یادداشت:</strong> ${r.notes}</p>` : ""}
+      <p class="lab-card__desc" style="margin-top:8px">${esc(r.description)}</p>
+      ${r.notes ? `<p class="lab-card__desc" style="border-top:1px dashed var(--color-border);margin-top:8px;padding-top:6px"><strong>یادداشت:</strong> ${esc(r.notes)}</p>` : ""}
     </article>`;
   }).join("");
 

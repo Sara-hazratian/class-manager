@@ -6,7 +6,7 @@
    no new schema needed.
    ============================================================ */
 import { getStudents, getEvaluations, getAttendance, getDiscipline, SUBJECTS, subjectById } from "./store.js";
-import { $, $$ } from "./ui.js";
+import { $, $$, esc } from "./ui.js";
 import { fa, toJalali, isoToDate, JMONTHS } from "./jalali.js";
 import { registerTitle, onViewChange } from "./router.js";
 
@@ -26,7 +26,7 @@ function refreshStudentSelect() {
   const sel = $("#pr-student");
   const students = getStudents();
   const keep = sel.value;
-  sel.innerHTML = students.map(s => `<option value="${s.id}">${s.name}</option>`).join("");
+  sel.innerHTML = students.map(s => `<option value="${s.id}">${esc(s.name)}</option>`).join("");
   sel.value = students.some(s => s.id === keep) ? keep : (students[0]?.id || "");
 }
 
