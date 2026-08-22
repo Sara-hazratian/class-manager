@@ -536,7 +536,10 @@ export async function unlinkChild(studentId) {
 
 /** برنامه‌ی فردا — معلم می‌نویسه (مثلاً «امتحان املا»)، والدینِ همون
     کلاس هم می‌تونن ببیننش. برخلاف «کارهای امروز» که کاملاً خصوصیه. */
+let previewTomorrowPlanText = "";
+
 export async function getTomorrowPlan() {
+  if (previewModeActive) return previewTomorrowPlanText;
   const { tomorrowISO } = await import("./jalali.js");
   const teacherId = await requireUserId();
   const { sb } = await import("./supabase-client.js");
@@ -546,6 +549,7 @@ export async function getTomorrowPlan() {
 }
 
 export async function setTomorrowPlan(text) {
+  if (previewModeActive) { previewTomorrowPlanText = text.trim(); return; }
   const { tomorrowISO } = await import("./jalali.js");
   const teacherId = await requireUserId();
   const { sb } = await import("./supabase-client.js");
@@ -563,6 +567,7 @@ export async function setTomorrowPlan(text) {
     چیزی نوشته باشه). RLS خودش تضمین می‌کنه فقط برنامه‌ی معلمِ خودِ
     فرزندشون قابل‌دیدن باشه، نه هر معلم دیگری. */
 export async function loadChildTomorrowPlan(teacherId) {
+  if (previewModeActive) return previewTomorrowPlanText;
   const { tomorrowISO } = await import("./jalali.js");
   const { sb } = await import("./supabase-client.js");
   const { data, error } = await sb.from("daily_plans").select("text").eq("teacher_id", teacherId).eq("plan_date", tomorrowISO()).maybeSingle();
