@@ -13,4 +13,6 @@ const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_m6ja7cGjlGnZ0s4_qXAv5w_9lCak_4B
 
 // `supabase` here is the global from the CDN script tag in index.html
 // (window.supabase), not to be confused with our own client instance below.
-export const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+export const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+  auth: { flowType: "pkce", detectSessionInUrl: true, persistSession: true, autoRefreshToken: true },
+});

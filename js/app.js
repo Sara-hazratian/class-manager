@@ -12,7 +12,7 @@ import { isSetupComplete, loadProfile, loadAllCollections, loadParentData, enabl
 import { initTheme } from "./theme.js";
 import { initModals } from "./ui.js";
 import { initRouter, switchView } from "./router.js";
-import { initAuth, getSession, signOut } from "./auth.js";
+import { initAuth, getSession, ensureProfile, cleanOAuthParams } from "./auth.js";
 import { initSetup } from "./setup.js";
 import { initHeader } from "./header.js";
 import { initDashboard } from "./dashboard.js";
@@ -49,9 +49,10 @@ async function boot() {
   registerServiceWorker();
 
   const session = await getSession();
+  cleanOAuthParams();
   if (!session) {
     showScreen("auth-screen");
-    initAuth(afterAuthSuccess);
+    initAuth();
     return;
   }
   await afterAuthSuccess();
@@ -61,8 +62,13 @@ async function boot() {
     load where a session already exists. Only two possible destinations:
     the teacher's own class, or a parent's read-only view of their child. */
 async function afterAuthSuccess() {
-  const profile = await loadProfile();
-  if (!profile) { showScreen("auth-screen"); initAuth(afterAuthSuccess); return; }
+  let profile = await loadProfile();
+  if (!profile) {
+    // اولین ورود با SSO: پروفایل را بساز (نقش از صفحه‌ی ورود)
+    try { await ensureProfile(); profile = await loadProfile(); }
+    catch (err) { console.error("ClassPilot: ensureProfile failed", err); }
+  }
+  if (!profile) { showScreen("auth-screen"); initAuth(); return; }
 
   if (profile.role === "parent") {
     await loadParentData();
