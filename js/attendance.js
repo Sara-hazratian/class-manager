@@ -10,7 +10,8 @@
    ============================================================ */
 import { getActiveStudents, getAttendance, setAttendance, uid } from "./store.js";
 import { $, $$, initials , esc } from "./ui.js";
-import { todayISO, formatJalaliLong, weekdayName, fa } from "./jalali.js";
+import { todayISO, fa } from "./jalali.js";
+import { mountDateNav } from "./datepicker.js";
 import { registerTitle, onViewChange } from "./router.js";
 
 registerTitle("attendance", "حضور و غیاب");
@@ -19,7 +20,8 @@ const BASE_STATUSES = [
   { id: "present", label: "حاضر" },
   { id: "absent", label: "غایب" },
 ];
-const date = todayISO(); // this phase only handles today; historical dates arrive with Reports (Phase 13)
+let date = todayISO(); // تاریخ انتخاب‌شده (پیش‌فرض امروز؛ تا یک سال به عقب قابل تغییر)
+let dateNav = null;
 
 function recordFor(studentId) {
   return getAttendance().find(a => a.studentId === studentId && a.date === date);
@@ -36,10 +38,6 @@ function upsert(studentId, patch) {
 export function renderAttendance() {
   const tbody = $("#att-tbody"), empty = $("#att-empty");
   if (!tbody) return;
-
-  const now = new Date();
-  $("#att-date").textContent = formatJalaliLong(now);
-  $("#att-weekday").textContent = weekdayName(now);
 
   const students = getActiveStudents();
   empty.hidden = students.length > 0;
@@ -127,8 +125,9 @@ function markAllPresent() {
 export function initAttendance() {
   $("#btn-all-present")?.addEventListener("click", () => {
     if (!getActiveStudents().length) return;
-    if (confirm("وضعیت همه دانش‌آموزان برای امروز «حاضر» ثبت شود؟ می‌توانید بعداً موارد استثنا را تغییر دهید.")) markAllPresent();
+    if (confirm(`وضعیت همه دانش‌آموزان برای ${date === todayISO() ? "امروز" : "این تاریخ"} «حاضر» ثبت شود؟ می‌توانید بعداً موارد استثنا را تغییر دهید.`)) markAllPresent();
   });
-  onViewChange(name => { if (name === "attendance") renderAttendance(); });
+  dateNav = mountDateNav($("#att-date-nav"), { getDate: () => date, onChange: iso => { date = iso; renderAttendance(); } });
+  onViewChange(name => { if (name === "attendance") { date = todayISO(); dateNav.refresh(); renderAttendance(); } });
   renderAttendance();
 }
