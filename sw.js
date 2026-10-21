@@ -4,7 +4,7 @@
    Bump CACHE_NAME whenever any precached file changes so
    returning users get the update instead of a stale cache.
    ============================================================ */
-const CACHE_NAME = "classpilot-v65";
+const CACHE_NAME = "classpilot-v66";
 
 const PRECACHE_URLS = [
   "./",
@@ -51,7 +51,7 @@ const PRECACHE_URLS = [
 self.addEventListener("install", event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(PRECACHE_URLS))
+      .then(cache => cache.addAll(PRECACHE_URLS.map(u => new Request(u, { cache: "reload" }))))
       .then(() => self.skipWaiting())
   );
 });
@@ -67,6 +67,13 @@ self.addEventListener("activate", event => {
 self.addEventListener("fetch", event => {
   const req = event.request;
   if (req.method !== "GET") return; // never intercept writes
+  const url = new URL(req.url);
+
+  // هرگز درخواست‌های API (Supabase، ورود با Google و ...) را کش نکن —
+  // داده‌ی کاربر نباید کهنه شود و نباید بین کاربران روی یک دستگاه بماند.
+  const isSameOrigin = url.origin === self.location.origin;
+  const isCdnLib = url.hostname === "cdnjs.cloudflare.com" || url.hostname === "cdn.jsdelivr.net";
+  if (!isSameOrigin && !isCdnLib) return;
 
   // Navigations (opening/refreshing the app): try the network first so
   // updates are picked up when online, fall back to the cached shell offline.
@@ -83,8 +90,24 @@ self.addEventListener("fetch", event => {
     return;
   }
 
-  // Everything else (css/js/icons/fonts): cache-first, refresh in the
-  // background, fall back to network if it's not cached yet.
+  // فایل‌های خود برنامه (js/css/آیکون): اول شبکه، تا هر به‌روزرسانی فوراً
+  // اعمال شود و هرگز ترکیبی از فایل قدیمی و جدید اجرا نشود؛ آفلاین از کش.
+  if (isSameOrigin) {
+    event.respondWith(
+      fetch(req)
+        .then(res => {
+          if (res && res.status === 200) {
+            const copy = res.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(req, copy));
+          }
+          return res;
+        })
+        .catch(() => caches.match(req))
+    );
+    return;
+  }
+
+  // کتابخانه‌های CDN (تغییر نمی‌کنند): اول کش، در پس‌زمینه تازه می‌شود.
   event.respondWith(
     caches.match(req).then(cached => {
       const network = fetch(req)
