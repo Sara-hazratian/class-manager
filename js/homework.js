@@ -5,7 +5,8 @@
    ============================================================ */
 import { getActiveStudents, getHomework, setHomework, uid, SUBJECTS } from "./store.js";
 import { $, $$, toast, initials , esc } from "./ui.js";
-import { todayISO, formatJalaliLong } from "./jalali.js";
+import { todayISO } from "./jalali.js";
+import { mountDateNav } from "./datepicker.js";
 import { registerTitle, onViewChange } from "./router.js";
 
 registerTitle("homework", "تکالیف");
@@ -17,7 +18,8 @@ const STATES = [
 ];
 
 let subjectId = SUBJECTS[0].id;
-const date = todayISO(); // today only — matches Attendance's Phase-5 scope decision
+let date = todayISO(); // تاریخ انتخاب‌شده (پیش‌فرض امروز؛ تا یک سال به عقب قابل تغییر)
+let dateNav = null;
 
 function recordFor(studentId) {
   return getHomework().find(h => h.studentId === studentId && h.subjectId === subjectId && h.date === date);
@@ -34,7 +36,6 @@ function upsert(studentId, status) {
 export function renderHomework() {
   const tbody = $("#hw-tbody"), empty = $("#hw-empty");
   if (!tbody) return;
-  $("#hw-date").textContent = formatJalaliLong(new Date());
 
   const students = getActiveStudents();
   empty.hidden = students.length > 0;
@@ -86,6 +87,7 @@ export function initHomework() {
 
   $$("[data-hw-all]").forEach(b => b.addEventListener("click", () => markAll(b.dataset.hwAll)));
 
-  onViewChange(name => { if (name === "homework") renderHomework(); });
+  dateNav = mountDateNav($("#hw-date-nav"), { getDate: () => date, onChange: iso => { date = iso; renderHomework(); } });
+  onViewChange(name => { if (name === "homework") { date = todayISO(); dateNav.refresh(); renderHomework(); } });
   renderHomework();
 }
