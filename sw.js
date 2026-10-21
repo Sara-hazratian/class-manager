@@ -4,7 +4,7 @@
    Bump CACHE_NAME whenever any precached file changes so
    returning users get the update instead of a stale cache.
    ============================================================ */
-const CACHE_NAME = "classpilot-v62";
+const CACHE_NAME = "classpilot-v65";
 
 const PRECACHE_URLS = [
   "./",
@@ -20,6 +20,7 @@ const PRECACHE_URLS = [
   "./js/auth.js",
   "./js/parent.js",
   "./js/jalali.js",
+  "./js/datepicker.js",
   "./js/theme.js",
   "./js/ui.js",
   "./js/router.js",
