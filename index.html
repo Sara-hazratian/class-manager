@@ -270,10 +270,7 @@
       <!-- ========== ATTENDANCE (Phase 5) ========== -->
       <section class="view" id="view-attendance" data-view="attendance" hidden>
         <div class="toolbar" style="display:flex;align-items:center;justify-content:space-between;gap:var(--space-4);margin-bottom:var(--space-5);flex-wrap:wrap">
-          <div class="date-trigger">
-            <svg class="icon"><use href="#i-calendar"/></svg>
-            <span id="att-date"></span><span style="color:var(--color-ink-faint);margin-inline-start:6px" id="att-weekday"></span>
-          </div>
+          <div id="att-date-nav"></div>
           <div style="display:flex;gap:8px;flex-wrap:wrap">
             <span class="chip chip--excellent">حاضر: <strong id="c-present">۰</strong></span>
             <span class="chip chip--danger">غایب: <strong id="c-absent">۰</strong></span>
@@ -307,7 +304,7 @@
         <div class="panel" style="margin-bottom:var(--space-5)">
           <div class="panel__header">
             <div><span class="panel__eyebrow">ارزشیابی درس</span><h2 id="lesson-title">—</h2></div>
-            <div class="date-trigger"><svg class="icon"><use href="#i-calendar"/></svg><span id="lesson-date"></span></div>
+            <div id="lesson-date-nav"></div>
           </div>
 
           <div class="pill-tabs" id="period-tabs" style="margin-bottom:var(--space-3)">
@@ -342,7 +339,7 @@
       <section class="view" id="view-homework" data-view="homework" hidden>
         <div class="toolbar" style="display:flex;align-items:flex-end;justify-content:space-between;gap:var(--space-4);margin-bottom:var(--space-5);flex-wrap:wrap">
           <div style="min-width:200px"><label for="hw-subject">درس</label><select id="hw-subject" class="select-control"></select></div>
-          <div class="date-trigger"><svg class="icon"><use href="#i-calendar"/></svg><span id="hw-date"></span></div>
+          <div id="hw-date-nav"></div>
         </div>
 
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">
@@ -379,6 +376,9 @@
             <form id="discipline-form">
               <label for="dp-student">دانش‌آموز</label>
               <select id="dp-student" class="select-control"></select>
+
+              <label>تاریخ</label>
+              <div id="dp-date-nav" style="margin-bottom:var(--space-3)"></div>
 
               <label>نوع</label>
               <div class="pill-tabs">
@@ -582,6 +582,27 @@
     </main>
   </div>
 </div>
+
+<!-- MODAL: Jalali date picker (reusable) -->
+<dialog class="modal" id="modal-date">
+  <div class="modal__form">
+    <header class="modal__header"><h2>انتخاب تاریخ</h2>
+      <button type="button" class="modal__close" data-close><svg class="icon"><use href="#i-close"/></svg></button></header>
+    <div class="modal__body">
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:var(--space-3)">
+        <button type="button" class="btn btn--ghost btn--sm" id="date-prev-month">ماه قبل</button>
+        <select id="date-month" class="select-control" style="flex:1"></select>
+        <select id="date-year" class="select-control" style="width:auto"></select>
+        <button type="button" class="btn btn--ghost btn--sm" id="date-next-month">ماه بعد</button>
+      </div>
+      <div class="cal-grid" id="date-grid"></div>
+    </div>
+    <footer class="modal__footer">
+      <button type="button" class="btn btn--ghost" data-close>انصراف</button>
+      <button type="button" class="btn btn--primary" id="date-today">امروز</button>
+    </footer>
+  </div>
+</dialog>
 
 <!-- MODAL: Add / edit student (Phase 4) -->
 <dialog class="modal" id="modal-student">
