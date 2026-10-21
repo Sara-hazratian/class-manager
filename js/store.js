@@ -191,7 +191,10 @@ export async function setStudentsChecked(newList) {
     await diffAndSync("students", oldList, newList, studentToDb);
   } catch (err) {
     studentsCache = oldList; // برگردان به حالت قبل، چون واقعاً ذخیره نشد
-    if (err.code === "23505" || (err.message || "").includes("national_id")) {
+    const msg = (err && err.message) || "";
+    // 23505 = unique_violation در Postgres؛ HTTP 409 = همان خطا از طرف API.
+    // تنها قید یکتای دیگر این جدول id تصادفی است، پس هر تداخل یعنی کد ملی تکراری.
+    if (err?.code === "23505" || err?.status === 409 || /duplicate key|unique constraint|national_id/i.test(msg)) {
       throw new Error("این کد ملی قبلاً برای دانش‌آموز دیگری (در کلاس دیگری) ثبت شده است.");
     }
     throw err;
