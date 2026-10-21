@@ -4,7 +4,7 @@
    assigned to them any time afterward — not forced at creation.
    ============================================================ */
 import { getStudents, getActiveStudents, setStudents, setStudentsChecked, archiveStudent, getGroups, setGroups, uid } from "./store.js";
-import { $, $$, toast, openModal, initials, esc } from "./ui.js";
+import { $, $$, toast, openModal, initials, esc, translateError } from "./ui.js";
 import { registerTitle, onViewChange } from "./router.js";
 
 registerTitle("students", "دانش‌آموزان");
@@ -240,7 +240,14 @@ export function initStudents() {
       renderStudents(); notify(); toast("ذخیره شد");
       $("#modal-student").close();
     } catch (err) {
-      errorEl.textContent = err.message || "ذخیره ناموفق بود. دوباره تلاش کنید.";
+      console.error("ClassPilot: student save failed", err);
+      const message = translateError(err);
+      errorEl.textContent = message;
+      errorEl.style.fontWeight = "700";
+      // فرم روی صفحه‌ی کوچک ممکن است اسکرول داشته باشد؛ هم خطا را به دید بیاور
+      // و هم پیام بالای صفحه نشان بده تا هیچ‌وقت نادیده نماند.
+      errorEl.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      toast(message, "error");
     } finally {
       if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = "ذخیره"; }
     }
