@@ -7,6 +7,7 @@
 import { getActiveStudents, getDiscipline, setDiscipline, uid, SUBJECTS } from "./store.js";
 import { $, $$, toast, esc } from "./ui.js";
 import { todayISO, formatJalaliLong, isoToDate } from "./jalali.js";
+import { mountDateNav } from "./datepicker.js";
 import { registerTitle, onViewChange } from "./router.js";
 
 registerTitle("discipline", "انضباط");
@@ -72,7 +73,11 @@ export function renderHistory() {
   }));
 }
 
+let dpDate = todayISO(); // تاریخ ثبت مورد جدید (پیش‌فرض امروز؛ تا یک سال به عقب)
+let dateNav = null;
+
 export function initDiscipline() {
+  dateNav = mountDateNav($("#dp-date-nav"), { getDate: () => dpDate, onChange: iso => { dpDate = iso; } });
   refreshSubjectSelect();
   refreshStudentSelect();
   setType("positive");
@@ -91,7 +96,7 @@ export function initDiscipline() {
     records.push({
       id: uid("dp"),
       studentId: selectedStudentId,
-      date: todayISO(),
+      date: dpDate,
       type: selectedType,
       subjectId: $("#dp-subject").value || "",
       description,
@@ -108,5 +113,5 @@ export function initDiscipline() {
     toast("ثبت شد");
   });
 
-  onViewChange(name => { if (name === "discipline") { refreshStudentSelect(); renderHistory(); } });
+  onViewChange(name => { if (name === "discipline") { dpDate = todayISO(); dateNav.refresh(); refreshStudentSelect(); renderHistory(); } });
 }
