@@ -206,6 +206,18 @@ label { font-size: 12.5px; font-weight: 700; color: var(--color-ink-soft); displ
 
 .date-trigger { display: inline-flex; align-items: center; gap: var(--space-2); background: var(--color-surface); border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); padding: 10px 15px; font-weight: 700; font-size: 13.5px; }
 .date-trigger .icon { width: 15px; height: 15px; color: var(--color-primary); }
+button.date-trigger { font-family: inherit; color: inherit; }
+button.date-trigger:hover { border-color: var(--color-primary); }
+
+/* ---------- Jalali date picker ---------- */
+.date-nav { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; }
+.cal-head { font-size: 11px; color: var(--color-ink-faint); font-weight: 700; padding: 4px 0; }
+.cal-day { aspect-ratio: 1; border-radius: var(--radius-sm); border: 1px solid transparent; background: none; font: inherit; font-size: 13px; color: inherit; cursor: pointer; }
+.cal-day:hover:not(:disabled) { background: var(--color-primary-tint); }
+.cal-day.is-today { border-color: var(--color-primary); }
+.cal-day.is-selected { background: var(--color-primary); color: #fff; font-weight: 700; }
+.cal-day:disabled { opacity: .3; cursor: not-allowed; }
 
 /* ---------- Students (Phase 4) ---------- */
 .student-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px,1fr)); gap: var(--space-4); }
