@@ -12,7 +12,8 @@
    ============================================================ */
 import { getActiveStudents, getEvaluations, setEvaluations, uid, subjectById, getProfile, SUBJECT_PAGE_COUNTS } from "./store.js";
 import { $, $$, toast, initials , esc } from "./ui.js";
-import { todayISO, formatJalaliLong, fa } from "./jalali.js";
+import { todayISO, fa } from "./jalali.js";
+import { mountDateNav } from "./datepicker.js";
 import { switchView, registerTitle } from "./router.js";
 
 registerTitle("lesson", "ارزشیابی درس");
@@ -33,14 +34,23 @@ const KINDS = {
 let subjectId = null;
 let period = "daily";
 let kind = "participation";
+let currentDate = todayISO(); // تاریخی که ارزشیابی برایش ثبت می‌شود (پیش‌فرض: امروز، قابل تغییر)
 
 export function openLesson(id) {
   subjectId = id; period = "daily"; kind = KINDS.daily[0].id;
+  currentDate = todayISO();
   $("#lesson-title").textContent = subjectById(id)?.name || "";
-  $("#lesson-date").textContent = formatJalaliLong(new Date());
+  dateNav?.refresh();
   $$("#period-tabs .pill-tab").forEach(b => b.classList.toggle("is-active", b.dataset.period === "daily"));
   renderKindTabs(); renderRangePicker(); defaultTopicForSession(); renderEvalTable();
   switchView("lesson");
+}
+
+/* ---------- تاریخ: ناوبری مشترک (قبل / بعد / انتخاب‌گر شمسی) ---------- */
+let dateNav = null;
+function applyDate(iso) {
+  currentDate = iso;
+  renderRangePicker(); defaultTopicForSession(); renderEvalTable();
 }
 
 function renderKindTabs() {
@@ -75,7 +85,7 @@ function renderRangePicker() {
   };
   // Default to whatever the most recent record in this exact session used, so reopening today's session keeps the range.
   const recent = getEvaluations()
-    .filter(e => e.subjectId === subjectId && e.period === period && (e.kind || "") === (kind || "") && e.date === todayISO())
+    .filter(e => e.subjectId === subjectId && e.period === period && (e.kind || "") === (kind || "") && e.date === currentDate)
     .slice(-1)[0];
 
   wrap.innerHTML = `
@@ -100,7 +110,7 @@ function currentTopic() {
 
 function defaultTopicForSession() {
   const recent = getEvaluations()
-    .filter(e => e.subjectId === subjectId && e.period === period && (e.kind || "") === (kind || "") && e.date === todayISO())
+    .filter(e => e.subjectId === subjectId && e.period === period && (e.kind || "") === (kind || "") && e.date === currentDate)
     .slice(-1)[0];
   const input = $("#eval-topic");
   if (input) input.value = recent?.topic || "";
@@ -118,7 +128,7 @@ export function renderEvalTable() {
   renderMarkAll();
   if (!students.length) { tbody.innerHTML = ""; return; }
 
-  const date = todayISO();
+  const date = currentDate;
   const list = getEvaluations();
   tbody.innerHTML = students.map(s => {
     const rec = findRecord(list, s.id, date);
@@ -139,7 +149,7 @@ function renderMarkAll() {
 }
 
 function setLevel(studentId, level) {
-  const date = todayISO();
+  const date = currentDate;
   const list = getEvaluations();
   const existing = findRecord(list, studentId, date);
 
@@ -177,7 +187,7 @@ function setAllLevel(level) {
   }
   const levelLabel = LEVELS.find(l => l.id === level).label;
   if (!confirm(`سطح «${levelLabel}» برای همه دانش‌آموزان ثبت شود؟`)) return;
-  const date = todayISO();
+  const date = currentDate;
   const range = currentRange();
   const list = getEvaluations();
   students.forEach(s => {
@@ -199,4 +209,5 @@ export function initLesson() {
     renderKindTabs(); renderRangePicker(); defaultTopicForSession(); renderEvalTable();
   }));
   $("#btn-back-to-lessons")?.addEventListener("click", () => switchView("lessons"));
+  dateNav = mountDateNav($("#lesson-date-nav"), { getDate: () => currentDate, onChange: applyDate });
 }
