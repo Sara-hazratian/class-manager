@@ -18,10 +18,17 @@
 
 /* On phone-sized screens, the card becomes a true full-screen page —
    edge to edge, sized to the viewport — instead of a floating card with a
-   lot of empty background around it. */
+   lot of empty background around it. Content starts from the top (not
+   vertically centered) — the sign-in and sign-up forms have very
+   different heights, and centering would make the whole card visibly
+   jump up/down every time the person switches between them. */
 @media (max-width: 640px) {
-  #auth-screen, #setup-screen { padding: 0; align-items: stretch; }
-  .setup-card { min-height: 100vh; min-height: 100dvh; border-radius: 0; box-shadow: none; max-width: none; display: flex; flex-direction: column; justify-content: center; }
+  #auth-screen, #setup-screen { padding: 0; align-items: stretch; background: var(--color-surface); }
+  .setup-card {
+    min-height: 100vh; min-height: 100dvh; border-radius: 0; box-shadow: none; max-width: none;
+    display: flex; flex-direction: column; justify-content: flex-start;
+    padding-top: max(var(--space-6), env(safe-area-inset-top, 0px) + var(--space-5));
+  }
 }
 
 /* ---------- App shell ---------- */
