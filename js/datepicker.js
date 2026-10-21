@@ -8,7 +8,7 @@
      pickDate({ selectedISO, minISO, maxISO, onSelect: iso => { ... } })
      mountDateNav(container, { getDate, onChange })   ← ناوبری کامل تاریخ برای هر صفحه
    ============================================================ */
-import { toJalali, fromJalali, JMONTHS, fa, todayISO, formatJalaliLong, weekdayName, isoToDate } from "./jalali.js";
+import { toJalali, fromJalali, JMONTHS, fa, todayISO, formatJalaliLong, weekdayName, isoToDate, currentAcademicYearRange } from "./jalali.js";
 import { $, $$ } from "./ui.js";
 
 const WEEK_HEADS = ["ش", "ی", "د", "س", "چ", "پ", "ج"]; // شنبه ... جمعه
@@ -16,12 +16,12 @@ const WEEK_HEADS = ["ش", "ی", "د", "س", "چ", "پ", "ج"]; // شنبه ... �
 const pad = n => String(n).padStart(2, "0");
 export function dateToISO(d) { return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; }
 
-/** کمترین تاریخ مجاز برای ثبت: اول مهرِ «سال شمسی گذشته».
-    مثلاً در سال ۱۴۰۵ تا اول مهر ۱۴۰۴ و در سال ۱۴۰۶ تا اول مهر ۱۴۰۵ — یعنی
-    فقط یک سال به عقب، نه بیشتر. */
+/** کمترین تاریخ مجاز برای ثبت: اول مهرِ «سال تحصیلی جاری» (مهر تا خرداد).
+    مثلاً در سال تحصیلی ۱۴۰۵-۱۴۰۶ (از آبان ۱۴۰۵ تا خرداد ۱۴۰۶ و حتی تابستان
+    بعدش) می‌شود تا اول مهر ۱۴۰۵ برگشت؛ با شروع مهر ۱۴۰۶ سال تحصیلی جدید
+    شروع می‌شود و کمترین تاریخ اول مهر ۱۴۰۶ است. */
 export function earliestAllowedISO() {
-  const { jy } = toJalali(new Date());
-  return dateToISO(fromJalali(jy - 1, 7, 1));
+  return currentAcademicYearRange().start;
 }
 
 function daysInJalaliMonth(jy, jm) {
@@ -46,7 +46,7 @@ function render() {
   const today = todayISO();
   const { jy: tyJ } = toJalali(new Date());
 
-  // سال‌ها: فقط بازه‌ی مجاز (حداکثر یک سال به عقب تا امروز)
+  // سال‌ها: فقط بازه‌ی مجاز (از شروع سال تحصیلی جاری تا امروز)
   const minJy = minISO ? toJalali(new Date(minISO + "T00:00:00")).jy : tyJ - 1;
   const years = [];
   for (let y = minJy; y <= tyJ; y++) years.push(y);
