@@ -75,13 +75,17 @@
           <label for="parent-national-id">کد ملی دانش‌آموز</label>
           <input type="text" id="parent-national-id" inputmode="numeric" maxlength="10" placeholder="۱۰ رقم" required />
         </div>
+        <div style="flex:1;min-width:200px">
+          <label for="parent-code">کد دعوت (از معلم بگیرید)</label>
+          <input type="text" id="parent-code" maxlength="8" placeholder="مثلاً a1b2c3d4" autocomplete="off" required style="direction:ltr;text-align:left" />
+        </div>
         <button type="submit" class="btn btn--primary">افزودن</button>
       </form>
       <p id="parent-add-error" style="color:var(--color-danger);font-size:12.5px;margin-top:8px;min-height:1em"></p>
     </section>
 
     <div class="empty-state" id="parent-empty" hidden>
-      <p class="empty-state__text">هنوز فرزندی اضافه نکرده‌اید — کد ملی را در بالا وارد کنید.</p>
+      <p class="empty-state__text">هنوز فرزندی اضافه نکرده‌اید — کد ملی و کد دعوتی را که معلم به شما داده در بالا وارد کنید.</p>
     </div>
 
     <div id="parent-content" hidden>
