@@ -170,7 +170,7 @@ function studentToDb(s, teacherId) {
   return { id: s.id, teacher_id: teacherId, name: s.name, national_id: s.nationalId, phone: s.phone || null, group_id: s.groupId || null, notes: s.notes || null };
 }
 function dbToStudent(r) {
-  return { id: r.id, name: r.name, nationalId: r.national_id, phone: r.phone || "", groupId: r.group_id, notes: r.notes || "", teacherId: r.teacher_id, archived: r.archived || false };
+  return { id: r.id, name: r.name, nationalId: r.national_id, phone: r.phone || "", groupId: r.group_id, notes: r.notes || "", teacherId: r.teacher_id, archived: r.archived || false, parentCode: r.parent_code || "" };
 }
 
 export async function setStudents(newList) {
@@ -516,14 +516,25 @@ export async function loadParentData() {
   disciplineCache = check(discipline, "discipline").map(dbToDiscipline);
 }
 
-/** A parent links themself to a child by national ID — server-side function
-    does the lookup (see schema-v2.sql's link_child_to_parent). */
-export async function addChildByNationalId(nationalId) {
+/** اولیا با «کد ملی + کد دعوت» (که معلم به او می‌دهد) به فرزندش وصل می‌شود —
+    تابع سمت سرور جست‌وجو و بررسی را انجام می‌دهد (parent-code-setup.sql). */
+export async function addChildByNationalId(nationalId, parentCode) {
   const { sb } = await import("./supabase-client.js");
-  const { data, error } = await sb.rpc("link_child_to_parent", { p_national_id: nationalId });
+  const { data, error } = await sb.rpc("link_child_to_parent", { p_national_id: nationalId, p_code: parentCode });
   if (error) throw error;
-  if (!data.success) throw new Error(data.error || "دانش‌آموزی با این کد ملی پیدا نشد.");
+  if (!data.success) throw new Error(data.error || "کد ملی یا کد دعوت اشتباه است.");
   return data;
+}
+
+/** بعد از افزودن دانش‌آموز جدید، کد دعوتش را دیتابیس می‌سازد؛ لیست را دوباره
+    می‌خوانیم تا کد فوراً نشان داده شود. */
+export async function refreshStudents() {
+  if (previewModeActive) return;
+  const teacherId = await requireUserId();
+  const { sb } = await import("./supabase-client.js");
+  const { data, error } = await sb.from("students").select("*").eq("teacher_id", teacherId);
+  if (error) { console.error("ClassPilot: failed to refresh students", error); return; }
+  studentsCache = (data || []).map(dbToStudent);
 }
 
 /** اگه اولیا اشتباهی به یه دانش‌آموز وصل شدن (مثلاً معلم کد ملی رو

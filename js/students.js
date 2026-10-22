@@ -3,7 +3,7 @@
    tab. Groups are defined independently and students are
    assigned to them any time afterward — not forced at creation.
    ============================================================ */
-import { getStudents, getActiveStudents, setStudents, setStudentsChecked, archiveStudent, getGroups, setGroups, uid } from "./store.js";
+import { getStudents, getActiveStudents, setStudents, setStudentsChecked, refreshStudents, archiveStudent, getGroups, setGroups, uid } from "./store.js";
 import { $, $$, toast, openModal, initials, esc, translateError } from "./ui.js";
 import { registerTitle, onViewChange } from "./router.js";
 
@@ -53,12 +53,19 @@ export function renderStudents() {
         </div>
       </div>
       <div class="student-card__id">کد ملی: ${s.nationalId ? fa2(s.nationalId) : "—"}</div>
+      ${s.parentCode ? `<div class="student-card__id" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+        <span>کد دعوت اولیا:</span><b dir="ltr" style="font-family:monospace;letter-spacing:1px">${esc(s.parentCode)}</b>
+        <button type="button" class="chip-btn" data-copy-code="${esc(s.parentCode)}">کپی</button></div>` : ""}
       <div style="display:flex;gap:6px;margin-top:auto">
         <button type="button" class="btn btn--secondary btn--sm" data-edit="${s.id}"><svg class="icon"><use href="#i-edit"/></svg>ویرایش</button>
         <button type="button" class="btn btn--danger btn--sm" data-del="${s.id}"><svg class="icon"><use href="#i-trash"/></svg>حذف</button>
       </div>
     </article>`).join("");
 
+  $$("[data-copy-code]", grid).forEach(b => b.addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText(b.dataset.copyCode); toast("کد دعوت کپی شد"); }
+    catch { toast("کپی نشد — کد را دستی بنویسید", "error"); }
+  }));
   $$("[data-edit]", grid).forEach(b => b.addEventListener("click", () => openStudentModal(b.dataset.edit)));
   $$("[data-del]", grid).forEach(b => b.addEventListener("click", () => removeStudent(b.dataset.del)));
 }
@@ -237,6 +244,7 @@ export function initStudents() {
       // کل سامانه یکتا باشد (نه فقط بین دانش‌آموزهای همین معلم)، نباید
       // قبل از تأیید واقعی «ذخیره شد» نشان داده شود.
       await setStudentsChecked(newList);
+      if (!id) await refreshStudents(); // کد دعوتِ دانش‌آموز جدید را از دیتابیس بگیر
       renderStudents(); notify(); toast("ذخیره شد");
       $("#modal-student").close();
     } catch (err) {

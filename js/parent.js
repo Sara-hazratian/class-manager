@@ -103,13 +103,16 @@ export function initParent() {
     const nid = $("#parent-national-id").value.trim();
     const errorEl = $("#parent-add-error");
     errorEl.textContent = "";
+    const code = $("#parent-code").value.trim();
     if (!/^\d{10}$/.test(nid)) { errorEl.textContent = "کد ملی باید دقیقاً ۱۰ رقم باشد."; return; }
+    if (!code) { errorEl.textContent = "کد دعوت را وارد کنید (معلم به شما می‌دهد)."; return; }
 
     try {
-      await addChildByNationalId(nid);
+      await addChildByNationalId(nid, code);
       const { loadParentData } = await import("./store.js");
       await loadParentData();
       $("#parent-national-id").value = "";
+      $("#parent-code").value = "";
       renderParentView();
       toast("فرزند اضافه شد");
     } catch (err) {
