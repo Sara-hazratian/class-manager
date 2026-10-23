@@ -116,7 +116,11 @@ export function initParent() {
       renderParentView();
       toast("فرزند اضافه شد");
     } catch (err) {
-      errorEl.textContent = translateError(err);
+      console.error("link_child_to_parent failed:", err);
+      const raw = err && (err.message || err.details || err.hint || err.code);
+      const tech = raw && !/[\u0600-\u06FF]/.test(String(raw)) ? `\n(جزئیات فنی: ${err.code ? err.code + " — " : ""}${String(raw).slice(0, 200)})` : "";
+      errorEl.textContent = translateError(err) + tech;
+      errorEl.style.whiteSpace = "pre-line";
     }
   });
 
