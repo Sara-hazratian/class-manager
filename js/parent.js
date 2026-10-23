@@ -60,9 +60,15 @@ async function renderTomorrowPlanBanner(studentId) {
   const student = getStudents().find(s => s.id === studentId);
   if (!student?.teacherId) { banner.hidden = true; return; }
   const text = await loadChildTomorrowPlan(student.teacherId);
-  if (!text) { banner.hidden = true; return; }
+  const items = String(text || "").split("\n").map(x => x.trim()).filter(Boolean);
+  if (!items.length) { banner.hidden = true; return; }
   const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
-  $("#parent-tomorrow-plan-text").textContent = `کارهای فردا (${formatJalaliLong(tomorrow)}): ${text}`;
+  const box = $("#parent-tomorrow-plan-text");
+  box.innerHTML = "";
+  const title = document.createElement("div");
+  title.textContent = `کارهای فردا (${formatJalaliLong(tomorrow)}):`;
+  box.appendChild(title);
+  items.forEach(it => { const row = document.createElement("div"); row.style.fontWeight = "600"; row.textContent = "• " + it; box.appendChild(row); });
   banner.hidden = false;
 }
 

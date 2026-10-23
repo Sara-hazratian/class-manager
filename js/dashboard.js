@@ -56,10 +56,56 @@ function renderTodaySchedule() {
   });
 }
 
+/* «کارهای فردا» به‌صورت لیست: هر خط متنِ ذخیره‌شده = یک کار. */
+let planItems = [];
+const parsePlan = text => String(text || "").split("\n").map(x => x.trim()).filter(Boolean);
+
+function renderPlanList() {
+  const ul = $("#tomorrow-plan-list");
+  if (!ul) return;
+  ul.innerHTML = "";
+  planItems.forEach((item, i) => {
+    const li = document.createElement("li");
+    li.className = "plan-list__item";
+    const span = document.createElement("span");
+    span.textContent = item;
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "plan-list__del";
+    btn.title = "حذف";
+    btn.setAttribute("aria-label", "حذف");
+    btn.textContent = "✕";
+    btn.addEventListener("click", () => removePlanItem(i));
+    li.append(span, btn);
+    ul.appendChild(li);
+  });
+  $("#stat-tomorrow-plan").textContent = planItems.length ? `${fa(planItems.length)} مورد` : "—";
+}
+
+async function savePlanItems(next, okMsg) {
+  const prev = planItems;
+  const statusEl = $("#tomorrow-plan-status");
+  planItems = next;
+  renderPlanList();
+  try {
+    await setTomorrowPlan(next.join("\n"));
+    statusEl.style.color = "var(--color-success)";
+    statusEl.textContent = okMsg;
+  } catch (err) {
+    planItems = prev; // ذخیره نشد؛ به حالت قبل برگرد
+    renderPlanList();
+    console.error("tomorrow plan save failed:", err);
+    const raw = err && (err.code ? err.code + " — " : "") + (err.message || err.details || "");
+    statusEl.style.color = "var(--color-danger)";
+    statusEl.textContent = "ذخیره ناموفق بود. دوباره تلاش کنید." + (raw ? ` (جزئیات فنی: ${String(raw).slice(0, 160)})` : "");
+  }
+}
+
+function removePlanItem(i) { savePlanItems(planItems.filter((_, k) => k !== i), "حذف شد"); }
+
 async function renderTomorrowPlan() {
-  const text = await getTomorrowPlan();
-  $("#tomorrow-plan-input").value = text;
-  $("#stat-tomorrow-plan").textContent = text ? "ثبت‌شده" : "—";
+  planItems = parsePlan(await getTomorrowPlan());
+  renderPlanList();
   const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
   $("#tomorrow-plan-date").textContent = `(${formatJalaliLong(tomorrow)})`;
 }
@@ -76,24 +122,13 @@ export function renderDashboard() {
 
 export function initDashboard() {
   $("#btn-save-tomorrow-plan")?.addEventListener("click", async () => {
-    const text = $("#tomorrow-plan-input").value.trim();
-    const btn = $("#btn-save-tomorrow-plan");
-    const statusEl = $("#tomorrow-plan-status");
-    btn.disabled = true;
-    try {
-      await setTomorrowPlan(text);
-      statusEl.style.color = "var(--color-success)";
-      statusEl.textContent = text ? "ذخیره شد — برای اولیا قابل مشاهده است" : "پاک شد";
-      $("#stat-tomorrow-plan").textContent = text ? "ثبت‌شده" : "—";
-      toast(text ? "برنامه‌ی فردا ذخیره شد" : "برنامه‌ی فردا پاک شد");
-    } catch (err) {
-      statusEl.style.color = "var(--color-danger)";
-      console.error("tomorrow plan save failed:", err);
-      const raw = err && (err.code ? err.code + " — " : "") + (err.message || err.details || "");
-      statusEl.textContent = "ذخیره ناموفق بود. دوباره تلاش کنید." + (raw ? ` (جزئیات فنی: ${String(raw).slice(0, 160)})` : "");
-    } finally {
-      btn.disabled = false;
-    }
+    const input = $("#tomorrow-plan-input");
+    const text = input.value.replace(/\s+/g, " ").trim();
+    if (!text) return;
+    if (planItems.includes(text)) { input.value = ""; return; }
+    if (planItems.length >= 20) { toast("حداکثر ۲۰ مورد", "error"); return; }
+    input.value = "";
+    await savePlanItems([...planItems, text], "افزوده شد — برای اولیا قابل مشاهده است");
   });
   $("#tomorrow-plan-input")?.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); $("#btn-save-tomorrow-plan").click(); } });
 
