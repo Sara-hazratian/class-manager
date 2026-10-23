@@ -481,6 +481,22 @@ export function enablePreviewMode(role) {
   applyPreviewCollections();
 }
 
+/* خواندن «همه‌ی» ردیف‌ها: Supabase در هر درخواست حداکثر ۱۰۰۰ ردیف می‌دهد؛
+   حضور و غیاب و ارزشیابیِ یک سال کامل بیشتر از این است، پس صفحه‌صفحه می‌خوانیم. */
+async function fetchAll(sb, table, teacherId) {
+  const PAGE = 1000;
+  let all = [];
+  for (let from = 0; ; from += PAGE) {
+    let q = sb.from(table).select("*");
+    if (teacherId) q = q.eq("teacher_id", teacherId);
+    const { data, error } = await q.order("id", { ascending: true }).range(from, from + PAGE - 1);
+    if (error) return { data: all, error };
+    all = all.concat(data || []);
+    if (!data || data.length < PAGE) break;
+  }
+  return { data: all, error: null };
+}
+
 /* ================================================================
    LOAD EVERYTHING — called once right after loadProfile() succeeds.
    ================================================================ */
@@ -490,14 +506,14 @@ export async function loadAllCollections() {
   const { sb } = await import("./supabase-client.js");
 
   const [students, groups, attendance, evaluations, homework, discipline, labs, tasks, settings] = await Promise.all([
-    sb.from("students").select("*").eq("teacher_id", teacherId),
-    sb.from("groups").select("*").eq("teacher_id", teacherId),
-    sb.from("attendance").select("*").eq("teacher_id", teacherId),
-    sb.from("evaluations").select("*").eq("teacher_id", teacherId),
-    sb.from("homework").select("*").eq("teacher_id", teacherId),
-    sb.from("discipline").select("*").eq("teacher_id", teacherId),
-    sb.from("labs").select("*").eq("teacher_id", teacherId),
-    sb.from("tasks").select("*").eq("teacher_id", teacherId),
+    fetchAll(sb, "students", teacherId),
+    fetchAll(sb, "groups", teacherId),
+    fetchAll(sb, "attendance", teacherId),
+    fetchAll(sb, "evaluations", teacherId),
+    fetchAll(sb, "homework", teacherId),
+    fetchAll(sb, "discipline", teacherId),
+    fetchAll(sb, "labs", teacherId),
+    fetchAll(sb, "tasks", teacherId),
     sb.from("teacher_settings").select("*").eq("teacher_id", teacherId).maybeSingle(),
   ]);
 
@@ -532,11 +548,11 @@ export async function loadParentData() {
   // No .eq("teacher_id", …) filters here on purpose — RLS alone decides
   // what a parent account is allowed to see (their linked children only).
   const [students, attendance, evaluations, homework, discipline] = await Promise.all([
-    sb.from("students").select("*"),
-    sb.from("attendance").select("*"),
-    sb.from("evaluations").select("*"),
-    sb.from("homework").select("*"),
-    sb.from("discipline").select("*"),
+    fetchAll(sb, "students", null),
+    fetchAll(sb, "attendance", null),
+    fetchAll(sb, "evaluations", null),
+    fetchAll(sb, "homework", null),
+    fetchAll(sb, "discipline", null),
   ]);
   const check = (res, label) => { if (res.error) console.error(`ClassPilot: failed to load "${label}" for parent`, res.error); return res.data || []; };
 
