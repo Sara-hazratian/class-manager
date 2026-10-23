@@ -27,20 +27,41 @@ async function requireUserId() {
   return currentUserId;
 }
 
-/* ---------- generic list diff/sync engine, shared by every collection below ---------- */
-async function diffAndSync(table, oldList, newList, toDbRow) {
+/* ---------- generic list diff/sync engine, shared by every collection below ----------
+   نکته‌ی مهم: صفحه‌ها اغلب همان آرایه‌ی حافظه را تغییر می‌دهند (push) و دوباره
+   به set...() می‌دهند؛ پس «لیست قدیمی» و «لیست جدید» یک آرایه‌اند و مقایسه‌ی
+   آن‌ها هیچ تفاوتی نشان نمی‌دهد. برای همین آخرین وضعیتِ ذخیره‌شده در دیتابیس را
+   جدا (به‌صورت متن JSON) نگه می‌داریم و با آن مقایسه می‌کنیم. */
+const syncedState = {};          // table -> Map(id -> JSON string)
+const syncQueues = {};           // table -> Promise (ذخیره‌ها پشت‌سرهم، نه هم‌زمان)
+
+function snapshotOf(list) { return new Map((list || []).map(r => [r.id, JSON.stringify(r)])); }
+function markSynced(table, list) { syncedState[table] = snapshotOf(list); }
+function markAllSynced() {
+  markSynced("students", studentsCache); markSynced("groups", groupsCache);
+  markSynced("attendance", attendanceCache); markSynced("evaluations", evaluationsCache);
+  markSynced("homework", homeworkCache); markSynced("discipline", disciplineCache);
+  markSynced("labs", labsCache); markSynced("tasks", tasksCache);
+}
+
+function diffAndSync(table, oldList, newList, toDbRow) {
+  const run = () => doDiffAndSync(table, oldList, newList, toDbRow);
+  const prev = syncQueues[table] || Promise.resolve();
+  const next = prev.catch(() => {}).then(run);
+  syncQueues[table] = next;
+  return next;
+}
+
+async function doDiffAndSync(table, oldList, newList, toDbRow) {
   const teacherId = await requireUserId();
   const { sb } = await import("./supabase-client.js");
 
-  const oldById = new Map(oldList.map(r => [r.id, r]));
-  const newIds = new Set(newList.map(r => r.id));
+  const before = syncedState[table] || snapshotOf(oldList);
+  const nowSnap = snapshotOf(newList);
 
-  const toDeleteIds = [...oldById.keys()].filter(id => !newIds.has(id));
-  const toInsert = newList.filter(r => !oldById.has(r.id));
-  const toUpdate = newList.filter(r => {
-    const prev = oldById.get(r.id);
-    return prev && JSON.stringify(prev) !== JSON.stringify(r);
-  });
+  const toDeleteIds = [...before.keys()].filter(id => !nowSnap.has(id));
+  const toInsert = newList.filter(r => !before.has(r.id));
+  const toUpdate = newList.filter(r => before.has(r.id) && before.get(r.id) !== nowSnap.get(r.id));
 
   if (toDeleteIds.length) {
     const { error } = await sb.from(table).delete().in("id", toDeleteIds);
@@ -54,6 +75,7 @@ async function diffAndSync(table, oldList, newList, toDbRow) {
     const { error } = await sb.from(table).update(toDbRow(row, teacherId)).eq("id", row.id);
     if (error) throw error;
   }
+  syncedState[table] = nowSnap;
 }
 
 function logSyncError(collection, err) {
@@ -486,6 +508,7 @@ export async function loadAllCollections() {
   disciplineCache = check(discipline, "discipline").map(dbToDiscipline);
   labsCache = check(labs, "labs").map(dbToLab);
   tasksCache = check(tasks, "tasks").map(dbToTask);
+  markAllSynced();
 
   const settingsRow = settings.data;
   settingsCache = {
@@ -540,6 +563,7 @@ export async function refreshStudents() {
   const { data, error } = await sb.from("students").select("*").eq("teacher_id", teacherId);
   if (error) { console.error("ClassPilot: failed to refresh students", error); return; }
   studentsCache = (data || []).map(dbToStudent);
+  markSynced("students", studentsCache);
 }
 
 /** اگه اولیا اشتباهی به یه دانش‌آموز وصل شدن (مثلاً معلم کد ملی رو
@@ -616,6 +640,7 @@ export async function resetEverything() {
 
   studentsCache = []; groupsCache = []; attendanceCache = []; evaluationsCache = [];
   homeworkCache = []; disciplineCache = []; labsCache = []; tasksCache = [];
+  markAllSynced();
   settingsCache = { generalNotes: "", schedule: defaultSchedule(), annualPlan: {} };
   profileCache = profileCache ? { ...profileCache, schoolName: "", grade: "", className: "", academicYear: "" } : null;
 }
