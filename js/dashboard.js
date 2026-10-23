@@ -88,7 +88,9 @@ export function initDashboard() {
       toast(text ? "برنامه‌ی فردا ذخیره شد" : "برنامه‌ی فردا پاک شد");
     } catch (err) {
       statusEl.style.color = "var(--color-danger)";
-      statusEl.textContent = "ذخیره ناموفق بود. دوباره تلاش کنید.";
+      console.error("tomorrow plan save failed:", err);
+      const raw = err && (err.code ? err.code + " — " : "") + (err.message || err.details || "");
+      statusEl.textContent = "ذخیره ناموفق بود. دوباره تلاش کنید." + (raw ? ` (جزئیات فنی: ${String(raw).slice(0, 160)})` : "");
     } finally {
       btn.disabled = false;
     }

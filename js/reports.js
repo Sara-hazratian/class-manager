@@ -8,7 +8,7 @@
    own sentence, so the report can say e.g. "learned pages 1–3
    well, but needs practice on pages 4–6" within the same subject.
    ============================================================ */
-import { getStudents, getEvaluations, getAttendance, getDiscipline, getProfile, SUBJECTS } from "./store.js";
+import { getStudents, getEvaluations, getAttendance, getDiscipline, getHomework, getProfile, SUBJECTS } from "./store.js";
 import { $, $$, toast, esc } from "./ui.js";
 import { fa, termOf, toJalali, isoToDate, formatJalaliLong, formatJalali, todayISO, JMONTHS, currentAcademicYearRange } from "./jalali.js";
 import { registerTitle, onViewChange } from "./router.js";
@@ -124,13 +124,28 @@ export function buildStudentReport(studentId, period, monthKey) {
     .filter(d => d.studentId === studentId && matchesPeriod(d.date, period, monthKey))
     .sort((a, b) => a.date.localeCompare(b.date));
 
+  // تکالیف: برای هر درس تعداد «انجام شده / ناقص / انجام نشده» + تاریخ‌های انجام‌نشده
+  const hwRecords = getHomework().filter(h => h.studentId === studentId && matchesPeriod(h.date, period, monthKey));
+  const homeworkRows = SUBJECTS.map(sub => {
+    const list = hwRecords.filter(h => h.subjectId === sub.id);
+    if (!list.length) return null;
+    const missed = list.filter(h => h.status === "not-completed").sort((a, b) => a.date.localeCompare(b.date));
+    return {
+      subject: sub, total: list.length,
+      done: list.filter(h => h.status === "completed").length,
+      partial: list.filter(h => h.status === "partial").length,
+      missed: missed.length,
+      missedDates: missed.map(h => formatJalali(isoToDate(h.date))),
+    };
+  }).filter(Boolean);
+
   const overall = subjectRows.length ? subjectRows.reduce((s, r) => s + r.avg, 0) / subjectRows.length : null;
-  return { student, subjectRows, attendanceByMonth, disciplineRecords, overall };
+  return { student, subjectRows, attendanceByMonth, disciplineRecords, homeworkRows, overall };
 }
 
 /* ---------- rendering ---------- */
 export function renderStudentReportHTML(data) {
-  if (!data.subjectRows.length && !data.attendanceByMonth.length && !data.disciplineRecords.length) {
+  if (!data.subjectRows.length && !data.attendanceByMonth.length && !data.disciplineRecords.length && !(data.homeworkRows || []).length) {
     return `<h3>${esc(data.student.name)}</h3><p style="font-size:13.5px;color:var(--color-ink-soft);margin-top:8px">برای این بازه هنوز اطلاعاتی ثبت نشده است.</p>`;
   }
 
@@ -146,6 +161,16 @@ export function renderStudentReportHTML(data) {
       ${m.lateEntries.length ? ` · ${fa(m.lateEntries.length)} بار تأخیر (${m.lateEntries.join("، ")})` : ""}
       ${m.leftDates.length ? ` · ${fa(m.leftDates.length)} بار خروج زودتر (${m.leftDates.join("، ")})` : ""}
     </p>`).join("") : `<p style="font-size:13px;color:var(--color-ink-faint)">حضوری برای این بازه ثبت نشده است.</p>`;
+
+  const homeworkHTML = (data.homeworkRows || []).length ? `
+    <div class="eval-table-wrap" style="margin-bottom:8px">
+      <table class="eval-table">
+        <thead><tr><th>درس</th><th>انجام شده</th><th>ناقص</th><th>انجام نشده</th></tr></thead>
+        <tbody>${data.homeworkRows.map(r => `<tr><td>${r.subject.name}</td><td>${fa(r.done)}</td><td>${fa(r.partial)}</td><td>${fa(r.missed)}</td></tr>`).join("")}</tbody>
+      </table>
+    </div>
+    ${data.homeworkRows.filter(r => r.missed).map(r => `<p style="font-size:12.5px;color:var(--color-ink-soft);margin-bottom:3px">${r.subject.name} — انجام نشده: ${r.missedDates.join("، ")}</p>`).join("")}`
+    : `<p style="font-size:13px;color:var(--color-ink-faint)">تکلیفی برای این بازه ثبت نشده است.</p>`;
 
   const disciplineHTML = data.disciplineRecords.length ? `
     <ul style="padding-inline-start:18px;list-style:disc">
@@ -174,6 +199,9 @@ export function renderStudentReportHTML(data) {
 
     <p style="margin-bottom:6px"><strong>حضور و غیاب:</strong></p>
     ${attendanceHTML}
+
+    <p style="margin:12px 0 6px"><strong>تکالیف:</strong></p>
+    ${homeworkHTML}
 
     <p style="margin:12px 0 6px"><strong>انضباط:</strong></p>
     ${disciplineHTML}
