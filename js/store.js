@@ -58,6 +58,11 @@ async function diffAndSync(table, oldList, newList, toDbRow) {
 
 function logSyncError(collection, err) {
   console.error(`ClassPilot: failed to sync "${collection}" to the database`, err);
+  // به کاربر هم نشان بده — وگرنه داده فقط در حافظه‌ی صفحه می‌ماند و با تازه‌سازی می‌پرد.
+  try {
+    const raw = err && (err.message || err.details || err.code) ? `${err.code ? err.code + " — " : ""}${err.message || err.details}` : String(err);
+    window.dispatchEvent(new CustomEvent("classpilot:sync-error", { detail: { collection, raw: String(raw).slice(0, 220) } }));
+  } catch (_) { /* ignore */ }
 }
 
 /* ---------- Teacher profile + theme (Setup / Settings) ---------- */

@@ -10,7 +10,7 @@
    ============================================================ */
 import { isSetupComplete, loadProfile, loadAllCollections, loadParentData, enablePreviewMode } from "./store.js";
 import { initTheme } from "./theme.js";
-import { initModals } from "./ui.js";
+import { initModals, toast } from "./ui.js";
 import { initRouter, switchView } from "./router.js";
 import { initAuth, getSession, ensureProfile, cleanOAuthParams } from "./auth.js";
 import { initSetup } from "./setup.js";
@@ -121,3 +121,11 @@ export async function showPreview(role) {
 
 if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
 else boot();
+
+
+// خطای ذخیره‌سازی در دیتابیس را فوراً به کاربر نشان بده.
+window.addEventListener("classpilot:sync-error", e => {
+  const { collection, raw } = e.detail || {};
+  toast(`ذخیره نشد (${collection}): ${raw}`, "error");
+  console.warn("ClassPilot sync error:", collection, raw);
+});

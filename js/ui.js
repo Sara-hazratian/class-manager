@@ -30,7 +30,7 @@ export function toast(message, type = "success") {
     el.style.transition = "opacity .2s, transform .2s";
     el.style.opacity = "0"; el.style.transform = "translateY(6px)";
     setTimeout(() => el.remove(), 220);
-  }, 2600);
+  }, type === "error" ? 12000 : 2600);
 }
 
 /** Turns any error (Supabase/Postgres, network, or otherwise) into a plain-
