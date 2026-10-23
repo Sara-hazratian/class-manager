@@ -76,6 +76,9 @@ async function doDiffAndSync(table, oldList, newList, toDbRow) {
     if (error) throw error;
   }
   syncedState[table] = nowSnap;
+  if (toDeleteIds.length || toInsert.length || toUpdate.length) {
+    try { window.dispatchEvent(new CustomEvent("classpilot:sync-ok", { detail: { table } })); } catch (_) {}
+  }
 }
 
 function logSyncError(collection, err) {

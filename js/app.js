@@ -129,3 +129,12 @@ window.addEventListener("classpilot:sync-error", e => {
   toast(`ذخیره نشد (${collection}): ${raw}`, "error");
   console.warn("ClassPilot sync error:", collection, raw);
 });
+
+// پیام سبز: یعنی نوشتن در دیتابیس واقعاً انجام شد.
+let lastOkToast = 0;
+window.addEventListener("classpilot:sync-ok", () => {
+  const now = Date.now();
+  if (now - lastOkToast < 1500) return;
+  lastOkToast = now;
+  toast("ذخیره شد ✓");
+});
