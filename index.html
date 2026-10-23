@@ -91,7 +91,7 @@
     <div id="parent-content" hidden>
       <div id="parent-tomorrow-plan" hidden style="background:var(--color-primary-tint);border-radius:var(--radius-md);padding:var(--space-3) var(--space-4);margin-bottom:var(--space-4);display:flex;align-items:center;gap:10px">
         <span style="font-size:20px">📅</span>
-        <p style="font-size:13.5px;font-weight:700;color:var(--color-primary-dark)" id="parent-tomorrow-plan-text"></p>
+        <div style="font-size:13.5px;font-weight:700;color:var(--color-primary-dark)" id="parent-tomorrow-plan-text"></div>
       </div>
       <div class="pill-tabs" id="parent-child-tabs" style="margin-bottom:var(--space-4)"></div>
       <button type="button" class="btn btn--ghost btn--sm" id="parent-unlink-btn" style="margin-bottom:var(--space-4);color:var(--color-danger)">این دانش‌آموز اشتباه است؟ قطع ارتباط</button>
@@ -194,11 +194,12 @@
           <div style="display:flex;flex-direction:column;gap:var(--space-5)">
             <section class="panel">
               <div class="panel__header"><h2>کارهای فردا <span id="tomorrow-plan-date" style="font-size:12px;font-weight:600;color:var(--color-ink-faint)"></span></h2></div>
-              <p style="font-size:11.5px;color:var(--color-ink-faint);margin-bottom:var(--space-3)">این متن برای اولیای همین کلاس هم قابل مشاهده است.</p>
+              <p style="font-size:11.5px;color:var(--color-ink-faint);margin-bottom:var(--space-3)">هر کار را جدا بنویسید و «افزودن» بزنید؛ برای اولیای همین کلاس هم قابل مشاهده است و تا پایان فردا می‌ماند.</p>
               <div style="display:flex;gap:8px">
-                <input type="text" id="tomorrow-plan-input" placeholder="مثلاً امتحان املا" style="flex:1" />
-                <button class="btn btn--primary btn--sm" id="btn-save-tomorrow-plan">ذخیره</button>
+                <input type="text" id="tomorrow-plan-input" placeholder="مثلاً امتحان املا" maxlength="120" style="flex:1" />
+                <button class="btn btn--primary btn--sm" id="btn-save-tomorrow-plan">افزودن</button>
               </div>
+              <ul id="tomorrow-plan-list" class="plan-list"></ul>
               <p id="tomorrow-plan-status" style="font-size:11.5px;color:var(--color-success);margin-top:6px;min-height:1em"></p>
             </section>
 
