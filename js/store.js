@@ -498,6 +498,130 @@ async function fetchAll(sb, table, teacherId) {
 }
 
 /* ================================================================
+   اشتراک Pro — وضعیت از دیتابیس (تابع my_pro_status / parent_pro_status) خوانده
+   می‌شود. تصمیم اصلی با RLS در خود دیتابیس است؛ این‌ها فقط برای نمایش پیام و
+   قفل‌کردن رابط‌اند. (SQL: pro-setup.sql)
+   ================================================================ */
+const FREE_SUB = { isPro: false, state: "free", plan: "free", planCode: null, endsAt: null, upcomingStartsAt: null, pending: false };
+let subscriptionCache = { ...FREE_SUB };
+let parentProCache = { linked: false, active: false };
+export const isPro = () => subscriptionCache.isPro;
+export const getSubscription = () => subscriptionCache;
+export const getParentProState = () => parentProCache;
+
+/** وضعیت اشتراک معلم را از سرور می‌خواند. اگر وضعیت عوض شده باشد true برمی‌گرداند. */
+export async function refreshSubscription() {
+  const before = JSON.stringify(subscriptionCache);
+  if (previewModeActive) {
+    subscriptionCache = { ...FREE_SUB, isPro: true, state: "active", plan: "pro" };
+    return before !== JSON.stringify(subscriptionCache);
+  }
+  try {
+    const { sb } = await import("./supabase-client.js");
+    const { data, error } = await sb.rpc("my_pro_status");
+    if (error) throw error;
+    subscriptionCache = {
+      isPro: !!data?.is_pro,
+      state: data?.state || (data?.is_pro ? "active" : "free"),
+      plan: data?.plan || "free",
+      planCode: data?.plan_code || null,
+      endsAt: data?.ends_at || null,
+      upcomingStartsAt: data?.upcoming_starts_at || null,
+      pending: !!data?.pending_payment,
+    };
+  } catch (err) {
+    console.error("ClassPilot: could not read subscription status (is monetization-setup.sql run?)", err);
+    subscriptionCache = { ...FREE_SUB };
+  }
+  return before !== JSON.stringify(subscriptionCache);
+}
+
+/* ---- قیمت‌ها: منبع اصلی جدول plans در دیتابیس است؛ این مقادیر فقط برای نمایش وقتی
+   خواندن جدول ممکن نیست (آفلاین). قیمت واقعیِ پرداخت همیشه سمت سرور تعیین می‌شود. ---- */
+export const FALLBACK_PLANS = [
+  { code: "term1",  title: "اشتراک نیمسال اول", priceToman: 349000 },
+  { code: "term2",  title: "اشتراک نیمسال دوم", priceToman: 349000 },
+  { code: "annual", title: "اشتراک سالانه",     priceToman: 499000 },
+];
+export async function fetchPlans() {
+  try {
+    const { sb } = await import("./supabase-client.js");
+    const { data, error } = await sb.from("plans").select("code,title_fa,price_toman,sort_order").order("sort_order");
+    if (error || !data?.length) throw error || new Error("no plans");
+    return data.map(p => ({ code: p.code, title: p.title_fa, priceToman: p.price_toman }));
+  } catch { return FALLBACK_PLANS; }
+}
+
+/** ساخت درخواست پرداخت در سرور. خروجی: { ok, url } یا { ok:false, error } */
+export async function startPayment(planCode) {
+  try {
+    const { sb } = await import("./supabase-client.js");
+    const { data, error } = await sb.functions.invoke("payment-create", { body: { plan_code: planCode } });
+    if (error) {
+      let code = "NETWORK";
+      try { const b = await error.context?.json?.(); code = b?.error || code; } catch { /* ignore */ }
+      return { ok: false, error: code };
+    }
+    if (!data?.payment_url) return { ok: false, error: "BAD_RESPONSE" };
+    return { ok: true, url: data.payment_url, paymentId: data.payment_id };
+  } catch { return { ok: false, error: "NETWORK" }; }
+}
+
+/** وضعیت یک پرداخت — فقط از دیتابیس (نه از آدرس برگشتی). */
+export async function getPaymentStatus(paymentId) {
+  try {
+    const { sb } = await import("./supabase-client.js");
+    const { data, error } = await sb.rpc("my_payment_status", { p_payment: paymentId });
+    if (error) throw error;
+    return data || { status: "unknown" };
+  } catch { return { status: "unknown" }; }
+}
+
+/** درخواست بررسی مجدد یک پرداختِ در انتظار (سرور از درگاه می‌پرسد). */
+export async function recheckPayment(paymentId) {
+  try {
+    const { sb } = await import("./supabase-client.js");
+    const { data, error } = await sb.functions.invoke("payment-verify", { body: { payment_id: paymentId } });
+    if (error) return null;
+    return data?.outcome || null;
+  } catch { return null; }
+}
+
+/* ---- تحلیل‌های Pro: محاسبه و بررسی دسترسی سمت سرور (RPC) ---- */
+async function proRpc(fn, args) {
+  if (previewModeActive) return { data: null, error: { code: "PREVIEW" } };
+  const { sb } = await import("./supabase-client.js");
+  const { data, error } = await sb.rpc(fn, args);
+  if (error) {
+    const msg = String(error.message || "");
+    const code = error.code === "PT402" || msg.includes("PRO_REQUIRED") ? "PRO_REQUIRED"
+      : error.code === "PT401" || msg.includes("AUTH_REQUIRED") ? "AUTH_REQUIRED"
+      : error.code === "PT404" || msg.includes("NOT_FOUND") ? "NOT_FOUND" : "ERROR";
+    return { data: null, error: { code } };
+  }
+  return { data, error: null };
+}
+export const rpcClassPerformance = () => proRpc("class_performance_analysis");
+export const rpcStudentProgress = (studentId) => proRpc("student_progress", { p_student: studentId });
+export const rpcStudentTrend = (studentId, subjectId, ranges) =>
+  proRpc("student_trend", { p_student: studentId, p_subject: subjectId, p_ranges: ranges });
+
+/** برای اولیا: آیا معلمِ فرزندشان اشتراک معتبر دارد؟ */
+export async function refreshParentPro() {
+  const before = JSON.stringify(parentProCache);
+  try {
+    const { sb } = await import("./supabase-client.js");
+    const { data, error } = await sb.rpc("parent_pro_status");
+    if (error) throw error;
+    parentProCache = { linked: !!data?.linked, active: !!data?.active };
+  } catch (err) {
+    console.error("ClassPilot: could not read parent access status (is pro-setup.sql run?)", err);
+    parentProCache = { linked: false, active: false };
+  }
+  return before !== JSON.stringify(parentProCache);
+}
+
+/* ================================================================
    LOAD EVERYTHING — called once right after loadProfile() succeeds.
    ================================================================ */
 export async function loadAllCollections() {
@@ -535,6 +659,7 @@ export async function loadAllCollections() {
     schedule: (settingsRow?.schedule && Object.keys(settingsRow.schedule).length) ? settingsRow.schedule : defaultSchedule(),
     annualPlan: settingsRow?.annual_plan || {},
   };
+  await refreshSubscription();
 }
 
 /* ================================================================
@@ -561,6 +686,7 @@ export async function loadParentData() {
   evaluationsCache = check(evaluations, "evaluations").map(dbToEvaluation);
   homeworkCache = check(homework, "homework").map(dbToHomework);
   disciplineCache = check(discipline, "discipline").map(dbToDiscipline);
+  await refreshParentPro();
 }
 
 /** اولیا با «کد ملی + کد دعوت» (که معلم به او می‌دهد) به فرزندش وصل می‌شود —

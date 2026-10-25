@@ -74,3 +74,16 @@ export function debounce(fn, ms = 400) {
   let t;
   return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
 }
+
+
+/* ---- Pro: نشان کوچک و پیام «این قابلیت به اشتراک Pro نیاز دارد» ---- */
+export const PRO_BADGE_HTML = '<span class="pro-badge">Pro</span>';
+export function proLockHTML(featureName) {
+  const name = featureName ? `«${esc(featureName)}» ` : "";
+  return `<div class="pro-lock" role="status">
+    ${PRO_BADGE_HTML}
+    <p class="pro-lock__text">${name}به اشتراک Pro نیاز دارد.</p>
+    <p class="pro-lock__sub">اطلاعات و امکانات رایگان شما بدون تغییر در دسترس است.</p>
+    <button type="button" class="btn btn--primary btn--sm" data-open-plans style="margin-top:10px">مشاهدهٔ طرح‌ها و ارتقا</button>
+  </div>`;
+}

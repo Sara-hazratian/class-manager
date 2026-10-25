@@ -8,7 +8,8 @@
    برنامه وجود ندارد — طبق تصمیم نهایی محصول. معلم و اولیا هیچ‌کدام
    نیازی به تأیید مدیریتی ندارند، بلافاصله بعد از ثبت‌نام فعال‌اند.
    ============================================================ */
-import { isSetupComplete, loadProfile, loadAllCollections, loadParentData, enablePreviewMode } from "./store.js";
+import { initPlans } from "./plans.js";
+import { isSetupComplete, loadProfile, loadAllCollections, loadParentData, enablePreviewMode, getProfile, refreshSubscription, refreshParentPro } from "./store.js";
 import { initTheme } from "./theme.js";
 import { initModals, toast } from "./ui.js";
 import { initRouter, switchView } from "./router.js";
@@ -104,6 +105,7 @@ export async function showApp() {
   initPlanning();
   initReports();
   initSettings();
+  initPlans();
   switchView("dashboard");
 }
 
@@ -138,3 +140,15 @@ window.addEventListener("classpilot:sync-ok", () => {
   lastOkToast = now;
   toast("ذخیره شد ✓");
 });
+
+// وضعیت اشتراک را گاهی دوباره بخوان تا انقضا/فعال‌شدن بدون ورود دوباره اعمال شود.
+async function recheckPro() {
+  try {
+    const role = getProfile()?.role;
+    if (!role) return;
+    const changed = role === "parent" ? await refreshParentPro() : await refreshSubscription();
+    if (changed) document.dispatchEvent(new Event("pro:changed"));
+  } catch (_) { /* ignore */ }
+}
+document.addEventListener("visibilitychange", () => { if (!document.hidden) recheckPro(); });
+setInterval(recheckPro, 10 * 60 * 1000);

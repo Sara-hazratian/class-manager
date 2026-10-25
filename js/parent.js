@@ -10,9 +10,9 @@
    - see tomorrow's class plan, if the teacher has written one
    No edit controls anywhere on this screen, by design.
    ============================================================ */
-import { getStudents, addChildByNationalId, unlinkChild, getProfile, getEvaluations, SUBJECTS, loadChildTomorrowPlan } from "./store.js";
+import { getStudents, addChildByNationalId, unlinkChild, getProfile, getEvaluations, SUBJECTS, loadChildTomorrowPlan, getParentProState } from "./store.js";
 import { buildStudentReport, renderStudentReportHTML, ACADEMIC_MONTHS } from "./reports.js";
-import { avgScore, lastNMonthlyBuckets, renderLineChart, renderTrendBadge } from "./progress.js";
+import { avgScore, academicYearBuckets, renderLineChart, renderTrendBadge } from "./progress.js";
 import { $, $$, toast, translateError , esc } from "./ui.js";
 import { fa, formatJalaliLong } from "./jalali.js";
 import { signOut } from "./auth.js";
@@ -79,7 +79,7 @@ async function renderProgressChart(studentId) {
   if (sel.innerHTML === "") sel.innerHTML = SUBJECTS.map(s => `<option value="${s.id}" ${s.id === progressSubjectId ? "selected" : ""}>${s.name}</option>`).join("");
 
   const subject = SUBJECTS.find(s => s.id === progressSubjectId) || SUBJECTS[0];
-  const buckets = lastNMonthlyBuckets(8);
+  const buckets = academicYearBuckets();
   const { toJalali } = await import("./jalali.js");
   const scores = buckets.map(b => avgScore(
     getEvaluations().filter(e => {
@@ -99,11 +99,26 @@ async function renderProgressChart(studentId) {
 }
 
 export function renderParentView() {
+  // اولیا به معلم وصل است ولی اشتراک Pro معلم معتبر نیست: فقط پیام Pro نشان بده.
+  const pro = getParentProState();
+  const lock = $("#parent-pro-lock");
+  if (pro.linked && !pro.active) {
+    if (lock) lock.hidden = false;
+    $("#parent-empty").hidden = true;
+    $("#parent-content").hidden = true;
+    return;
+  }
+  if (lock) lock.hidden = true;
   renderChildTabs();
   renderChildContent();
 }
 
 export function initParent() {
+  document.addEventListener("pro:changed", async () => {
+    const { loadParentData } = await import("./store.js");
+    await loadParentData();
+    renderParentView();
+  });
   $("#parent-add-child-form")?.addEventListener("submit", async e => {
     e.preventDefault();
     const nid = $("#parent-national-id").value.trim();

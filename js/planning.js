@@ -9,8 +9,8 @@
        seed (DEFAULT_BUDGET below) that the teacher can still
        edit — their edits always win over the seed.
    ============================================================ */
-import { SUBJECTS, DAYS, PERIODS, getSchedule, setSchedule, getAnnualPlan, setAnnualPlan, getProfile, SUBJECT_PAGE_COUNTS, subjectById, getStudents, getEvaluations } from "./store.js";
-import { $, $$, toast, debounce, esc } from "./ui.js";
+import { SUBJECTS, DAYS, PERIODS, getSchedule, setSchedule, getAnnualPlan, setAnnualPlan, getProfile, SUBJECT_PAGE_COUNTS, subjectById, isPro, rpcClassPerformance } from "./store.js";
+import { $, $$, toast, debounce, esc, proLockHTML } from "./ui.js";
 import { fa } from "./jalali.js";
 import { registerTitle, onViewChange } from "./router.js";
 
@@ -175,7 +175,6 @@ function renderBudgetSubjectDropdown() {
    به یک امتیاز عددی تبدیل می‌شود تا بشود میانگین گرفت، دقیقاً مثل
    مثال‌های سند: «کسرها → ۴۳٪ → نیاز به تقویت».
    ============================================================ */
-const PERFORMANCE_SCORE_MAP = { excellent: 95, good: 80, acceptable: 60, "needs-improvement": 30 };
 const NEEDS_IMPROVEMENT_THRESHOLD = 50;
 
 function performanceLabel(score) {
@@ -184,40 +183,25 @@ function performanceLabel(score) {
   return { label: "خوب", cls: "chip--excellent" };
 }
 
-export function computeClassPerformance() {
-  const evaluations = getEvaluations();
-  const bySubject = {};
+let perfToken = 0;
+function perfMessage(text) {
+  $("#performance-summary").innerHTML = `<p class="empty-state empty-state--inline">${text}</p>`;
+  $("#performance-insights").innerHTML = "";
+  $("#performance-subjects").innerHTML = "";
+}
 
-  evaluations.forEach(e => {
-    const score = PERFORMANCE_SCORE_MAP[e.level];
-    if (score === undefined) return;
-    const topicKey = e.topic?.trim() || "سایر";
-    bySubject[e.subjectId] ??= {};
-    bySubject[e.subjectId][topicKey] ??= {};
-    (bySubject[e.subjectId][topicKey][e.studentId] ??= []).push(score);
-  });
-
-  const subjects = Object.entries(bySubject).map(([subjectId, topics]) => {
-    const topicRows = Object.entries(topics).map(([topic, byStudent]) => {
-      const studentAverages = Object.values(byStudent).map(scores => scores.reduce((a, b) => a + b, 0) / scores.length);
-      const avg = Math.round(studentAverages.reduce((a, b) => a + b, 0) / studentAverages.length);
-      const needingCount = studentAverages.filter(s => s < NEEDS_IMPROVEMENT_THRESHOLD).length;
-      const needingPct = Math.round((needingCount / studentAverages.length) * 100);
-      return { topic, avg, ...performanceLabel(avg), studentCount: studentAverages.length, needingPct };
-    }).sort((a, b) => a.avg - b.avg); // weakest topic first
-
-    const allScores = Object.values(topics).flatMap(byStudent => Object.values(byStudent).flat());
-    const subjectAvg = allScores.length ? Math.round(allScores.reduce((a, b) => a + b, 0) / allScores.length) : null;
-
-    return {
-      subjectId,
-      subjectName: subjectById(subjectId)?.name || subjectId,
-      avg: subjectAvg,
-      ...(subjectAvg !== null ? performanceLabel(subjectAvg) : { label: "—", cls: "" }),
-      topics: topicRows,
-    };
-  }).sort((a, b) => (a.avg ?? 100) - (b.avg ?? 100));
-
+/** داده‌ی تحلیل از سرور می‌آید (class_performance_analysis)؛ برچسب‌ها و یافته‌های متنی فقط از روی اعداد ساخته می‌شوند. */
+function shapeAnalysis(raw) {
+  const subjects = (raw?.subjects || []).map(s => ({
+    subjectId: s.subject_id,
+    subjectName: subjectById(s.subject_id)?.name || s.subject_id,
+    avg: s.avg,
+    ...(s.avg !== null && s.avg !== undefined ? performanceLabel(s.avg) : { label: "—", cls: "" }),
+    topics: (s.topics || []).map(t => ({
+      topic: t.topic, avg: t.avg, ...performanceLabel(t.avg),
+      studentCount: t.student_count, needingPct: t.needing_pct,
+    })),
+  }));
   const insights = [];
   subjects.forEach(s => {
     const weakest = s.topics[0];
@@ -230,17 +214,27 @@ export function computeClassPerformance() {
       }
     });
   });
-
-  const subjectsWithAvg = subjects.filter(s => s.avg !== null);
-  const overallAvg = subjectsWithAvg.length
-    ? Math.round(subjectsWithAvg.reduce((a, s) => a + s.avg, 0) / subjectsWithAvg.length)
-    : null;
-
-  return { subjects, insights, overallAvg, totalStudents: getStudents().length };
+  return { subjects, insights, overallAvg: raw?.overall_avg ?? null };
 }
 
-function renderClassPerformance() {
-  const data = computeClassPerformance();
+async function renderClassPerformance() {
+  if (!isPro()) {
+    $("#performance-summary").innerHTML = proLockHTML("تحلیل عملکرد کلاس");
+    $("#performance-insights").innerHTML = "";
+    $("#performance-subjects").innerHTML = "";
+    return;
+  }
+  const token = ++perfToken;
+  perfMessage("در حال محاسبه…");
+  const { data: raw, error } = await rpcClassPerformance();
+  if (token !== perfToken) return;
+  if (error) {
+    if (error.code === "PRO_REQUIRED") { $("#performance-summary").innerHTML = proLockHTML("تحلیل عملکرد کلاس"); $("#performance-insights").innerHTML = ""; $("#performance-subjects").innerHTML = ""; return; }
+    perfMessage(error.code === "PREVIEW" ? "در حالت پیش‌نمایش، این تحلیل در دسترس نیست." : "دریافت تحلیل ممکن نشد. اتصال اینترنت را بررسی کنید و دوباره تلاش کنید.");
+    return;
+  }
+  const data = shapeAnalysis(raw);
+
 
   const summaryBox = $("#performance-summary");
   summaryBox.innerHTML = `
@@ -304,6 +298,7 @@ export function initPlanning() {
     renderBudget();
     if (!$("#plan-performance").hidden) renderClassPerformance();
   });
+  document.addEventListener("pro:changed", () => { if (!$("#plan-performance").hidden) renderClassPerformance(); });
   renderSchedule();
   renderBudgetSubjectDropdown();
   renderBudget();

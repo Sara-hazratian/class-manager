@@ -5,9 +5,9 @@
    Phase 6, Attendance from Phase 5, Discipline from Phase 9) —
    no new schema needed.
    ============================================================ */
-import { getStudents, getEvaluations, getAttendance, getDiscipline, SUBJECTS, subjectById } from "./store.js";
-import { $, $$, esc } from "./ui.js";
-import { fa, toJalali, isoToDate, JMONTHS } from "./jalali.js";
+import { getStudents, SUBJECTS, subjectById, isPro, rpcStudentProgress, rpcStudentTrend } from "./store.js";
+import { $, $$, esc, proLockHTML } from "./ui.js";
+import { fa, toJalali, fromJalali, JMONTHS } from "./jalali.js";
 import { registerTitle, onViewChange } from "./router.js";
 
 registerTitle("progress", "پیشرفت");
@@ -30,33 +30,27 @@ function refreshStudentSelect() {
   sel.value = students.some(s => s.id === keep) ? keep : (students[0]?.id || "");
 }
 
-function renderMiniStats(studentId) {
-  const att = getAttendance().filter(a => a.studentId === studentId);
-  const presentLike = att.filter(a => a.status === "present").length;
-  const attRate = att.length ? Math.round((presentLike / att.length) * 100) : null;
+let renderToken = 0;
+const setBars = html => { $("#progress-bars").innerHTML = html; };
+const errorHTML = code => `<p class="empty-state empty-state--inline">${
+  code === "PREVIEW" ? "در حالت پیش‌نمایش، این بخش در دسترس نیست."
+  : code === "NOT_FOUND" ? "این دانش‌آموز پیدا نشد."
+  : "دریافت اطلاعات ممکن نشد. اتصال اینترنت را بررسی کنید و دوباره تلاش کنید."}</p>`;
 
-  const evalCount = getEvaluations().filter(e => e.studentId === studentId).length;
-
-  const dp = getDiscipline().filter(d => d.studentId === studentId);
-  const positives = dp.filter(d => d.type === "positive").length;
-  const warnings = dp.filter(d => d.type === "warning").length;
-
-  $("#pr-stat-attendance").textContent = attRate === null ? "—" : `${fa(attRate)}٪`;
-  $("#pr-stat-evals").textContent = fa(evalCount);
-  $("#pr-stat-positive").textContent = fa(positives);
-  $("#pr-stat-warning").textContent = fa(warnings);
+function showMiniStats(d) {
+  $("#pr-stat-attendance").textContent = d.attendance_rate === null || d.attendance_rate === undefined ? "—" : `${fa(d.attendance_rate)}٪`;
+  $("#pr-stat-evals").textContent = fa(d.eval_count || 0);
+  $("#pr-stat-positive").textContent = fa(d.positives || 0);
+  $("#pr-stat-warning").textContent = fa(d.warnings || 0);
+}
+function clearMiniStats() {
+  ["#pr-stat-attendance", "#pr-stat-evals", "#pr-stat-positive", "#pr-stat-warning"].forEach(id => { $(id).textContent = "—"; });
 }
 
-function renderSubjectBars(studentId) {
-  const wrap = $("#progress-bars");
-  const rows = SUBJECTS.map(s => ({
-    subject: s,
-    score: avgScore(getEvaluations().filter(e => e.studentId === studentId && e.subjectId === s.id)),
-  })).filter(r => r.score !== null);
-
-  if (!rows.length) { wrap.innerHTML = `<p class="empty-state empty-state--inline">هنوز ارزشیابی‌ای برای این دانش‌آموز ثبت نشده است.</p>`; return; }
-
-  wrap.innerHTML = rows.map(r => `
+function showSubjectBars(d) {
+  const rows = (d.subjects || []).map(r => ({ subject: subjectById(r.subject_id), score: r.score })).filter(r => r.subject && r.score !== null);
+  if (!rows.length) { setBars(`<p class="empty-state empty-state--inline">هنوز ارزشیابی‌ای برای این دانش‌آموز ثبت نشده است.</p>`); return; }
+  setBars(rows.map(r => `
     <div style="margin-bottom:14px">
       <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;margin-bottom:5px">
         <span>${r.subject.name}</span><span style="font-family:var(--font-mono);color:var(--color-ink-soft)">${fa(r.score)}٪</span>
@@ -64,7 +58,17 @@ function renderSubjectBars(studentId) {
       <div style="height:10px;background:var(--color-surface-alt);border-radius:999px;overflow:hidden">
         <div style="height:100%;width:${r.score}%;background:${r.subject.color};border-radius:999px;transition:width .4s"></div>
       </div>
-    </div>`).join("");
+    </div>`).join(""));
+}
+
+/** ماه‌های «سال تحصیلی جاری»: مهر تا خرداد (۹ ماه). تیر تا شهریور هنوز جزو همان سال
+    تحصیلیِ تمام‌شده حساب می‌شود (مثل currentAcademicYearRange). ماه‌هایی که هنوز
+    نیامده‌اند خالی می‌مانند و نمودار فقط از ماه‌های دارای ارزشیابی رسم می‌شود. */
+export function academicYearBuckets() {
+  const { jy, jm } = toJalali(new Date());
+  const startJy = jm >= 7 ? jy : jy - 1;
+  const order = [7, 8, 9, 10, 11, 12, 1, 2, 3];
+  return order.map(m => ({ jy: m >= 7 ? startJy : startJy + 1, jm: m, label: JMONTHS[m - 1] }));
 }
 
 export function lastNMonthlyBuckets(n = 8) {
@@ -144,37 +148,56 @@ export function renderTrendBadge(scores) {
   </span>`;
 }
 
-function renderTrend(studentId) {
-  const wrap = $("#progress-bars");
-  const subject = subjectById(trendSubjectId);
-  const buckets = lastNMonthlyBuckets(8);
-  const scores = buckets.map(b => avgScore(
-    getEvaluations().filter(e => {
-      if (e.studentId !== studentId || e.subjectId !== trendSubjectId) return false;
-      const j = toJalali(isoToDate(e.date));
-      return j.jy === b.jy && j.jm === b.jm;
-    })
-  ));
-  const hasAny = scores.filter(s => s !== null).length >= 2; // a line needs at least 2 points to mean anything
+/** بازه‌ی میلادیِ هر ماه شمسی (برای پرسش از سرور): از ۱ام همان ماه تا یک روز قبل از ۱ام ماه بعد. */
+function monthRange(b) {
+  const iso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const nextJy = b.jm === 12 ? b.jy + 1 : b.jy;
+  const nextJm = b.jm === 12 ? 1 : b.jm + 1;
+  const end = fromJalali(nextJy, nextJm, 1);
+  end.setDate(end.getDate() - 1);
+  return { from: iso(fromJalali(b.jy, b.jm, 1)), to: iso(end) };
+}
 
-  wrap.innerHTML = `
+function showTrend(scores, buckets) {
+  const subject = subjectById(trendSubjectId);
+  const hasAny = scores.filter(s => s !== null).length >= 2; // a line needs at least 2 points to mean anything
+  setBars(`
     <div style="display:flex;align-items:center;flex-wrap:wrap;margin-bottom:10px">
-      <p style="font-size:13px;font-weight:700;margin:0">روند ۸ ماه اخیر — ${subject.name}</p>
+      <p style="font-size:13px;font-weight:700;margin:0">روند سال تحصیلی (مهر تا خرداد) — ${subject.name}</p>
       ${hasAny ? renderTrendBadge(scores) : ""}
     </div>
     ${hasAny ? renderLineChart(buckets, scores, subject.color, `progress-gradient-${trendSubjectId}`) : `<p class="empty-state empty-state--inline">برای رسم نمودار روند، حداقل به ارزشیابی در دو ماه مختلف نیاز است.</p>`}
-  `;
+  `);
 }
 
-export function renderProgress() {
+export async function renderProgress() {
+  // کل صفحه‌ی «پیشرفت» ویژه‌ی Pro است؛ برای رایگان فقط پیام نشان داده می‌شود و هیچ درخواستی به سرور نمی‌رود.
+  const locked = !isPro();
+  $("#progress-body").hidden = locked;
+  const lockBox = $("#progress-lock");
+  lockBox.hidden = !locked;
+  if (locked) { lockBox.innerHTML = proLockHTML("پیشرفت تحصیلی دانش‌آموزان"); return; }
   const studentId = $("#pr-student")?.value;
   if (!studentId) {
-    $("#progress-bars").innerHTML = `<p class="empty-state empty-state--inline">ابتدا از صفحه‌ی «دانش‌آموزان» دانش‌آموزان کلاس را اضافه کنید.</p>`;
+    clearMiniStats();
+    setBars(`<p class="empty-state empty-state--inline">ابتدا از صفحه‌ی «دانش‌آموزان» دانش‌آموزان کلاس را اضافه کنید.</p>`);
     return;
   }
-  renderMiniStats(studentId);
-  if (mode === "subjects") renderSubjectBars(studentId);
-  else renderTrend(studentId);
+  const token = ++renderToken;
+  setBars(`<p class="empty-state empty-state--inline">در حال دریافت…</p>`);
+  const showLock = () => { $("#progress-body").hidden = true; lockBox.hidden = false; lockBox.innerHTML = proLockHTML("پیشرفت تحصیلی دانش‌آموزان"); };
+
+  const { data, error } = await rpcStudentProgress(studentId);
+  if (token !== renderToken) return;
+  if (error) { if (error.code === "PRO_REQUIRED") return showLock(); clearMiniStats(); setBars(errorHTML(error.code)); return; }
+  showMiniStats(data);
+
+  if (mode === "subjects") { showSubjectBars(data); return; }
+  const buckets = academicYearBuckets();
+  const { data: tr, error: trErr } = await rpcStudentTrend(studentId, trendSubjectId, buckets.map(monthRange));
+  if (token !== renderToken) return;
+  if (trErr) { if (trErr.code === "PRO_REQUIRED") return showLock(); setBars(errorHTML(trErr.code)); return; }
+  showTrend((tr?.scores || []).map(v => (v === undefined ? null : v)), buckets);
 }
 
 export function initProgress() {
@@ -193,6 +216,7 @@ export function initProgress() {
   }));
 
   onViewChange(name => { if (name === "progress") { refreshStudentSelect(); renderProgress(); } });
+  document.addEventListener("pro:changed", () => { if (!$("#view-progress").hidden) renderProgress(); });
   refreshStudentSelect();
   renderProgress();
 }

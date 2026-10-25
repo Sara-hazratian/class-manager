@@ -4,9 +4,9 @@
 import {
   getActiveStudents, getSchedule, subjectById,
   todayDayIndex, DAYS, getGeneralNotes, setGeneralNotes,
-  getTomorrowPlan, setTomorrowPlan,
+  getTomorrowPlan, setTomorrowPlan, isPro,
 } from "./store.js";
-import { $, $$, toast, debounce } from "./ui.js";
+import { $, $$, toast, debounce, proLockHTML } from "./ui.js";
 import { fa, formatJalaliLong } from "./jalali.js";
 import { registerTitle, onViewChange } from "./router.js";
 import { updateHeaderDate } from "./header.js";
@@ -104,6 +104,19 @@ async function savePlanItems(next, okMsg) {
 function removePlanItem(i) { savePlanItems(planItems.filter((_, k) => k !== i), "حذف شد"); }
 
 async function renderTomorrowPlan() {
+  const lock = $("#tomorrow-plan-lock"), form = $("#tomorrow-plan-form");
+  if (!isPro()) {
+    // رایگان: بخش قفل است؛ فقط پیام Pro نشان داده می‌شود.
+    planItems = [];
+    renderPlanList();
+    $("#stat-tomorrow-plan").textContent = "—";
+    if (lock) { lock.innerHTML = proLockHTML("کارهای فردا برای اولیا"); lock.hidden = false; }
+    if (form) form.style.display = "none";
+    $("#tomorrow-plan-status").textContent = "";
+    return;
+  }
+  if (lock) lock.hidden = true;
+  if (form) form.style.display = "flex";
   planItems = parsePlan(await getTomorrowPlan());
   renderPlanList();
   const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
@@ -125,6 +138,7 @@ export function initDashboard() {
     const input = $("#tomorrow-plan-input");
     const text = input.value.replace(/\s+/g, " ").trim();
     if (!text) return;
+    if (!isPro()) { toast("این قابلیت به اشتراک Pro نیاز دارد", "error"); return; }
     if (planItems.includes(text)) { input.value = ""; return; }
     if (planItems.length >= 20) { toast("حداکثر ۲۰ مورد", "error"); return; }
     input.value = "";
@@ -135,6 +149,7 @@ export function initDashboard() {
   $("#dashboard-notes")?.addEventListener("input", e => saveNotes(e.target.value));
 
   onViewChange(name => { if (name === "dashboard") renderDashboard(); });
+  document.addEventListener("pro:changed", () => { if (!$("#view-dashboard").hidden) renderTomorrowPlan(); });
   document.addEventListener("data:changed", () => {
     if (!$("#view-dashboard").hidden) renderDashboard();
   });

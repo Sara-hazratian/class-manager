@@ -88,6 +88,14 @@
       <p class="empty-state__text">هنوز فرزندی اضافه نکرده‌اید — کد ملی و کد دعوتی را که معلم به شما داده در بالا وارد کنید.</p>
     </div>
 
+    <div id="parent-pro-lock" hidden>
+      <div class="pro-lock" role="status">
+        <span class="pro-badge">Pro</span>
+        <p class="pro-lock__text">مشاهدهٔ وضعیت آموزشی فرزند به اشتراک Pro معلم نیاز دارد.</p>
+        <p class="pro-lock__sub">فرزند شما به معلم وصل است؛ پس از فعال‌شدن اشتراک، اطلاعات خودکار نمایش داده می‌شود.</p>
+      </div>
+    </div>
+
     <div id="parent-content" hidden>
       <div id="parent-tomorrow-plan" hidden style="background:var(--color-primary-tint);border-radius:var(--radius-md);padding:var(--space-3) var(--space-4);margin-bottom:var(--space-4);display:flex;align-items:center;gap:10px">
         <span style="font-size:20px">📅</span>
@@ -135,7 +143,7 @@
       <button class="nav-tab" data-view="lab"><svg class="icon"><use href="#i-flask"/></svg><span class="nav-tab__label">آزمایشگاه علوم</span></button>
       <button class="nav-tab" data-view="discipline"><svg class="icon"><use href="#i-shield"/></svg><span class="nav-tab__label">انضباط</span></button>
       <button class="nav-tab" data-view="notes"><svg class="icon"><use href="#i-note"/></svg><span class="nav-tab__label">یادداشت‌ها</span></button>
-      <button class="nav-tab" data-view="progress"><svg class="icon"><use href="#i-chart"/></svg><span class="nav-tab__label">پیشرفت</span></button>
+      <button class="nav-tab" data-view="progress"><svg class="icon"><use href="#i-chart"/></svg><span class="nav-tab__label">پیشرفت <span class="pro-badge">Pro</span></span></button>
       <button class="nav-tab" data-view="planning"><svg class="icon"><use href="#i-map"/></svg><span class="nav-tab__label">برنامه‌ریزی</span></button>
       <button class="nav-tab" data-view="reports"><svg class="icon"><use href="#i-report"/></svg><span class="nav-tab__label">گزارش‌ها</span></button>
       <button class="nav-tab" data-view="settings"><svg class="icon"><use href="#i-settings"/></svg><span class="nav-tab__label">تنظیمات</span></button>
@@ -193,9 +201,10 @@
 
           <div style="display:flex;flex-direction:column;gap:var(--space-5)">
             <section class="panel">
-              <div class="panel__header"><h2>کارهای فردا <span id="tomorrow-plan-date" style="font-size:12px;font-weight:600;color:var(--color-ink-faint)"></span></h2></div>
+              <div class="panel__header"><h2>کارهای فردا <span class="pro-badge">Pro</span> <span id="tomorrow-plan-date" style="font-size:12px;font-weight:600;color:var(--color-ink-faint)"></span></h2></div>
               <p style="font-size:11.5px;color:var(--color-ink-faint);margin-bottom:var(--space-3)">هر کار را جدا بنویسید و «افزودن» بزنید؛ برای اولیای همین کلاس هم قابل مشاهده است و تا پایان فردا می‌ماند.</p>
-              <div style="display:flex;gap:8px">
+              <div id="tomorrow-plan-lock" hidden></div>
+              <div id="tomorrow-plan-form" style="display:flex;gap:8px">
                 <input type="text" id="tomorrow-plan-input" placeholder="مثلاً امتحان املا" maxlength="120" style="flex:1" />
                 <button class="btn btn--primary btn--sm" id="btn-save-tomorrow-plan">افزودن</button>
               </div>
@@ -439,6 +448,8 @@
 
       <!-- ========== PROGRESS (Phase 11) ========== -->
       <section class="view" id="view-progress" data-view="progress" hidden>
+        <div id="progress-lock" hidden></div>
+        <div id="progress-body">
         <div class="toolbar" style="display:flex;align-items:flex-end;justify-content:space-between;gap:var(--space-4);margin-bottom:var(--space-5);flex-wrap:wrap">
           <div style="display:flex;gap:var(--space-3);flex-wrap:wrap">
             <div style="min-width:200px"><label for="pr-student">دانش‌آموز</label><select id="pr-student" class="select-control"></select></div>
@@ -462,13 +473,14 @@
           <div class="panel__header"><h2>پیشرفت</h2></div>
           <div id="progress-bars"></div>
         </section>
+              </div>
       </section>
 
       <!-- ========== PLANNING (Phase 12) ========== -->
       <section class="view" id="view-planning" data-view="planning" hidden>
         <div class="pill-tabs" id="plan-tabs" style="margin-bottom:var(--space-5)">
           <button type="button" class="pill-tab is-active" data-plan-tab="weekly">برنامه هفتگی</button>
-          <button type="button" class="pill-tab" data-plan-tab="performance">تحلیل عملکرد کلاس</button>
+          <button type="button" class="pill-tab" data-plan-tab="performance">تحلیل عملکرد کلاس <span class="pro-badge">Pro</span></button>
           <button type="button" class="pill-tab" data-plan-tab="budget">بودجه‌بندی سالانه</button>
         </div>
 
@@ -574,6 +586,12 @@
         </section>
 
         <section class="panel" style="margin-bottom:var(--space-5)">
+          <div class="panel__header"><h2>اشتراک</h2></div>
+          <div id="settings-plan"></div>
+          <button type="button" class="btn btn--primary" data-open-plans style="margin-top:var(--space-3)">مشاهدهٔ طرح‌ها و قیمت‌ها</button>
+        </section>
+
+        <section class="panel" style="margin-bottom:var(--space-5)">
           <div class="panel__header"><h2>حساب کاربری</h2></div>
           <button type="button" class="btn btn--secondary" id="btn-sign-out"><svg class="icon"><use href="#i-back"/></svg>خروج از حساب</button>
         </section>
@@ -587,6 +605,15 @@
     </main>
   </div>
 </div>
+
+<!-- MODAL: طرح‌ها و اشتراک -->
+<dialog class="modal" id="modal-plans">
+  <div class="modal__form">
+    <header class="modal__header"><h2>طرح‌ها و اشتراک</h2>
+      <button type="button" class="modal__close" data-close><svg class="icon"><use href="#i-close"/></svg></button></header>
+    <div class="modal__body" id="plans-body"></div>
+  </div>
+</dialog>
 
 <!-- MODAL: Jalali date picker (reusable) -->
 <dialog class="modal" id="modal-date">
