@@ -13,28 +13,31 @@
    ============================================================ */
 
 :root {
-  /* ---------- Neutral surface & text (same across all themes) ---------- */
-  --color-bg: #F5F7F8;
-  --color-bg-alt: #EEF2F3;
-  --color-surface: #FFFFFF;
-  --color-surface-alt: #F8FAFA;
-  --color-ink: #1B2426;
-  --color-ink-soft: #5C6C70;
-  --color-ink-faint: #92A2A5;
-  --color-border: #E3E9EA;
-  --color-border-strong: #CFDADC;
+  /* ---------- Neutral surface & text — گرم و کرمی (تم جدید) ---------- */
+  --color-bg: #FCF6EE;
+  --color-bg-alt: #F6EEE2;
+  --color-surface: #FFFDF9;
+  --color-surface-alt: #F8F0E4;
+  --color-ink: #2D2420;
+  --color-ink-soft: #76675A;
+  --color-ink-faint: #A09080;
+  --color-border: #EBDFD0;
+  --color-border-strong: #DCCDB9;
 
   /* ---------- Semantic colors (status meanings, theme-independent) ---------- */
-  --color-success: #1F9D63;
-  --color-success-tint: #E1F6EA;
-  --color-warning: #E8A33D;
-  --color-warning-tint: #FCEFD9;
-  --color-danger: #D1523F;
-  --color-danger-tint: #FBE6E2;
-  --color-info: #3D7DCA;
-  --color-info-tint: #E4EEFB;
-  --color-plum: #7C6AE0;
-  --color-plum-tint: #EAE6FB;
+  --color-success: #5E8450;
+  --color-success-tint: #E6EEDD;
+  --color-warning: #B8832A;
+  --color-warning-tint: #F7EAD0;
+  --color-danger: #B8402A;
+  --color-danger-tint: #F8E1D8;
+  --color-info: #5B7F8C;
+  --color-info-tint: #E2ECEE;
+  --color-plum: #8A6A8F;
+  --color-plum-tint: #EFE5F0;
+
+  --overlay: rgba(45,36,32,.5);
+  --header-bg: rgba(252,246,238,.86);
 
   /* ---------- Type ---------- */
   --font-body: 'Vazirmatn', Tahoma, sans-serif;
@@ -44,9 +47,9 @@
   --radius-xs: 8px; --radius-sm: 12px; --radius-md: 16px; --radius-lg: 20px; --radius-xl: 24px; --radius-pill: 999px;
   --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 20px; --space-6: 24px; --space-7: 32px; --space-8: 48px;
 
-  --shadow-1: 0 1px 2px rgba(20,30,32,.06), 0 1px 1px rgba(20,30,32,.04);
-  --shadow-2: 0 8px 22px rgba(20,30,32,.09), 0 2px 6px rgba(20,30,32,.05);
-  --shadow-3: 0 22px 44px rgba(20,30,32,.16), 0 8px 16px rgba(20,30,32,.06);
+  --shadow-1: 0 1px 2px rgba(60,40,20,.06), 0 1px 1px rgba(60,40,20,.04);
+  --shadow-2: 0 4px 14px rgba(60,40,20,.07), 0 1px 3px rgba(60,40,20,.04);
+  --shadow-3: 0 18px 40px rgba(60,40,20,.16), 0 6px 14px rgba(60,40,20,.06);
 
   --ease: cubic-bezier(.2,0,0,1);
   --ease-spring: cubic-bezier(.34,1.56,.64,1);
@@ -61,6 +64,10 @@
    THEME COLOR PRESETS — chosen at Setup, editable in Settings.
    Each only defines the brand hue; everything else above stays put.
    ============================================================ */
+[data-theme="clay"] {
+  --color-primary: #B04A2B; --color-primary-dark: #8F3A20; --color-primary-tint: #F6E2D4;
+  --gradient-brand: linear-gradient(135deg, #B04A2B, #B04A2B);
+}
 [data-theme="blue"] {
   --color-primary: #2F6FED; --color-primary-dark: #1E4FC4; --color-primary-tint: #E3ECFE;
   --gradient-brand: linear-gradient(135deg, #2F6FED 0%, #6AA3FF 100%);
@@ -84,6 +91,34 @@
 
 /* Default before Setup has run (Setup itself always shows a neutral/blue hero) */
 html:not([data-theme]) {
-  --color-primary: #2F6FED; --color-primary-dark: #1E4FC4; --color-primary-tint: #E3ECFE;
-  --gradient-brand: linear-gradient(135deg, #2F6FED 0%, #6AA3FF 100%);
+  --color-primary: #B04A2B; --color-primary-dark: #8F3A20; --color-primary-tint: #F6E2D4;
+  --gradient-brand: linear-gradient(135deg, #B04A2B, #B04A2B);
 }
+
+/* ============================================================
+   حالت تیره — فقط مقدارهای توکن عوض می‌شود
+   ============================================================ */
+html[data-mode="dark"] {
+  color-scheme: dark;
+  --color-bg: #1E1914; --color-bg-alt: #261F19; --color-surface: #2A231C; --color-surface-alt: #231D17;
+  --color-ink: #F2E8DC; --color-ink-soft: #B5A593; --color-ink-faint: #8A7B6C;
+  --color-border: #3A3128; --color-border-strong: #4A3F34;
+  --color-success: #9DB88A; --color-success-tint: #2B3326;
+  --color-warning: #DDAA4D; --color-warning-tint: #3A2F1B;
+  --color-danger: #E5785A; --color-danger-tint: #3D241D;
+  --color-info: #8DB0BC; --color-info-tint: #222F33;
+  --color-plum: #BE9CC4; --color-plum-tint: #33283A;
+  --overlay: rgba(0,0,0,.62);
+  --header-bg: rgba(30,25,20,.86);
+  --shadow-1: 0 1px 2px rgba(0,0,0,.4);
+  --shadow-2: 0 4px 14px rgba(0,0,0,.35);
+  --shadow-3: 0 18px 40px rgba(0,0,0,.5);
+}
+html[data-mode="dark"][data-theme="clay"], html[data-mode="dark"]:not([data-theme]) {
+  --color-primary: #E58A66; --color-primary-dark: #F0A585; --color-primary-tint: #3A2A22;
+  --gradient-brand: linear-gradient(135deg, #E58A66, #E58A66);
+}
+html[data-mode="dark"] .btn--primary, html[data-mode="dark"] .pill-tab.is-active,
+html[data-mode="dark"] .cal-day.is-selected, html[data-mode="dark"] .today-schedule__period,
+html[data-mode="dark"] .student-card__avatar, html[data-mode="dark"] .pro-lock .pro-badge,
+html[data-mode="dark"] .plan-card__ribbon { color: #1E1914; }
