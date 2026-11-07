@@ -16,12 +16,9 @@ export function renderSubjects() {
       <span class="subject-card__icon"><svg class="icon"><use href="#${s.icon}"/></svg></span>
       <span class="subject-card__name">${s.name}</span>
       <span class="subject-card__meta">ارزشیابی روزانه، هفتگی و ماهانه</span>
-      ${s.id === "science" ? `<button type="button" class="btn btn--secondary btn--sm" data-lab style="margin-top:4px;align-self:flex-start">
-        <svg class="icon"><use href="#i-flask"/></svg>آزمایشگاه علوم (صفحه‌ی جدا)</button>` : ""}
     </article>`).join("");
 
   $$("[data-subject]", grid).forEach(card => card.addEventListener("click", () => openLesson(card.dataset.subject)));
-  $$("[data-lab]", grid).forEach(b => b.addEventListener("click", e => { e.stopPropagation(); switchView("lab"); }));
 }
 
 export function initLessons() {

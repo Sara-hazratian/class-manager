@@ -140,7 +140,6 @@
       <button class="nav-tab" data-view="attendance"><svg class="icon"><use href="#i-check-cal"/></svg><span class="nav-tab__label">حضور و غیاب</span></button>
       <button class="nav-tab" data-view="lessons"><svg class="icon"><use href="#i-book"/></svg><span class="nav-tab__label">درس‌ها</span></button>
       <button class="nav-tab" data-view="homework"><svg class="icon"><use href="#i-clipboard"/></svg><span class="nav-tab__label">تکالیف</span></button>
-      <button class="nav-tab" data-view="lab"><svg class="icon"><use href="#i-flask"/></svg><span class="nav-tab__label">آزمایشگاه علوم</span></button>
       <button class="nav-tab" data-view="discipline"><svg class="icon"><use href="#i-shield"/></svg><span class="nav-tab__label">انضباط</span></button>
       <button class="nav-tab" data-view="notes"><svg class="icon"><use href="#i-note"/></svg><span class="nav-tab__label">یادداشت‌ها</span></button>
       <button class="nav-tab" data-view="progress"><svg class="icon"><use href="#i-chart"/></svg><span class="nav-tab__label">پیشرفت <span class="pro-badge">Pro</span></span></button>
@@ -232,7 +231,6 @@
             <button type="button" class="btn btn--secondary" data-goto="attendance"><svg class="icon"><use href="#i-check-cal"/></svg>ثبت حضور و غیاب امروز</button>
             <button type="button" class="btn btn--secondary" data-goto="lessons"><svg class="icon"><use href="#i-book"/></svg>ارزشیابی درس‌ها</button>
             <button type="button" class="btn btn--secondary" data-goto="homework"><svg class="icon"><use href="#i-clipboard"/></svg>بررسی تکالیف</button>
-            <button type="button" class="btn btn--secondary" data-goto="lab"><svg class="icon"><use href="#i-flask"/></svg>آزمایشگاه علوم</button>
             <button type="button" class="btn btn--secondary" data-goto="discipline"><svg class="icon"><use href="#i-shield"/></svg>ثبت انضباط</button>
             <button type="button" class="btn btn--secondary" data-goto="notes"><svg class="icon"><use href="#i-note"/></svg>یادداشت‌ها</button>
             <button type="button" class="btn btn--secondary" data-goto="progress"><svg class="icon"><use href="#i-chart"/></svg>پیشرفت دانش‌آموزان</button>
@@ -377,15 +375,6 @@
         <p class="empty-state" id="hw-empty" hidden>ابتدا از صفحه‌ی «دانش‌آموزان» دانش‌آموزان کلاس را اضافه کنید.</p>
       </section>
 
-      <!-- ========== SCIENCE LABORATORY (Phase 8) — separate from Science evaluation ========== -->
-      <section class="view" id="view-lab" data-view="lab" hidden>
-        <div class="toolbar" style="display:flex;align-items:center;justify-content:space-between;gap:var(--space-4);margin-bottom:var(--space-5);flex-wrap:wrap">
-          <p class="empty-state__text" style="text-align:right;padding:0">آزمایش‌های علوم — جدا از ارزشیابی درس علوم</p>
-          <button type="button" class="btn btn--primary" id="btn-add-lab"><svg class="icon"><use href="#i-plus"/></svg>ثبت آزمایش</button>
-        </div>
-        <div class="plan-grid" id="lab-list" style="display:flex;flex-direction:column;gap:var(--space-4)"></div>
-        <div class="empty-state" id="lab-empty" hidden><p class="empty-state__text">هنوز آزمایشی ثبت نشده است.</p></div>
-      </section>
 
       <!-- ========== DISCIPLINE LOG (Phase 9) — deliberately NOT table-based ========== -->
       <section class="view" id="view-discipline" data-view="discipline" hidden>
@@ -668,29 +657,6 @@
 </dialog>
 
 <!-- MODAL: Record a science experiment (Phase 8) -->
-<dialog class="modal" id="modal-lab">
-  <form class="modal__form" id="lab-form">
-    <header class="modal__header"><h2 id="lab-modal-title">ثبت آزمایش علوم</h2>
-      <button type="button" class="modal__close" data-close><svg class="icon"><use href="#i-close"/></svg></button></header>
-    <div class="modal__body">
-      <label for="lab-title">عنوان آزمایش</label>
-      <input type="text" id="lab-title" required placeholder="مثلاً تبخیر آب" />
-
-      <label>تاریخ آزمایش</label>
-      <div class="date-trigger" id="lab-date-preview" style="width:fit-content"></div>
-
-      <label for="lab-desc">شرح آزمایش</label>
-      <textarea id="lab-desc" placeholder="مواد لازم، مراحل انجام…"></textarea>
-
-      <label for="lab-notes">یادداشت معلم</label>
-      <textarea id="lab-notes" placeholder="نتیجه‌گیری، نکات کلاس…"></textarea>
-    </div>
-    <footer class="modal__footer">
-      <button type="button" class="btn btn--ghost" data-close>انصراف</button>
-      <button type="submit" class="btn btn--primary">ذخیره آزمایش</button>
-    </footer>
-  </form>
-</dialog>
 
 <div class="toast-container" id="toast-container" role="status" aria-live="polite"></div>
 

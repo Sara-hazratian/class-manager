@@ -22,7 +22,6 @@ import { initAttendance } from "./attendance.js";
 import { initLessons } from "./lessons.js";
 import { initLesson } from "./evaluations.js";
 import { initHomework } from "./homework.js";
-import { initLab } from "./lab.js";
 import { initDiscipline } from "./discipline.js";
 import { initNotes } from "./notes.js";
 import { initProgress } from "./progress.js";
@@ -98,7 +97,6 @@ export async function showApp() {
   initLessons();
   initLesson();
   initHomework();
-  initLab();
   initDiscipline();
   initNotes();
   initProgress();
