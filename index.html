@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>ClassPilot — دفتر مدیریت کلاسی</title>
-<meta name="theme-color" content="#2F6FED" />
+<meta name="theme-color" content="#FCF6EE" />
 <link rel="manifest" href="manifest.webmanifest?v=5" />
 <link rel="icon" href="icons/icon-192.png?v=5" type="image/png" />
 <link rel="icon" href="icons/favicon.png?v=5" type="image/png" sizes="32x32" />
@@ -161,7 +161,12 @@
           <div class="app-header__meta" id="header-meta"></div>
         </div>
       </div>
-      <time class="app-header__date" id="header-date"></time>
+      <div style="display:flex;align-items:center;gap:10px">
+        <button type="button" class="icon-btn" data-mode-toggle aria-label="تغییر حالت روشن و تیره" aria-pressed="false" style="width:44px;height:44px;border-radius:50%;border:1px solid var(--color-border);background:var(--color-surface);color:var(--color-ink);display:grid;place-items:center;padding:0">
+          <svg class="icon mode-moon" viewBox="0 0 24 24" style="width:20px;height:20px"><path d="M20 14.5A8 8 0 0 1 9.5 4a8.2 8.2 0 1 0 10.5 10.5z"/></svg><svg class="icon mode-sun" viewBox="0 0 24 24" style="width:20px;height:20px"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6"/></svg>
+        </button>
+        <time class="app-header__date" id="header-date"></time>
+      </div>
     </header>
 
     <main class="main-content">

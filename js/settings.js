@@ -19,9 +19,9 @@ const GRADES = [
   { id: "grade1", label: "پایه اول" }, { id: "grade2", label: "پایه دوم" }, { id: "grade3", label: "پایه سوم" },
   { id: "grade4", label: "پایه چهارم" }, { id: "grade5", label: "پایه پنجم" }, { id: "grade6", label: "پایه ششم" },
 ];
-const HEX = { blue: "#2F6FED", green: "#22A06B", purple: "#7C5CE0", orange: "#E8862F", teal: "#17A2A2" };
+const HEX = { clay: "#B04A2B", blue: "#2F6FED", green: "#22A06B", purple: "#7C5CE0", orange: "#E8862F", teal: "#17A2A2" };
 
-let selectedTheme = "blue";
+let selectedTheme = "clay";
 
 function fillForm() {
   const p = getProfile(); if (!p) return;
@@ -30,7 +30,7 @@ function fillForm() {
   $("#set-grade").value = p.grade || "grade3";
   $("#set-class").value = p.className || "";
   $("#set-year").value = p.academicYear || "";
-  selectedTheme = p.themeColor || "blue";
+  selectedTheme = p.themeColor === "blue" || !p.themeColor ? "clay" : p.themeColor;
   $$(".theme-swatch", $("#settings-swatches")).forEach(b => b.classList.toggle("is-active", b.dataset.themeId === selectedTheme));
 }
 

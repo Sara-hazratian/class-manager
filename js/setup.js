@@ -81,7 +81,7 @@ function renderSetupForm() {
 
   // Give each swatch its real preset color as a background (can't read [data-theme] vars without applying them,
   // so we hardcode the same 5 hex values used in tokens.css just for the little preview dots).
-  const HEX = { blue: "#2F6FED", green: "#22A06B", purple: "#7C5CE0", orange: "#E8862F", teal: "#17A2A2" };
+  const HEX = { clay: "#B04A2B", blue: "#2F6FED", green: "#22A06B", purple: "#7C5CE0", orange: "#E8862F", teal: "#17A2A2" };
   $$("[data-swatch-dot]").forEach(dot => { dot.style.background = HEX[dot.dataset.swatchDot]; });
 
   let selectedTheme = THEME_COLORS[0].id;

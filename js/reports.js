@@ -51,19 +51,25 @@ function periodLabel(period, monthKey) {
 function clampLevel(avg) { return Math.max(1, Math.min(4, Math.round(avg))); }
 
 /* ---------- descriptive text, informed by the page range recorded on the evaluation itself ---------- */
-function formatTopic(subjectName, pageFrom, pageTo) {
+function formatTopic(subjectName, pageFrom, pageTo, topic) {
+  // اگر معلم اسم مبحث را ثبت کرده، همان در گزارش می‌آید و صفحه‌ها به‌صورت توضیح کنارش.
+  if (topic) {
+    const pages = pageFrom && pageTo ? ` (صفحه ${fa(pageFrom)} تا ${fa(pageTo)} کتاب ${subjectName})`
+      : pageFrom ? ` (صفحه ${fa(pageFrom)} به بعد کتاب ${subjectName})` : ` درس ${subjectName}`;
+    return `مبحث «${topic}»${pages}`;
+  }
   if (pageFrom && pageTo) return `صفحه ${fa(pageFrom)} تا ${fa(pageTo)} کتاب ${subjectName}`;
   if (pageFrom) return `صفحه ${fa(pageFrom)} به بعد کتاب ${subjectName}`;
   return `درس ${subjectName}`;
 }
-function describe(subjectName, avg, pageFrom, pageTo) {
+function describe(subjectName, avg, pageFrom, pageTo, topic) {
   const rounded = clampLevel(avg);
-  const topic = formatTopic(subjectName, pageFrom, pageTo);
+  const topicText = formatTopic(subjectName, pageFrom, pageTo, topic);
   const templates = {
-    4: `دانش‌آموز ${topic} را به‌خوبی یاد گرفته و در فعالیت‌های کلاسی مشارکت فعال دارد.`,
-    3: `دانش‌آموز ${topic} را خوب یاد گرفته و در بیشتر فعالیت‌ها شرکت می‌کند.`,
-    2: `دانش‌آموز در ${topic} پیشرفت قابل قبولی داشته، اما نیاز به تمرین بیشتر دارد.`,
-    1: `دانش‌آموز در ${topic} ضعیف عمل کرده و نیاز به تمرین و پشتیبانی بیشتری دارد.`,
+    4: `دانش‌آموز ${topicText} را به‌خوبی یاد گرفته و در فعالیت‌های کلاسی مشارکت فعال دارد.`,
+    3: `دانش‌آموز ${topicText} را خوب یاد گرفته و در بیشتر فعالیت‌ها شرکت می‌کند.`,
+    2: `دانش‌آموز در ${topicText} پیشرفت قابل قبولی داشته، اما نیاز به تمرین بیشتر دارد.`,
+    1: `دانش‌آموز در ${topicText} ضعیف عمل کرده و نیاز به تمرین و پشتیبانی بیشتری دارد.`,
   };
   return { label: LABEL[rounded], text: templates[rounded] };
 }
@@ -91,8 +97,9 @@ function groupAttendanceByMonth(records) {
 function groupByRange(evaluations) {
   const groups = {};
   evaluations.forEach(e => {
-    const key = `${e.pageFrom ?? "x"}-${e.pageTo ?? "x"}`;
-    if (!groups[key]) groups[key] = { pageFrom: e.pageFrom || null, pageTo: e.pageTo || null, items: [] };
+    const topic = (e.topic || "").trim();
+    const key = `${topic}|${e.pageFrom ?? "x"}-${e.pageTo ?? "x"}`;
+    if (!groups[key]) groups[key] = { pageFrom: e.pageFrom || null, pageTo: e.pageTo || null, topic, items: [] };
     groups[key].items.push(e);
   });
   return Object.values(groups).sort((a, b) => (a.pageFrom || 0) - (b.pageFrom || 0));
@@ -111,7 +118,7 @@ export function buildStudentReport(studentId, period, monthKey) {
 
     const ranges = groupByRange(list).map(g => {
       const rAvg = g.items.reduce((sum, e) => sum + (SCORE[e.level] || 0), 0) / g.items.length;
-      return { pageFrom: g.pageFrom, pageTo: g.pageTo, count: g.items.length, avg: rAvg, ...describe(s.name, rAvg, g.pageFrom, g.pageTo) };
+      return { pageFrom: g.pageFrom, pageTo: g.pageTo, topic: g.topic, count: g.items.length, avg: rAvg, ...describe(s.name, rAvg, g.pageFrom, g.pageTo, g.topic) };
     });
 
     return { subject: s, count: list.length, avg, label: LABEL[clampLevel(avg)], ranges };
@@ -139,8 +146,13 @@ export function buildStudentReport(studentId, period, monthKey) {
     };
   }).filter(Boolean);
 
+  // مباحثی که میانگین‌شان ضعیف است (قابل قبول یا پایین‌تر) — با نام درس و مبحث
+  const weakTopics = subjectRows.flatMap(r => r.ranges.filter(g => g.avg < 2.5).map(g => ({
+    subjectName: r.subject.name, label: g.label, text: formatTopic(r.subject.name, g.pageFrom, g.pageTo, g.topic),
+  })));
+
   const overall = subjectRows.length ? subjectRows.reduce((s, r) => s + r.avg, 0) / subjectRows.length : null;
-  return { student, subjectRows, attendanceByMonth, disciplineRecords, homeworkRows, overall };
+  return { student, subjectRows, attendanceByMonth, disciplineRecords, homeworkRows, weakTopics, overall };
 }
 
 /* ---------- rendering ---------- */
@@ -192,6 +204,10 @@ export function renderStudentReportHTML(data) {
       </div>
       ${strengths.length ? `<p style="margin-bottom:6px"><strong>نقاط قوت:</strong> ${strengths.join("، ")}</p>` : ""}
       ${needsWork.length ? `<p style="margin-bottom:6px"><strong>نیازمند تلاش بیشتر:</strong> ${needsWork.join("، ")}</p>` : ""}
+      <p style="margin:12px 0 6px"><strong>مباحثی که ضعیف بوده است:</strong></p>
+      ${(data.weakTopics || []).length ? `<ul style="padding-inline-start:18px;list-style:disc;margin-bottom:12px">
+        ${data.weakTopics.map(w => `<li style="margin-bottom:4px;font-size:13.5px">${esc(w.subjectName)} — ${esc(w.text)} · ${w.label}</li>`).join("")}
+      </ul>` : `<p style="font-size:13px;color:var(--color-ink-faint);margin-bottom:12px">در این بازه مبحث ضعیفی ثبت نشده است.</p>`}
       <p style="margin:12px 0 6px"><strong>توصیف عملکرد به تفکیک مبحث ارزشیابی‌شده:</strong></p>
       <ul style="padding-inline-start:18px;list-style:disc;margin-bottom:16px">
         ${allDescriptions.map(r => `<li style="margin-bottom:5px;font-size:13.5px;color:var(--color-ink-soft)">${esc(r.text)}</li>`).join("")}
@@ -262,11 +278,11 @@ function exportExcel() {
   }
 
   // Sheet 1: evaluations — one row per (student, subject, page-range evaluated)
-  const evalSheet = [["دانش‌آموز", "درس", "از صفحه", "تا صفحه", "سطح", "تعداد ارزشیابی"]];
+  const evalSheet = [["دانش‌آموز", "درس", "مبحث", "از صفحه", "تا صفحه", "سطح", "تعداد ارزشیابی"]];
   rows.forEach(r => {
-    if (!r.subjectRows.length) { evalSheet.push([r.student.name, "—", "", "", "—", 0]); return; }
+    if (!r.subjectRows.length) { evalSheet.push([r.student.name, "—", "", "", "", "—", 0]); return; }
     r.subjectRows.forEach(sub => sub.ranges.forEach(rg => {
-      evalSheet.push([r.student.name, sub.subject.name, rg.pageFrom || "", rg.pageTo || "", rg.label, rg.count]);
+      evalSheet.push([r.student.name, sub.subject.name, rg.topic || "", rg.pageFrom || "", rg.pageTo || "", rg.label, rg.count]);
     }));
   });
 
@@ -294,7 +310,7 @@ function exportExcel() {
     ws["!cols"] = colWidths.map(w => ({ wch: w }));
     XLSX.utils.book_append_sheet(wb, ws, name);
   };
-  addSheet(evalSheet, "ارزشیابی‌ها", [18, 14, 9, 9, 16, 14]);
+  addSheet(evalSheet, "ارزشیابی‌ها", [18, 14, 18, 9, 9, 16, 14]);
   addSheet(attSheet, "حضور و غیاب", [18, 10, 12, 12, 28, 12, 28]);
   addSheet(dpSheet, "انضباط", [18, 12, 10, 30]);
 

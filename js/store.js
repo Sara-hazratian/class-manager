@@ -92,6 +92,7 @@ function logSyncError(collection, err) {
 
 /* ---------- Teacher profile + theme (Setup / Settings) ---------- */
 export const THEME_COLORS = [
+  { id: "clay",   label: "خاکی" },
   { id: "blue",   label: "آبی" },
   { id: "green",  label: "سبز" },
   { id: "purple", label: "بنفش" },
@@ -108,7 +109,7 @@ function dbRowToProfile(row) {
   return {
     fullName: row.full_name || "", schoolName: row.school_name || "", grade: row.grade || "",
     className: row.class_name || "", academicYear: row.academic_year || "",
-    themeColor: row.theme_color || "blue", role: row.role,
+    themeColor: row.theme_color || "clay", role: row.role,
     username: row.username || "", personnelCode: row.personnel_code || "",
     verified: row.verified,
   };
@@ -464,7 +465,7 @@ export function enablePreviewMode(role) {
   previewModeActive = true;
   currentUserId = "prev-teacher";
 
-  const base = { username: "PREVIEW", verified: true, themeColor: "blue" };
+  const base = { username: "PREVIEW", verified: true, themeColor: "clay" };
   if (role === "parent") {
     profileCache = { ...base, role: "parent", fullName: "اولیا نمونه" };
     // یک اولیا فقط باید فرزند خودش را ببیند — نه هر سه دانش‌آموز نمونه.
